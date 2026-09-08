@@ -41,6 +41,7 @@ Ledger, die auseinanderlaufen.
 | `package.json` mit `@vercel/blob`, `playwright`, `ffmpeg-static` | ✅ neu — die `--no-save`-Falle gibt es in diesem Repo nicht mehr |
 | 15 Secrets + `REPOS_TOKEN` | ❌ **neu zu beschaffen** (Schritt 2 und 3) |
 | Repository-Variable `SOCIAL_ZEITPLAN` | ❌ erst beim Umschalten setzen (Schritt 4) |
+| Standardzweig `main` | ✅ seit 08.09.2026 gesetzt (Schritt 1) |
 | Vercel-Projekt für die Freigabe-Seite | ❌ war auch vorher noch nicht angelegt (Schritt 5) |
 
 **Der günstigste Zeitpunkt für die Secrets ist nach TikToks Freigabe** (App Review
@@ -50,17 +51,17 @@ Blob kann man davor schon eintragen; sie hängen nicht an TikTok.
 
 ### Die Reihenfolge
 
-**1. Standardzweig umstellen** — der Handgriff, der von den sechs am wenigsten
-aussieht und am meisten still kaputtmacht. `main` gibt es seit dem 08.09.2026 und
-der ganze Inhalt liegt darauf (PR #1, zusammengeführt). Standardzweig ist aber
-weiterhin `claude/new-session-cigpk4`: GitHub macht den zuerst gepushten Zweig dazu,
-und das ist eine Einstellung, keine Datei — sie lässt sich nur von Hand ändern
-(Settings → General → Default branch → auf `main` umstellen).
+**1. Standardzweig — ✅ erledigt am 08.09.2026.** `main` trägt den ganzen Inhalt
+(PR #1) und ist der Standardzweig. Der Zweig `claude/new-session-cigpk4` ist damit
+entbehrlich und kann gelöscht werden.
 
-Solange sie steht, greifen zwei Dinge ins Leere, ohne einen Fehler zu zeigen:
-`freigabe-app/api/freigabe.js` startet den Freigabe-Workflow mit `ref: 'main'`, und
-ein Zeitplan läuft **ausschließlich** auf dem Standardzweig. Danach darf der
-Claude-Zweig weg.
+⚠ Warum das ein eigener Schritt war: GitHub macht den zuerst gepushten Zweig zum
+Standard, und das ist eine Einstellung, keine Datei — kein Commit kann sie ändern.
+Solange sie falsch stand, hätten zwei Dinge ins Leere gegriffen, ohne einen Fehler
+zu zeigen: `freigabe-app/api/freigabe.js` startet den Freigabe-Workflow mit
+`ref: 'main'`, und ein Zeitplan läuft **ausschließlich** auf dem Standardzweig.
+⚠ Und der Knopf daneben ist eine Falle: Der Bleistift *benennt den Zweig um*,
+umgestellt wird mit dem Symbol aus zwei Pfeilen (⇄) daneben.
 
 **2. Die 15 Secrets** (Settings → Secrets and variables → Actions). Namen und
 Herkunft, ausführlich in `tools/social/veroeffentlichen/README.md`, Teil D:
@@ -179,7 +180,7 @@ keinen Winkel; der Ledger wird nur nach einem echten Lauf zurückgeschrieben.
 
 ## Was offen ist (Stand 08.09.2026)
 
-- **Umzug abschließen** — Schritte 1 bis 6 oben.
+- **Umzug abschließen** — Schritte 2 bis 6 oben (Schritt 1 ist erledigt).
 - **TikToks Antwort abwarten.** Kommt die Freigabe: Client Key und Secret der
   Produktion in die Secrets, alle fünf Refresh-Token neu holen (Sandbox-Token gelten
   dort nicht). Details: `veroeffentlichen/README.md`, Teil B.
