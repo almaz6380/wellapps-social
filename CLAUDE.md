@@ -50,11 +50,17 @@ Blob kann man davor schon eintragen; sie hängen nicht an TikTok.
 
 ### Die Reihenfolge
 
-**1. Standardzweig.** Der erste Push in dieses Repo kam über einen Claude-Zweig
-(`claude/new-session-cigpk4`), und GitHub macht den ersten Zweig zum Standardzweig.
-`main` daraus anlegen und als Standard setzen: `freigabe-app/api/freigabe.js` startet
-den Freigabe-Workflow mit `ref: 'main'`, und der Zeitplan läuft nur auf dem
-Standardzweig.
+**1. Standardzweig umstellen** — der Handgriff, der von den sechs am wenigsten
+aussieht und am meisten still kaputtmacht. `main` gibt es seit dem 08.09.2026 und
+der ganze Inhalt liegt darauf (PR #1, zusammengeführt). Standardzweig ist aber
+weiterhin `claude/new-session-cigpk4`: GitHub macht den zuerst gepushten Zweig dazu,
+und das ist eine Einstellung, keine Datei — sie lässt sich nur von Hand ändern
+(Settings → General → Default branch → auf `main` umstellen).
+
+Solange sie steht, greifen zwei Dinge ins Leere, ohne einen Fehler zu zeigen:
+`freigabe-app/api/freigabe.js` startet den Freigabe-Workflow mit `ref: 'main'`, und
+ein Zeitplan läuft **ausschließlich** auf dem Standardzweig. Danach darf der
+Claude-Zweig weg.
 
 **2. Die 15 Secrets** (Settings → Secrets and variables → Actions). Namen und
 Herkunft, ausführlich in `tools/social/veroeffentlichen/README.md`, Teil D:
