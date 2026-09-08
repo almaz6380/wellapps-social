@@ -1,0 +1,17 @@
+node_modules
+*.log
+
+# Gerenderte Beitraege, Frames, Kontaktboegen — Videos gehoeren nicht ins Repo.
+# Was zaehlt, steht im Ledger; die Motoren sind deterministisch.
+out/
+
+# Zugangsdaten liegen in den GitHub-Secrets, nie hier.
+.env
+.env.*
+
+.vercel
+.DS_Store
+__pycache__/
+
+# Claude Code: persoenliche Einstellungen (nicht teilen)
+.claude/settings.local.json
