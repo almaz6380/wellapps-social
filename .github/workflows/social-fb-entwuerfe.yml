@@ -1,0 +1,54 @@
+name: Facebook-Entwuerfe
+
+# Zeigt die unveroeffentlichten Beitraege einer Seite und loescht sie auf
+# Wunsch — beides ueber die API, nicht ueber die Oberflaeche.
+#
+# ⚠ Warum nicht einfach in der Meta Business Suite: Deren Reiter „Entwuerfe"
+# zeigt nur, was IM Composer dort angefangen wurde. Was unsere Automatik mit
+# `published=false` anlegt, ist fuer Meta ein „unveroeffentlichter
+# Seitenbeitrag" und steht woanders — am 05.09.2026 eine halbe Stunde
+# vergeblich gesucht.
+#
+# ⚠ Loeschen ist endgueltig und verlangt ausdrueckliche IDs. Es gibt bewusst
+# kein „alle loeschen".
+
+on:
+  workflow_dispatch:
+    inputs:
+      modus:
+        description: 'zeigen = auflisten · loeschen = die unter ids genannten Beitraege entfernen'
+        type: choice
+        options: [zeigen, loeschen]
+        default: zeigen
+      apps:
+        description: 'Welche Seite(n)? anigosha,mahjong,wellbooked,fullrep,swaply'
+        type: string
+        default: anigosha
+      ids:
+        description: 'Nur bei loeschen: Beitrags-IDs, kommagetrennt'
+        type: string
+        required: false
+
+jobs:
+  entwuerfe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Entwuerfe
+        env:
+          FB_SEITEN_TOKEN_ANIGOSHA: ${{ secrets.FB_SEITEN_TOKEN_ANIGOSHA }}
+          FB_SEITEN_TOKEN_MAHJONG: ${{ secrets.FB_SEITEN_TOKEN_MAHJONG }}
+          FB_SEITEN_TOKEN_WELLBOOKED: ${{ secrets.FB_SEITEN_TOKEN_WELLBOOKED }}
+          FB_SEITEN_TOKEN_FULLREP: ${{ secrets.FB_SEITEN_TOKEN_FULLREP }}
+          FB_SEITEN_TOKEN_SWAPLY: ${{ secrets.FB_SEITEN_TOKEN_SWAPLY }}
+          MODUS: ${{ inputs.modus }}
+          APPS: ${{ inputs.apps }}
+          IDS: ${{ inputs.ids }}
+        run: node tools/social/fb-entwuerfe.mjs

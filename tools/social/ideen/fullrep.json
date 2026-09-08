@@ -1,0 +1,138 @@
+{
+  "_quelle": "162 Uebungsordner mit je zwei Fotos (public/exercise-demos/*/0.jpg,1.jpg), ~1 MB belegtes Wissen (src/data/*Knowledge.js mit quickDE/quickEN und references), 25 Rezepte, 244 Uebungen, 21 Peak-Programme",
+  "_regel": "Download-Badges fuer App Store und Google Play statt eines Satzes. KI-erzeugte Menschen tragen unten rechts ein AI-Wasserzeichen. Keine Dosierungen, keine Diagnosen, keine Therapieempfehlungen. Haftungshinweis und Quellenangabe entfallen in Beitraegen — beide sind Auflagen fuer den Store-Eintrag, wo sie unveraendert bleiben.",
+  "winkel": [
+    {
+      "id": "uebung-loop",
+      "medium": "reel",
+      "format": "uebung-loop",
+      "status": "vorhanden",
+      "haken": "Start- und Endposition aus public/exercise-demos/<Uebung>/ als sauberer Loop, mit Name und Zielmuskel. 162 Uebungen = 162 Posts ohne Wiederholung",
+      "schluessel": "uebung",
+      "sprachen": [
+        "de",
+        "en"
+      ]
+    },
+    {
+      "id": "studien-fakt",
+      "medium": "bild",
+      "format": "studien-fakt",
+      "status": "vorhanden",
+      "haken": "Ein Studienfund als Karte: wechselnder Aufhaenger, grosse Ueberschrift, Erklaertext, darunter der Wert. 26 kuratierte Eintraege, jeder woertlich aus src/data/ — es wird keine Zahl erfunden",
+      "schluessel": "studie",
+      "sprachen": [
+        "de",
+        "en"
+      ]
+    },
+    {
+      "id": "quick-fakt",
+      "medium": "reel",
+      "format": "wissen-reel",
+      "status": "vorhanden",
+      "haken": "Ein quickDE/quickEN-Paar aus den Wissensdateien, mit sichtbarer Quelle. Genau das, was Apple 1.4.1 verlangt hat — hier wird die Pflicht zum Format",
+      "schluessel": "wissensthema",
+      "sprachen": [
+        "de",
+        "en"
+      ]
+    },
+    {
+      "id": "mythos-check",
+      "medium": "reel",
+      "format": "wissen-reel",
+      "status": "vorhanden",
+      "haken": "Trainingsmythos gegen die belegte Aussage. Der Studienbeleg ist der Unterschied zu jedem anderen Fitnesskanal",
+      "schluessel": "wissensthema",
+      "sprachen": [
+        "de",
+        "en"
+      ]
+    },
+    {
+      "id": "drei-fehler",
+      "medium": "reel",
+      "format": "uebung-loop",
+      "status": "neu",
+      "haken": "Drei Ausfuehrungsfehler einer Uebung, aus den Beschreibungen. Fehlerkorrektur wird staerker gespeichert als Anleitung",
+      "schluessel": "uebung",
+      "sprachen": [
+        "de",
+        "en"
+      ]
+    },
+    {
+      "id": "programm-woche",
+      "medium": "reel",
+      "format": "wissen-reel",
+      "status": "neu",
+      "haken": "Eine Woche aus einem der 21 Peak-Programme, mit Studienzitat. Zeigt Substanz statt Versprechen",
+      "schluessel": "programm",
+      "sprachen": [
+        "de",
+        "en"
+      ]
+    },
+    {
+      "id": "wissens-karte",
+      "medium": "bild",
+      "format": "wissen-karte",
+      "status": "vorhanden",
+      "haken": "Zitatkarte mit sichtbarer Quellenangabe. Teilbar, weil belegt",
+      "schluessel": "wissensthema",
+      "sprachen": [
+        "de",
+        "en"
+      ]
+    },
+    {
+      "id": "uebung-karte",
+      "medium": "bild",
+      "format": "uebung-karte",
+      "status": "vorhanden",
+      "haken": "Start und Ende nebeneinander, Muskelgruppe farbig markiert. Als Nachschlagebild speicherbar — Saves zaehlen bei Instagram mehr als Likes",
+      "schluessel": "uebung",
+      "sprachen": [
+        "de",
+        "en"
+      ]
+    },
+    {
+      "id": "rezept-karte",
+      "medium": "bild",
+      "format": "rezept-karte",
+      "status": "vorhanden",
+      "haken": "Eines der 25 Rezepte mit Makros. Essen ist das teilbarste Fitnessthema ueberhaupt",
+      "schluessel": "rezept",
+      "sprachen": [
+        "de",
+        "en"
+      ]
+    },
+    {
+      "id": "naehrstoff",
+      "medium": "bild",
+      "format": "wissen-karte",
+      "status": "vorhanden",
+      "haken": "Ein Mikronaehrstoff aus nutritionKnowledge.js — was er tut, worin er steckt. Ohne Dosierung, ohne Heilversprechen",
+      "schluessel": "wissensthema",
+      "sprachen": [
+        "de",
+        "en"
+      ]
+    },
+    {
+      "id": "erfolg",
+      "medium": "bild",
+      "format": "erfolg-karte",
+      "status": "neu",
+      "haken": "Eines der 23 Achievements als Motivationswinkel — 100 Trainings, 30 Tage Serie. Zielt auf Wiedereinsteiger",
+      "schluessel": "achievement",
+      "sprachen": [
+        "de",
+        "en"
+      ]
+    }
+  ]
+}

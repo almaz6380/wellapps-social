@@ -1,0 +1,130 @@
+{
+  "_quelle": "804 Fragen / 12 Serien, geparst aus supabase/migrations/0003-0015 nach tools/reels/data/fragen.json",
+  "_regel": "Reine Typografie. Nie ein Bild einer erkennbaren Anime-Figur, auch kein KI-erzeugtes. Anime-TITEL als Text sind unproblematisch.",
+  "winkel": [
+    {
+      "id": "fandom",
+      "medium": "reel",
+      "format": "fandom",
+      "status": "vorhanden",
+      "haken": "Drei Fragen aus EINER Serie, Schwierigkeit steigend — spricht den Fandom direkt an",
+      "schluessel": "kategorie",
+      "sprachen": [
+        "de",
+        "en"
+      ]
+    },
+    {
+      "id": "ladder",
+      "medium": "reel",
+      "format": "ladder",
+      "status": "vorhanden",
+      "haken": "Drei verschiedene Serien, Schwierigkeit steigend — erreicht mehrere Fandoms auf einmal",
+      "schluessel": "fragen-ids",
+      "sprachen": [
+        "de",
+        "en"
+      ]
+    },
+    {
+      "id": "nur-fuer-profis",
+      "medium": "reel",
+      "format": "profi",
+      "status": "neu",
+      "haken": "Ausschliesslich Schwierigkeit 3 einer Serie. Der Aufhaenger ist die Behauptung, dass es kaum jemand schafft — das provoziert Kommentare",
+      "schluessel": "kategorie",
+      "bereich": {
+        "difficulty": 3
+      },
+      "sprachen": [
+        "de",
+        "en"
+      ]
+    },
+    {
+      "id": "zwei-serien-duell",
+      "medium": "reel",
+      "format": "duell",
+      "status": "neu",
+      "haken": "Dieselbe Frageart aus zwei Serien gegeneinander. Fandom-Rivalitaet ist der staerkste Kommentartreiber, den es hier gibt",
+      "schluessel": "kategorie-paar",
+      "sprachen": [
+        "de",
+        "en"
+      ]
+    },
+    {
+      "id": "wusstest-du-rueckwaerts",
+      "medium": "reel",
+      "format": "erklaerung",
+      "status": "neu",
+      "haken": "Aus der Erklaerung eine Frage rueckwaerts bauen: erst der ueberraschende Fakt, dann die Frage dazu. Watchtime-Format",
+      "schluessel": "fragen-ids",
+      "sprachen": [
+        "de",
+        "en"
+      ]
+    },
+    {
+      "id": "jahrestag",
+      "medium": "reel",
+      "format": "fandom",
+      "status": "neu",
+      "haken": "Frage zu einer Serie mit Jubilaeum oder Anlass im aktuellen Kalendermonat — Aktualitaet als Aufhaenger",
+      "schluessel": "kategorie",
+      "saisonal": true,
+      "sprachen": [
+        "de",
+        "en"
+      ]
+    },
+    {
+      "id": "frage-karte",
+      "medium": "bild",
+      "format": "frage-karte",
+      "status": "vorhanden",
+      "haken": "Eine Frage als 1080x1350-Karte, Antwort ausdruecklich in die Kommentare verlegt. Billigster Post im ganzen System und der beste Kommentartreiber",
+      "schluessel": "fragen-ids",
+      "sprachen": [
+        "de",
+        "en"
+      ]
+    },
+    {
+      "id": "wusstest-du-karte",
+      "medium": "bild",
+      "format": "zitat-karte",
+      "status": "vorhanden",
+      "haken": "Nur die Erklaerung als Zitatkarte, ohne Frage. Teilbar, weil es Wissen und keine Aufgabe ist",
+      "schluessel": "fragen-ids",
+      "sprachen": [
+        "de",
+        "en"
+      ]
+    },
+    {
+      "id": "serien-steckbrief",
+      "medium": "bild",
+      "format": "steckbrief-karte",
+      "status": "neu",
+      "haken": "Drei Hinweise zu einer Serie untereinander, Name erst am Ende. Wer frueh raet, kommentiert",
+      "schluessel": "kategorie",
+      "sprachen": [
+        "de",
+        "en"
+      ]
+    },
+    {
+      "id": "schwierigkeitsleiter",
+      "medium": "bild",
+      "format": "leiter-karte",
+      "status": "vorhanden",
+      "haken": "Drei Fragen derselben Serie in aufsteigender Schwierigkeit als eine Karte — 'bis wohin kommst du?'",
+      "schluessel": "kategorie",
+      "sprachen": [
+        "de",
+        "en"
+      ]
+    }
+  ]
+}

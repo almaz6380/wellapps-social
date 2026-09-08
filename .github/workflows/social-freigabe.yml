@@ -1,0 +1,72 @@
+name: Instagram-Freigabe
+
+# Der zweite Halbschritt fuer Instagram: Der Tageslauf legt Bild und Text
+# bereit, hier entscheidest du.
+#
+# ⚠ WARUM ES DIESEN EXTRA-LAUF GIBT: Instagram kennt keinen Entwurf. Seine API
+# ist zweistufig (Container anlegen, dann veroeffentlichen), und der Container
+# verfaellt nach 24 Stunden. Er darf deshalb erst im Moment der Freigabe
+# entstehen — sonst waere er beim Freigeben tot, mit einer Meldung, die nach
+# einem kaputten Zugang aussieht.
+#
+# Zwei Schritte, immer in dieser Reihenfolge:
+#
+#   modus: zeigen            listet die offenen Beitraege mit Bildadresse und
+#                            Text. Sendet NICHTS. Die Adressen lassen sich am
+#                            Handy antippen und ansehen.
+#   modus: veroeffentlichen  stellt sie oeffentlich auf Instagram. Das ist
+#                            endgueltig; zuruecknehmen geht nur von Hand in
+#                            der App.
+#
+# ⚠ Ein zweiter Lauf verdoppelt nichts: Was veroeffentlicht wurde, wird in der
+# Merkliste vermerkt und beim naechsten Mal uebersprungen. Instagram selbst hat
+# diese Sperre nicht — zweimal veroeffentlichen ergibt dort zwei Beitraege.
+
+on:
+  workflow_dispatch:
+    inputs:
+      modus:
+        description: 'zeigen = nur ansehen · veroeffentlichen = wirklich posten (oeffentlich!)'
+        type: choice
+        options: [zeigen, veroeffentlichen]
+        default: zeigen
+      apps:
+        description: 'Nur diese Apps (anigosha,mahjong,wellbooked,fullrep,swaply) — leer = alle'
+        type: string
+        required: false
+      datum:
+        description: 'Welcher Tag (JJJJ-MM-TT), leer = heute'
+        type: string
+        required: false
+
+jobs:
+  freigeben:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # Nur die Bibliothek, kein Rendern: Dieser Lauf baut nichts, er liest die
+      # Merkliste und spricht mit Instagram. Deshalb weder Playwright noch
+      # ffmpeg (beide stehen hier unter devDependencies, --omit=dev laesst sie
+      # weg) und keine App-Repos.
+      - name: Abhaengigkeiten
+        run: npm ci --omit=dev --no-audit --no-fund || npm install --omit=dev --no-audit --no-fund
+
+      - name: Freigabe
+        env:
+          FB_SEITEN_TOKEN_ANIGOSHA: ${{ secrets.FB_SEITEN_TOKEN_ANIGOSHA }}
+          FB_SEITEN_TOKEN_MAHJONG: ${{ secrets.FB_SEITEN_TOKEN_MAHJONG }}
+          FB_SEITEN_TOKEN_WELLBOOKED: ${{ secrets.FB_SEITEN_TOKEN_WELLBOOKED }}
+          FB_SEITEN_TOKEN_FULLREP: ${{ secrets.FB_SEITEN_TOKEN_FULLREP }}
+          FB_SEITEN_TOKEN_SWAPLY: ${{ secrets.FB_SEITEN_TOKEN_SWAPLY }}
+          BLOB_TOKEN: ${{ secrets.BLOB_TOKEN }}
+          MODUS: ${{ inputs.modus }}
+          APPS: ${{ inputs.apps }}
+          DATUM: ${{ inputs.datum }}
+        run: node tools/social/freigeben.mjs

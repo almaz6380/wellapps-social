@@ -1,0 +1,135 @@
+{
+  "_quelle": "16 Kategorien mit Behandlungslisten (src/lib/constants.ts), Preise ebenda, Kalenderaufnahmen aus /kalender-demo, 128 KB Playbook in docs/marketing.md",
+  "_regel": "Marke IMMER 'WELLbooked!' mit Ausrufezeichen, ausser in Hashtags. Tonspur bleibt LEER — Josef legt Musik selbst darueber. Keine KI-Nahaufnahmen von Gesichtern. Preise nur gelesen, nie getippt.",
+  "winkel": [
+    {
+      "id": "bauchbinde",
+      "medium": "reel",
+      "format": "ablauf",
+      "status": "vorhanden",
+      "haken": "Einzeiler im Hausstil — DM Sans Bold 64 px, weiss auf 50 % Schwarz, Mitte y=1501",
+      "schluessel": "aussage",
+      "zielgruppe": "b2b",
+      "sprachen": [
+        "de"
+      ],
+      "_offen": "bild-reel.py existiert, aber der Adapter dafuer fehlt noch",
+      "_hinweis": "Reel als Dreischritt SUCHEN - BUCHEN - ENTSPANNEN."
+    },
+    {
+      "id": "zahl-gross",
+      "medium": "bild",
+      "format": "anzeige",
+      "status": "neu",
+      "haken": "Eine Zahl gross (--gross): 0 % Provision auf Folgebuchungen. Zahl GELESEN aus constants.ts, nie aus dem Gedaechtnis",
+      "schluessel": "kennzahl",
+      "zielgruppe": "b2b",
+      "quelle_pflicht": "src/lib/constants.ts",
+      "sprachen": [
+        "de"
+      ],
+      "_offen": "bild-reel.py existiert, aber der Adapter dafuer fehlt noch",
+      "_hinweis": "War als Reel geplant, zeigt aber eine Kennzahl. Der Reel-Generator zeigt bewusst KEINE Zahlen (sie muessten aus constants.ts gelesen werden, sonst veralten sie) — deshalb Bild."
+    },
+    {
+      "id": "kalender-clip",
+      "medium": "reel",
+      "format": "kategorie-loop",
+      "status": "vorhanden",
+      "haken": "Echte Kalenderaufnahme aus /kalender-demo — kein Mockup, das echte Produkt. Staerkster B2B-Beweis, den es gibt",
+      "schluessel": "screen",
+      "zielgruppe": "b2b",
+      "sprachen": [
+        "de"
+      ],
+      "_hinweis": "Reel als Kategorien-Schleife."
+    },
+    {
+      "id": "last-minute",
+      "medium": "reel",
+      "format": "kategorie-loop",
+      "status": "vorhanden",
+      "haken": "Das Alleinstellungsmerkmal: freier Termin heute, guenstiger. 'Too Good To Go fuer Wellness' — verstaendlich in einem Satz",
+      "schluessel": "kategorie",
+      "zielgruppe": "b2c",
+      "sprachen": [
+        "de"
+      ],
+      "_hinweis": "Reel als Kategorien-Schleife."
+    },
+    {
+      "id": "mythos",
+      "medium": "reel",
+      "format": "ablauf",
+      "status": "vorhanden",
+      "haken": "Verbreitete Annahme ueber Terminbuchung widerlegen. Widerspruch haelt laenger als Zustimmung",
+      "schluessel": "aussage",
+      "zielgruppe": "b2b",
+      "sprachen": [
+        "de"
+      ],
+      "_hinweis": "Reel als Dreischritt SUCHEN - BUCHEN - ENTSPANNEN."
+    },
+    {
+      "id": "kategorie-karte",
+      "medium": "bild",
+      "format": "anzeige",
+      "status": "vorhanden",
+      "haken": "Eine der 16 Kategorien mit ihrer Behandlungsliste. 16 Winkel aus einer Datei, ohne dass sich etwas wiederholt",
+      "schluessel": "kategorie",
+      "zielgruppe": "b2c",
+      "sprachen": [
+        "de"
+      ]
+    },
+    {
+      "id": "rechenbeispiel",
+      "medium": "bild",
+      "format": "anzeige",
+      "status": "vorhanden",
+      "haken": "Starter gegen Pro, mit echten Zahlen. Die haeufigste Frage im Verkaufsgespraech, einmal sauber beantwortet",
+      "schluessel": "kennzahl",
+      "zielgruppe": "b2b",
+      "quelle_pflicht": "src/lib/constants.ts",
+      "sprachen": [
+        "de"
+      ]
+    },
+    {
+      "id": "tirol-wien",
+      "medium": "bild",
+      "format": "anzeige",
+      "status": "vorhanden",
+      "haken": "Regionaler Aufhaenger auf die beiden Marketingschwerpunkte. Lokale Hashtags tragen hier weiter als Reichweitenhashtags",
+      "schluessel": "region",
+      "zielgruppe": "b2c",
+      "sprachen": [
+        "de"
+      ]
+    },
+    {
+      "id": "karussell-blatt",
+      "medium": "bild",
+      "format": "anzeige",
+      "status": "neu",
+      "haken": "Ein Blatt einer mehrteiligen Serie, Fortsetzung angekuendigt. Zieht Profilbesuche",
+      "schluessel": "serie",
+      "zielgruppe": "b2b",
+      "sprachen": [
+        "de"
+      ]
+    },
+    {
+      "id": "regulierte-bereiche",
+      "medium": "bild",
+      "format": "anzeige",
+      "status": "vorhanden",
+      "haken": "Vertrauenswinkel: Zwei der 16 Bereiche sind regulated:true und verlangen einen Qualifikationsnachweis. Das ist ein Verkaufsargument, kein Kleingedrucktes",
+      "schluessel": "aussage",
+      "zielgruppe": "b2c",
+      "sprachen": [
+        "de"
+      ]
+    }
+  ]
+}

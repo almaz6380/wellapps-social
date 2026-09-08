@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Freigabe</title>
+<style>
+  /* Handy zuerst — die Seite wird fast nur dort benutzt. */
+  :root {
+    --grund: #0f0d17; --karte: #1a1726; --rand: #2c2740;
+    --tinte: #f2effa; --leise: #9d95b8; --akzent: #e0459b; --gut: #3ec98a;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0; background: var(--grund); color: var(--tinte);
+    font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    padding: max(16px, env(safe-area-inset-top)) 16px calc(32px + env(safe-area-inset-bottom));
+    max-width: 640px; margin-inline: auto;
+  }
+  h1 { font-size: 22px; margin: 4px 0 2px; }
+  .leise { color: var(--leise); font-size: 14px; }
+  .karte { background: var(--karte); border: 1px solid var(--rand); border-radius: 16px; padding: 14px; margin: 14px 0; }
+  .app-kopf { display: flex; align-items: baseline; gap: 8px; margin: 26px 0 4px; }
+  .app-kopf h2 { font-size: 18px; margin: 0; }
+  video, img.medium { width: 100%; border-radius: 12px; display: block; background: #000; }
+  /* ⚠ Deckel, sonst fuellt ein 9:16-Video den ganzen Bildschirm und man
+     scrollt ewig, um fuenf Apps durchzusehen. */
+  video, img.medium { max-height: 46vh; object-fit: contain; }
+  .text {
+    white-space: pre-wrap; word-break: break-word; font-size: 14px;
+    background: #12101c; border: 1px solid var(--rand); border-radius: 10px;
+    padding: 10px; margin: 10px 0 8px; max-height: 8.5em; overflow: auto;
+  }
+  .reihe { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  button {
+    font: inherit; font-weight: 600; border: 0; border-radius: 11px;
+    padding: 11px 16px; background: var(--akzent); color: #fff; cursor: pointer;
+  }
+  button.rand { background: transparent; color: var(--tinte); border: 1px solid var(--rand); }
+  button:disabled { opacity: .45; cursor: default; }
+  .marke { font-size: 12px; padding: 4px 9px; border-radius: 999px; border: 1px solid var(--rand); color: var(--leise); }
+  .marke.gut { color: var(--gut); border-color: #24543f; }
+  .marke.schlecht { color: #ff8f8f; border-color: #5a2b2b; }
+  input {
+    font: inherit; width: 100%; padding: 12px; border-radius: 11px;
+    border: 1px solid var(--rand); background: #12101c; color: var(--tinte);
+  }
+  .kopfleiste { display: flex; gap: 8px; align-items: center; margin: 14px 0; }
+  .kopfleiste input { flex: 1; }
+  .hinweis { font-size: 13px; color: var(--leise); margin-top: 8px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+
+<h1>Freigabe</h1>
+<p class="leise" id="untertitel">Die Entwürfe des Tages, aus allen fünf Apps.</p>
+
+<!-- Anmeldung -->
+<section id="tor" class="karte">
+  <p class="leise" style="margin-top:0">Passwort</p>
+  <input id="pw" type="password" autocomplete="current-password" enterkeyhint="go">
+  <div class="reihe" style="margin-top:10px"><button id="rein">Öffnen</button></div>
+  <p class="hinweis" id="torfehler"></p>
+</section>
+
+<!-- Inhalt -->
+<section id="inhalt" hidden>
+  <div class="kopfleiste">
+    <input id="datum" type="date">
+    <button class="rand" id="neu">Laden</button>
+  </div>
+  <div id="liste"></div>
+</section>
+
+<script>
+// ⚠ Das Passwort liegt in localStorage, damit die Seite nicht bei jedem
+// Öffnen danach fragt. Das ist bewusst: Es schützt keine Geheimnisse (siehe
+// den Kommentar in api/freigabe.js), sondern verhindert, dass Fremde die
+// Seite bedienen. Auf einem fremden Gerät gehört es nicht gespeichert —
+// dafür gibt es unten „Abmelden".
+const SCHLUESSEL = 'wellapps.freigabe.pw';
+const $ = (s) => document.querySelector(s);
+const el = (t, k, txt) => { const d = document.createElement(t); if (k) d.className = k; if (txt != null) d.textContent = txt; return d; };
+
+let passwort = '';
+
+async function ruf(aktion, extra = {}) {
+  const antwort = await fetch('/api/freigabe', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ passwort, aktion, ...extra }),
+  });
+  const daten = await antwort.json().catch(() => ({ fehler: `HTTP ${antwort.status}` }));
+  if (!antwort.ok) throw new Error(daten.fehler || `HTTP ${antwort.status}`);
+  return daten;
+}
+
+const KANAL_NAME = { facebook: 'Facebook', tiktok: 'TikTok', instagram: 'Instagram' };
+const STAND_TEXT = {
+  entwurf: 'Entwurf liegt bereit',
+  posteingang: 'im Posteingang',
+  wartet: 'wartet auf dich',
+  uebersprungen: 'übersprungen',
+  fehler: 'Fehler',
+  trocken: 'nur Probelauf',
+};
+
+function markeFuer(kanal, stand, eintrag) {
+  const gut = stand === 'entwurf' || stand === 'posteingang' || eintrag?.veroeffentlicht;
+  const schlecht = stand === 'fehler';
+  const text = eintrag?.veroeffentlicht
+    ? `${KANAL_NAME[kanal]}: veröffentlicht`
+    : `${KANAL_NAME[kanal]}: ${STAND_TEXT[stand] ?? stand}`;
+  return el('span', `marke${gut ? ' gut' : ''}${schlecht ? ' schlecht' : ''}`, text);
+}
+
+function postKarte(post, liste) {
+  const k = el('div', 'karte');
+
+  if (post.url) {
+    const m = post.istVideo ? el('video') : el('img', 'medium');
+    if (post.istVideo) { m.controls = true; m.playsInline = true; m.preload = 'metadata'; }
+    m.src = post.url;
+    k.append(m);
+  } else {
+    k.append(el('p', 'leise', 'Keine Vorschau — an dem Tag lief nur ein einzelner Kanal.'));
+  }
+
+  k.append(el('div', 'text', post.text || '(kein Text)'));
+
+  const marken = el('div', 'reihe');
+  for (const [kanal, ergebnis] of Object.entries(post.kanaele ?? {})) {
+    // Der Instagram-Eintrag kennt als Einziger einen „veröffentlicht"-Vermerk;
+    // er steht in der Merkliste, nicht in der Übersicht.
+    const eintrag = kanal === 'instagram'
+      ? (liste.eintraege ?? []).find((e) => e.datei === post.datei)
+      : null;
+    marken.append(markeFuer(kanal, ergebnis.stand, eintrag));
+  }
+  k.append(marken);
+
+  const knoepfe = el('div', 'reihe');
+  knoepfe.style.marginTop = '10px';
+  const kopieren = el('button', 'rand', 'Text kopieren');
+  kopieren.onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(post.text || '');
+      kopieren.textContent = 'Kopiert ✓';
+      setTimeout(() => { kopieren.textContent = 'Text kopieren'; }, 1600);
+    } catch {
+      kopieren.textContent = 'Ging nicht — von Hand markieren';
+    }
+  };
+  knoepfe.append(kopieren);
+  k.append(knoepfe);
+  return k;
+}
+
+function appBlock(liste, datum) {
+  const raus = document.createDocumentFragment();
+
+  const kopf = el('div', 'app-kopf');
+  kopf.append(el('h2', null, liste.name || liste.app));
+  raus.append(kopf);
+
+  for (const post of liste.uebersicht ?? []) raus.append(postKarte(post, liste));
+
+  // Instagram ist der einzige Kanal, der wirklich auf eine Freigabe wartet.
+  // Facebook und TikTok liegen schon als Entwurf in ihrer eigenen App.
+  const offen = (liste.eintraege ?? []).filter((e) => !e.veroeffentlicht);
+  if (offen.length) {
+    const box = el('div', 'karte');
+    box.append(el('p', null, `${offen.length} Beitrag(e) warten auf Instagram.`));
+    const b = el('button', null, 'Auf Instagram veröffentlichen');
+    b.onclick = async () => {
+      if (!confirm(`${liste.name}: ${offen.length} Beitrag(e) jetzt öffentlich auf Instagram stellen?\n\nDas lässt sich nur in der App wieder zurücknehmen.`)) return;
+      b.disabled = true; b.textContent = 'Wird gestartet …';
+      try {
+        await ruf('veroeffentlichen', { datum, app: liste.app });
+        b.textContent = 'Läuft — dauert etwa eine Minute';
+        // ⚠ Nicht sofort neu laden: Der Workflow braucht Zeit, bis er die
+        // Merkliste zurückgeschrieben hat. Ein Laden nach zwei Sekunden zeigte
+        // den alten Stand — und lüde zum zweiten Klick ein.
+        setTimeout(laden, 60000);
+      } catch (e) {
+        b.disabled = false; b.textContent = 'Auf Instagram veröffentlichen';
+        alert(`Ging nicht: ${e.message}`);
+      }
+    };
+    box.append(b);
+    box.append(el('p', 'hinweis', 'Facebook und TikTok liegen schon als Entwurf in ihrer eigenen App — dort tippst du auf Veröffentlichen.'));
+    raus.append(box);
+  }
+
+  return raus;
+}
+
+async function laden() {
+  const ziel = $('#liste');
+  ziel.replaceChildren(el('p', 'leise', 'Wird geladen …'));
+  const datum = $('#datum').value;
+  try {
+    const { listen, datum: tag } = await ruf('liste', { datum });
+    ziel.replaceChildren();
+    if (!listen.length) {
+      ziel.append(el('p', 'leise', `Für ${tag} liegt nichts vor. Entweder lief an dem Tag kein Lauf, oder er war nur ein Probelauf — Probeläufe legen bewusst nichts ab.`));
+      return;
+    }
+    for (const liste of listen) ziel.append(appBlock(liste, tag));
+
+    const ab = el('button', 'rand', 'Abmelden');
+    ab.style.marginTop = '28px';
+    ab.onclick = () => { localStorage.removeItem(SCHLUESSEL); location.reload(); };
+    ziel.append(ab);
+  } catch (e) {
+    ziel.replaceChildren(el('p', 'leise', `Ging nicht: ${e.message}`));
+  }
+}
+
+async function anmelden(eingabe) {
+  passwort = eingabe;
+  await ruf('liste', { datum: $('#datum').value });   // Probe: stimmt das Passwort?
+  localStorage.setItem(SCHLUESSEL, eingabe);
+  $('#tor').hidden = true;
+  $('#inhalt').hidden = false;
+  laden();
+}
+
+$('#datum').value = new Date().toISOString().slice(0, 10);
+$('#neu').onclick = laden;
+
+$('#rein').onclick = async () => {
+  $('#torfehler').textContent = '';
+  try {
+    await anmelden($('#pw').value);
+  } catch (e) {
+    $('#torfehler').textContent = e.message;
+  }
+};
+$('#pw').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('#rein').click(); });
+
+// Schon einmal angemeldet? Dann still weiter.
+const gemerkt = localStorage.getItem(SCHLUESSEL);
+if (gemerkt) {
+  anmelden(gemerkt).catch(() => {
+    // Passwort in Vercel geändert — dann eben wieder fragen.
+    localStorage.removeItem(SCHLUESSEL);
+  });
+}
+</script>
+</body>
+</html>

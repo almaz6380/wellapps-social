@@ -1,0 +1,385 @@
+{
+  "_hinweis": "Markendaten fuer den Kanal-Ausstatter. Je Marke Farben, Zeichen und Texte. FullRep hat seinen eigenen Generator in mypeak/scripts/kanal-assets.mjs (dort liegt sein Logo); wer will, kann ihn spaeter hierher ziehen.",
+  "swaply": {
+    "name": "Swaply",
+    "wortmarke": "Swaply",
+    "_farben_quelle": "Aus landing/index.html des Branches claude/swaply-profile-cover-images-mlgr9m (Repo almaz6380/swaply) — die echten CSS-Variablen, nicht vom Screenshot geschaetzt. WICHTIG: dunkler Grund, Verlauf nur als AKZENT. Mein erster Entwurf hatte den Verlauf als Grund genommen und sah dadurch blass und beliebig aus.",
+    "verlauf": [
+      "#4e8cfe",
+      "#46adc6",
+      "#3ece8e"
+    ],
+    "schrift": "#eefaf7",
+    "gedaempft": "#9dbcbb",
+    "kontrast": "#0d2137",
+    "stores": {
+      "ios": true,
+      "android": true
+    },
+    "spruch": {
+      "de": "Schlechte Gewohnheiten gegen gute tauschen",
+      "en": "Swap bad habits for good ones"
+    },
+    "spruchZeilen": {
+      "de": [
+        "Tausche",
+        "schlechte",
+        "Gewohnheiten",
+        "gegen gute"
+      ],
+      "en": [
+        "Swap bad",
+        "habits for",
+        "good ones"
+      ]
+    },
+    "dreiklang": {
+      "de": [
+        "Doomscrolling",
+        "Zucker & Snacking",
+        "Nikotin & Vaping",
+        "Alkohol",
+        "Prokrastination",
+        "Nägelkauen"
+      ],
+      "en": [
+        "Doomscrolling",
+        "Sugar & snacking",
+        "Nicotine & vaping",
+        "Alcohol",
+        "Procrastination",
+        "Nail biting"
+      ]
+    },
+    "leiste": {
+      "de": [
+        "ERKENNEN",
+        "TAUSCHEN",
+        "DRANBLEIBEN"
+      ],
+      "en": [
+        "SPOT IT",
+        "SWAP IT",
+        "KEEP IT"
+      ]
+    },
+    "bios": {
+      "de": {
+        "tiktok": "Schlechte Gewohnheiten gegen gute tauschen 🔄 Ein Tausch nach dem anderen",
+        "instagram": "Tausche schlechte Gewohnheiten gegen gute 🔄\nRauchfrei · zuckerfrei · weniger Handy\nKostenlos · alles bleibt auf deinem Gerät\n👇 Hier laden",
+        "facebook": "Tausche schlechte Gewohnheiten gegen gute — ein Tausch nach dem anderen."
+      },
+      "en": {
+        "tiktok": "Swap bad habits for good ones 🔄 One swap at a time",
+        "instagram": "Swaply – swap your bad habits for good ones.\nOne swap at a time.\nSmall steps, real change 🔄",
+        "facebook": "Swap bad habits for good ones — one swap at a time."
+      }
+    },
+    "_quelle": "Aus SwaplyUebergabe.pdf vom 31.08.2026 (Uebergabe der Swaply-Sitzung).",
+    "links": {
+      "appstore": "https://apps.apple.com/app/id6787695557",
+      "play": "https://play.google.com/store/apps/details?id=at.gallab.swaply",
+      "bio": "https://getswaply.vercel.app",
+      "_hinweis": "getswaply.vercel.app traegt beide Store-Knoepfe und funktioniert. Die feineren Pfade /instagram, /tiktok und /app liegen im Branch claude/swaply-profile-cover-images-mlgr9m des Repos almaz6380/swaply und antworten bis zum Deploy mit 404."
+    },
+    "grund": "#06171c",
+    "grundTief": "#05252c",
+    "weich": "#cfe6e4",
+    "linie": "rgba(255,255,255,.14)",
+    "mint": "#7fe3b6",
+    "mittel": {
+      "icon": "marken-mittel/swaply/icon.png",
+      "display": "marken-mittel/swaply/fredoka-latin.woff2",
+      "body": "marken-mittel/swaply/nunito-latin.woff2"
+    },
+    "zusatz": {
+      "de": "Kostenlos · Kein Konto · Alles bleibt auf deinem Gerät",
+      "en": "Free · No account · Everything stays on your device"
+    }
+  },
+  "anigosha": {
+    "name": "Anigosha",
+    "wortmarke": "Anigosha",
+    "_farben_quelle": "Aus src/index.css dieses Repos — die echten CSS-Variablen (night-950, accent-500/400, pink-400). Dunkler Grund, der Violett-Pink-Verlauf NUR als Akzent: In der App kommt er hoechstens einmal je Bildschirm vor, und genau das gibt ihm sein Gewicht.",
+    "verlauf": [
+      "#8b5cf6",
+      "#c084fc",
+      "#f472b6"
+    ],
+    "schrift": "#f5f0ff",
+    "gedaempft": "#b7a9d6",
+    "kontrast": "#0f0a1e",
+    "grund": "#0f0a1e",
+    "grundTief": "#2a1650",
+    "weich": "#d9cbff",
+    "linie": "rgba(255,255,255,.14)",
+    "mint": "#c9b6ff",
+    "stores": {
+      "ios": true,
+      "android": true
+    },
+    "spruch": {
+      "de": "Das Anime-Quiz für echte Fans",
+      "en": "The anime quiz for real fans"
+    },
+    "spruchZeilen": {
+      "de": [
+        "Das Anime-Quiz",
+        "für echte",
+        "Fans"
+      ],
+      "en": [
+        "The anime quiz",
+        "for real",
+        "fans"
+      ]
+    },
+    "dreiklang": {
+      "de": [
+        "One Piece",
+        "Naruto",
+        "Attack on Titan",
+        "Demon Slayer",
+        "Jujutsu Kaisen",
+        "My Hero Academia"
+      ],
+      "en": [
+        "One Piece",
+        "Naruto",
+        "Attack on Titan",
+        "Demon Slayer",
+        "Jujutsu Kaisen",
+        "My Hero Academia"
+      ]
+    },
+    "leiste": {
+      "de": [
+        "RATEN",
+        "DUELLIEREN",
+        "AUFSTEIGEN"
+      ],
+      "en": [
+        "GUESS",
+        "DUEL",
+        "LEVEL UP"
+      ]
+    },
+    "zusatz": {
+      "de": "804 Fragen · 12 Serien · Duelle gegen echte Gegner",
+      "en": "804 questions · 12 series · duels against real opponents"
+    },
+    "bios": {
+      "de": {
+        "tiktok": "Anime-Quiz für echte Fans 🏆 3 Fragen täglich — wie viele schaffst du?",
+        "instagram": "Das Anime-Quiz für echte Fans 🏆\n804 Fragen · 12 Serien · Duelle gegen echte Gegner\nGratis im App Store und bei Google Play\n👇 Hier laden",
+        "facebook": "Das Anime-Quiz für echte Fans — 804 Fragen, 12 Serien und Duelle gegen echte Gegner."
+      },
+      "en": {
+        "tiktok": "Anime quiz for real fans 🏆 3 questions a day — how many can you get?",
+        "instagram": "The anime quiz for real fans 🏆\n804 questions · 12 series · duels against real opponents\nFree on the App Store and Google Play\n👇 Get it here",
+        "facebook": "The anime quiz for real fans — 804 questions, 12 series and duels against real opponents."
+      }
+    },
+    "links": {
+      "appstore": "https://apps.apple.com/app/id6797757350",
+      "play": "https://play.google.com/store/apps/details?id=at.gallab.animequiz",
+      "bio": "https://anigosha.vercel.app/get",
+      "_hinweis": "anigosha.vercel.app/get erkennt die Plattform selbst und leitet weiter — ein Link fuer beide Stores. Genau dafuer wurde die Seite gebaut."
+    },
+    "mittel": {
+      "icon": "marken-mittel/anigosha/icon.png",
+      "display": "marken-mittel/anigosha/outfit.woff2",
+      "body": "marken-mittel/anigosha/outfit.woff2"
+    }
+  },
+  "mahjong": {
+    "name": "Mahjong Royale",
+    "wortmarke": "Mahjong Royale",
+    "_farben_quelle": "Aus src/styles.css des Repos almaz6380/mahjong-app — --bg #103227, --felt #0b3d2e, --text #f4ecd8, --accent (Jade) #35a06d, --sel-gold #e6b74a. Der Jade-Look ist app-weit und traegt die Marke; Gold ist der Akzent, nicht der Grund.",
+    "verlauf": [
+      "#35a06d",
+      "#5fc48f",
+      "#e6b74a"
+    ],
+    "schrift": "#f4ecd8",
+    "gedaempft": "#a8bfb2",
+    "kontrast": "#0b3d2e",
+    "grund": "#103227",
+    "grundTief": "#0b3d2e",
+    "weich": "#d8e6dc",
+    "linie": "rgba(255,255,255,.14)",
+    "mint": "#e6b74a",
+    "stores": {
+      "ios": true,
+      "android": true
+    },
+    "spruch": {
+      "de": "Mahjong, wie es sein soll",
+      "en": "Mahjong the way it should be"
+    },
+    "spruchZeilen": {
+      "de": [
+        "Mahjong,",
+        "wie es sein",
+        "soll"
+      ],
+      "en": [
+        "Mahjong",
+        "the way it",
+        "should be"
+      ]
+    },
+    "dreiklang": {
+      "de": [
+        "Solitaire",
+        "Connect",
+        "Riichi",
+        "4 Spieler",
+        "Steindesigns",
+        "Wusstest du?"
+      ],
+      "en": [
+        "Solitaire",
+        "Connect",
+        "Riichi",
+        "4 players",
+        "Tile skins",
+        "Did you know?"
+      ]
+    },
+    "leiste": {
+      "de": [
+        "TIPPEN",
+        "PAAREN",
+        "LEEREN"
+      ],
+      "en": [
+        "TAP",
+        "MATCH",
+        "CLEAR"
+      ]
+    },
+    "zusatz": {
+      "de": "Jedes Brett garantiert loesbar · Gratis im App Store und bei Google Play",
+      "en": "Every board solvable by design · Free on the App Store and Google Play"
+    },
+    "bios": {
+      "de": {
+        "tiktok": "Mahjong, wie es sein soll 🀄 Solitaire, Connect, Riichi und 4 Spieler",
+        "instagram": "Mahjong, wie es sein soll 🀄\nSolitaire · Connect · Riichi · 4 Spieler\nJedes Brett ist garantiert lösbar\n👇 Hier laden",
+        "facebook": "Mahjong, wie es sein soll — Solitaire, Connect, Riichi und 4 Spieler in einer App."
+      },
+      "en": {
+        "tiktok": "Mahjong the way it should be 🀄 Solitaire, Connect, Riichi and 4 players",
+        "instagram": "Mahjong the way it should be 🀄\nSolitaire · Connect · Riichi · 4 players\nEvery board is solvable by design\n👇 Get it here",
+        "facebook": "Mahjong the way it should be — Solitaire, Connect, Riichi and 4 players in one app."
+      }
+    },
+    "links": {
+      "appstore": "",
+      "play": "",
+      "bio": "",
+      "_hinweis": "Store-Adressen bewusst LEER: Sie stehen in keiner Datei dieses Repos, und geraten waeren sie ein toter Link im Profil. Vor dem Einrichten der Profile aus der App Store Connect- bzw. Play-Console-Seite eintragen."
+    },
+    "mittel": {
+      "icon": "marken-mittel/mahjong/icon.png",
+      "display": "marken-mittel/mahjong/outfit.woff2",
+      "body": "marken-mittel/mahjong/outfit.woff2"
+    }
+  },
+  "wellbooked": {
+    "name": "WELLbooked!",
+    "wortmarke": "WELLbooked!",
+    "_farben_quelle": "Aus src/app/globals.css des Repos almaz6380/wellbooked — Eucalyptus #2d6a4f, hell #52b788, Sand #f5e6d3, Akzent #d4a373, Text dunkel #1b4332. ⚠ Die Marke ist im Produkt HELL; fuer die Kanalbilder liegt der dunkle Eucalyptus-Ton unten, weil weisse Kacheln in einem Instagram-Raster verschwinden.",
+    "verlauf": [
+      "#2d6a4f",
+      "#52b788",
+      "#d4a373"
+    ],
+    "schrift": "#f5e6d3",
+    "gedaempft": "#a9c4b4",
+    "kontrast": "#1b4332",
+    "grund": "#1b4332",
+    "grundTief": "#14352a",
+    "weich": "#d7e8dc",
+    "linie": "rgba(255,255,255,.14)",
+    "mint": "#d4a373",
+    "stores": {
+      "ios": true,
+      "android": true
+    },
+    "spruch": {
+      "de": "Freie Wellness-Termine in deiner Nähe",
+      "en": "Free wellness slots near you"
+    },
+    "spruchZeilen": {
+      "de": [
+        "Freie",
+        "Wellness-Termine",
+        "in deiner Nähe"
+      ],
+      "en": [
+        "Free wellness",
+        "slots",
+        "near you"
+      ]
+    },
+    "dreiklang": {
+      "de": [
+        "Massage",
+        "Kosmetik",
+        "Nägel",
+        "Haare",
+        "Physio",
+        "Last-Minute"
+      ],
+      "en": [
+        "Massage",
+        "Beauty",
+        "Nails",
+        "Hair",
+        "Physio",
+        "Last minute"
+      ]
+    },
+    "leiste": {
+      "de": [
+        "SUCHEN",
+        "BUCHEN",
+        "ENTSPANNEN"
+      ],
+      "en": [
+        "SEARCH",
+        "BOOK",
+        "RELAX"
+      ]
+    },
+    "zusatz": {
+      "de": "Österreich und Deutschland · Last-Minute oft günstiger",
+      "en": "Austria and Germany · last minute often cheaper"
+    },
+    "bios": {
+      "de": {
+        "tiktok": "WELLbooked! findet freie Wellness-Termine in deiner Nähe ✨",
+        "instagram": "WELLbooked! — freie Wellness-Termine in deiner Nähe ✨\nMassage · Kosmetik · Nägel · Haare · Physio\nÖsterreich und Deutschland\n👇 Hier buchen",
+        "facebook": "WELLbooked! findet freie Wellness-Termine in deiner Nähe — in Österreich und Deutschland."
+      },
+      "en": {
+        "tiktok": "WELLbooked! finds free wellness slots near you ✨",
+        "instagram": "WELLbooked! — free wellness slots near you ✨\nMassage · beauty · nails · hair · physio\nAustria and Germany\n👇 Book here",
+        "facebook": "WELLbooked! finds free wellness slots near you — in Austria and Germany."
+      }
+    },
+    "links": {
+      "appstore": "",
+      "play": "",
+      "bio": "",
+      "_hinweis": "Store-Adressen bewusst LEER — siehe Mahjong. Vor dem Einrichten der Profile eintragen."
+    },
+    "mittel": {
+      "icon": "marken-mittel/wellbooked/icon.png",
+      "display": "marken-mittel/wellbooked/outfit.woff2",
+      "body": "marken-mittel/wellbooked/outfit.woff2"
+    }
+  }
+}
