@@ -1,0 +1,85 @@
+{
+  "_quelle": "7 Kategorien in src/i18n/<lang>.ts, je mit alter Routine, 4-5 Ausloesern, 4 Belohnungen, 5 Ersatzroutinen und einer Notfall-Anleitung mit 4-5 Schritten. Macht rund 35 Tausch-Paare und 7 Notfall-Karten je Sprache — und das in de, en und es. Kein Text wird erfunden: scripts/social-daten.mjs liest die Woerterbuecher der App.",
+  "_regel": "Keine Diagnosen, keine Therapieversprechen, keine Suchtbehandlung — Swaply tauscht Gewohnheiten, es behandelt nichts. Ton ohne Schuldzuweisung: kein „endlich\", kein „Schluss mit\", kein Ausrufezeichen im Haupttext. Die Zielgruppe hoert genug davon, dass sie sich zusammenreissen soll. Kein Store-Link in der Bildflaeche (im Profil steht er, und auf Instagram waere er ohnehin nicht klickbar).",
+  "_reels_offen": "Bisher nur Bildposts. Ein Reel-Generator waere eine eigene Aufgabe (Video, Vertonung, ffmpeg) und ist bewusst NICHT angefangen — vier Winkel als Karte tragen den Kanal erst einmal.",
+  "winkel": [
+    {
+      "id": "tausch",
+      "medium": "bild",
+      "format": "tausch",
+      "status": "vorhanden",
+      "haken": "Der Kern der App auf einer Karte: die alte Routine durchgestrichen, darunter gross die Ersatzroutine. Die Blickfuehrung macht die Aussage, kein erklaerender Satz. 7 Kategorien x 5 Ersatzroutinen = 35 Paare je Sprache",
+      "schluessel": "kategorie",
+      "sprachen": [
+        "de",
+        "en",
+        "es"
+      ]
+    },
+    {
+      "id": "ausloeser",
+      "medium": "bild",
+      "format": "ausloeser",
+      "status": "vorhanden",
+      "haken": "Ausloeser und Belohnung nebeneinander, darunter der Satz „Du willst nicht die Routine. Du willst die Belohnung.\" Das ist der Post, der erklaert, WARUM Abgewoehnen scheitert — der staerkste Aufhaenger fuer Menschen, die es schon zehnmal versucht haben",
+      "schluessel": "kategorie",
+      "sprachen": [
+        "de",
+        "en",
+        "es"
+      ]
+    },
+    {
+      "id": "notfall",
+      "medium": "bild",
+      "format": "notfall",
+      "status": "vorhanden",
+      "haken": "Die Sofort-Hilfe aus der App als nummerierte Schritte. Der einzige Winkel, der ohne Vorwissen ueber die App nuetzt — deshalb der beste Einstieg fuer neue Zuschauer und das beste Speicher-Motiv",
+      "schluessel": "kategorie",
+      "sprachen": [
+        "de",
+        "en",
+        "es"
+      ]
+    },
+    {
+      "id": "regel",
+      "medium": "bild",
+      "format": "regel",
+      "status": "vorhanden",
+      "haken": "Die goldene Regel in drei Zeilen: Ausloeser bleibt, Belohnung bleibt, nur die Routine wird getauscht. Bewusst ohne Kategorie, weil die Regel fuer alle gilt — das Motiv fuer die Profil-Anheftung",
+      "schluessel": "regel",
+      "sprachen": [
+        "de",
+        "en",
+        "es"
+      ]
+    },
+    {
+      "id": "tausch-loop",
+      "medium": "reel",
+      "format": "tausch-loop",
+      "schluessel": "kategorie",
+      "_hinweis": "Reel-Fassung des Kernwinkels: alte Routine durchgestrichen, drei Ersatzhandlungen einzeln. Generator liegt in anigosha (tools/social/reels-fremd) — Grund steht dort.",
+      "status": "vorhanden",
+      "sprachen": [
+        "de",
+        "en",
+        "es"
+      ]
+    },
+    {
+      "id": "notfall-loop",
+      "medium": "reel",
+      "format": "notfall-loop",
+      "schluessel": "kategorie",
+      "_hinweis": "Die Sofort-Hilfe Schritt fuer Schritt. Der Winkel, der ohne Vorwissen nuetzt.",
+      "status": "vorhanden",
+      "sprachen": [
+        "de",
+        "en",
+        "es"
+      ]
+    }
+  ]
+}

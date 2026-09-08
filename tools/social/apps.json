@@ -1,0 +1,196 @@
+{
+  "_hinweis": "Registratur der vier Apps. Store-Verfuegbarkeit NIE im Text festtippen — der CTA wird aus 'stores' gebaut. Genau dieser Satz war bei Anigosha schon einmal falsch.",
+  "anigosha": {
+    "name": "Anigosha",
+    "marke": "Anigosha",
+    "nische": "Anime-Wissensquiz mit Duellen",
+    "meta": {
+      "fbSeitenId": "1251429691393243",
+      "igKontoId": "17841433440494367"
+    },
+    "pfad": "/home/user/anigosha",
+    "stores": {
+      "ios": true,
+      "android": true
+    },
+    "linkInBio": "anigosha.vercel.app/get",
+    "sprachen": [
+      "de",
+      "en"
+    ],
+    "kanaele": [
+      "tiktok",
+      "instagram",
+      "facebook"
+    ],
+    "posts_pro_tag": 2,
+    "motor": {
+      "reel": "node tools/reels/make-reel.mjs",
+      "bild": "node tools/post-bild.mjs"
+    },
+    "vorbereitung": [
+      "npm i --no-save playwright ffmpeg-static"
+    ],
+    "regeln": {
+      "nur_typografie": true,
+      "verbotene_medien": "Bilder erkennbarer Anime-Figuren, auch KI-erzeugte — Takedown-Risiko fuer das ganze Entwicklerkonto",
+      "store_link_in_caption": false
+    }
+  },
+  "mahjong": {
+    "name": "Mahjong Royale",
+    "marke": "Mahjong Royale",
+    "nische": "Mahjong-Sammlung: Solitaer, Connect, Riichi, 4 Spieler",
+    "meta": {
+      "fbSeitenId": "1269567446240752",
+      "igKontoId": "17841440307927621"
+    },
+    "pfad": "/home/user/mahjong-app",
+    "stores": {
+      "ios": true,
+      "android": true
+    },
+    "linkInBio": "mahjong-app-plum.vercel.app/links",
+    "sprachen": [
+      "en"
+    ],
+    "kanaele": [
+      "tiktok",
+      "instagram",
+      "facebook"
+    ],
+    "posts_pro_tag": 2,
+    "motor": {
+      "reel": "node scripts/reel/make-reel.mjs",
+      "bild": "node scripts/post-bild.mjs"
+    },
+    "vorbereitung": [
+      "npm ci --omit=optional || npm i --no-save",
+      "npm run build",
+      "npx vite preview --port 5199 --host 127.0.0.1"
+    ],
+    "regeln": {
+      "nur_eigener_ton": true,
+      "verbotene_medien": "Chart- und Trending-Sounds — die Lizenz deckt nur private Posts, kommerzielle Nutzung wird stummgeschaltet",
+      "store_link_in_caption": false
+    }
+  },
+  "wellbooked": {
+    "name": "WELLbooked!",
+    "marke": "WELLbooked!",
+    "nische": "Wellness-Buchungen AT+DE mit Last-Minute-Rabatten; B2C Kundschaft, B2B Studios",
+    "meta": {
+      "fbSeitenId": "1195032197021198",
+      "igKontoId": "17841428289091448"
+    },
+    "pfad": "/home/user/wellbooked",
+    "stores": {
+      "ios": true,
+      "android": true
+    },
+    "linkInBio": "wellbooked.at",
+    "sprachen": [
+      "de"
+    ],
+    "kanaele": [
+      "instagram",
+      "facebook",
+      "tiktok"
+    ],
+    "posts_pro_tag": 2,
+    "motor": {
+      "reel": "python3 docs/reels/bild-reel.py",
+      "bild": "python3 docs/reels/anzeige.py"
+    },
+    "vorbereitung": [
+      "pip install --quiet Pillow numpy"
+    ],
+    "regeln": {
+      "marke_mit_ausrufezeichen": true,
+      "tonspur_muss_leer_sein": true,
+      "verbotene_medien": "KI-Nahaufnahmen von Gesichtern, starke Mimik, grosser Mund- oder Haaransatz; keine Prominenten-Doppelgaenger; kein Text in KI-Bildern",
+      "preise_nur_aus": "src/lib/constants.ts",
+      "store_link_in_caption": false,
+      "ki_bildquelle": "public/bilder/kategorien/ — KI-erzeugt laut docs/bilder-leitfaden.md (Bing Image Creator / DALL·E 3). Mehrere Bilder zeigen erkennbare Personen, deshalb laeuft anzeige.py hier immer mit --ki. Wer ein ECHTES Foto einsetzt, muss --ki fuer dieses Motiv weglassen."
+    }
+  },
+  "fullrep": {
+    "name": "FullRep",
+    "marke": "FullRep",
+    "nische": "Fitness- und Ernaehrungstracker mit belegtem Wissen",
+    "meta": {
+      "fbSeitenId": "1245653821967923",
+      "igKontoId": "17841435733289216"
+    },
+    "pfad": "/home/user/mypeak",
+    "stores": {
+      "ios": true,
+      "android": true
+    },
+    "linkInBio": "my-peak.vercel.app",
+    "sprachen": [
+      "de",
+      "en"
+    ],
+    "kanaele": [
+      "tiktok",
+      "facebook",
+      "instagram"
+    ],
+    "posts_pro_tag": 2,
+    "motor": {
+      "reel": "node scripts/post-reel.mjs",
+      "bild": "node scripts/post-bild.mjs"
+    },
+    "vorbereitung": [
+      "npm i --no-save playwright ffmpeg-static"
+    ],
+    "regeln": {
+      "download_badges": true,
+      "_hinweis_entfallen": "Der aerztliche Haftungshinweis ist eine Auflage fuer den STORE-EINTRAG (Google-Ablehnung 30.07.2026), nicht fuer Social-Media-Beitraege. Josefs Entscheidung vom 29.08.2026. In der App und im Play-Text bleibt er unveraendert.",
+      "verbotene_medien": "keine Dosierungen, keine Diagnosen, keine Therapieempfehlungen",
+      "store_link_in_caption": false,
+      "_quellen_entfallen": "Quellenangaben stehen nicht mehr in Social-Media-Beitraegen. Apples 1.4.1-Ablehnung vom 29.07.2026 betraf medizinische Inhalte IN DER APP; dort (References.jsx) bleiben sie sichtbar. Josefs Entscheidung vom 29.08.2026.",
+      "_bildquelle_offen": "Die Uebungsfotos aus public/exercise-demos/ gehen NICHT in Werbung. Geprueft am 30.08.2026: free-exercise-db und die Quelle davor (wrkout/exercises.json) erklaeren beide die Unlicense, nennen aber nirgends die Herkunft der Fotos; die Dateien tragen kein Copyright-EXIF; die Issues #2 und #12 stellen genau diese Frage und sind seit Jahren unbeantwortet. Eine Unlicense-Erklaerung des Weiterverteilers ist keine Rechtekette. In der App bleiben die Fotos. Fuer Social liegt FOTO_BEREICHE in mypeak/scripts/social-daten.mjs leer — die Posts laufen typografisch. Ersatzquelle: store-assets/social/fotos/ mit HERKUNFT.md je Datei."
+    }
+  },
+  "swaply": {
+    "name": "Swaply",
+    "marke": "Swaply",
+    "nische": "Gewohnheiten tauschen statt abgewoehnen — Ausloeser und Belohnung bleiben, die Routine wird ersetzt",
+    "meta": {
+      "fbSeitenId": "1353158524539334",
+      "igKontoId": "17841436704302336"
+    },
+    "pfad": "/home/user/swaply",
+    "stores": {
+      "ios": true,
+      "android": true
+    },
+    "linkInBio": "getswaply.vercel.app/app",
+    "sprachen": [
+      "de",
+      "en",
+      "es"
+    ],
+    "kanaele": [
+      "tiktok",
+      "facebook",
+      "instagram"
+    ],
+    "posts_pro_tag": 2,
+    "motor": {
+      "bild": "node scripts/post-bild.mjs"
+    },
+    "vorbereitung": [
+      "npm i --no-save playwright"
+    ],
+    "regeln": {
+      "store_link_in_caption": false,
+      "verbotene_medien": "keine Diagnosen, keine Therapieversprechen, keine Suchtbehandlung — Swaply ist ein Gewohnheits-Werkzeug, kein Medizinprodukt. Auch keine Vorher-Nachher-Behauptungen ueber Menschen.",
+      "_ton": "Sachlich und ohne Schuldzuweisung. Die Zielgruppe hoert genug davon, dass sie sich zusammenreissen soll.",
+      "_nur_bilder": "Es gibt (noch) keinen Reel-Generator. ideen/swaply.json fuehrt nur medium: bild — wer Reels will, baut erst scripts/post-reel.mjs und ergaenzt dann die Weiche in motoren.mjs."
+    }
+  },
+  "_meta_ids": "Seiten- und Instagram-IDs sind OEFFENTLICH (jede Facebook-Seite zeigt ihre ID) und stehen deshalb hier statt in den Secrets — das spart zehn Handy-Eingaben. Geheim ist NUR der Seiten-Token (FB_SEITEN_TOKEN_<APP>). Erhoben am 03.09.2026 ueber GET /<Seiten-ID>?fields=name,instagram_business_account mit dem WELLapps-Token; die FullRep-Seite ist „FullRep – Fitness, Supplemente und Nutrition\" (1245653821967923), NICHT die aeltere „FullRepapp\" (1336912066163023)."
+}

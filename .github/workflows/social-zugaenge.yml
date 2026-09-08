@@ -1,0 +1,51 @@
+name: Social-Zugaenge pruefen
+
+# Sagt, welche Zugangsdaten fuer welche App und welchen Kanal hinterlegt sind
+# — und welche fehlen. Sendet NICHTS.
+#
+# ⚠ Warum es diesen Workflow ueberhaupt gibt: GitHub gibt Secrets nur an einen
+# laufenden Workflow heraus. Weder Josef noch eine Claude-Sitzung koennen
+# nachsehen, ob ein Secret angelegt ist und ob der Wert taugt — nachtraeglich
+# ist selbst in der Oberflaeche nur der NAME sichtbar. Ein Tippfehler im Namen
+# oder ein halb kopierter Token faellt sonst erst beim ersten echten Lauf auf.
+#
+# ⚠ Der Token wird NICHT ausgegeben, nur seine Laenge und die ersten vier
+# Zeichen. Diese Protokolle sind fuer jeden lesbar, der Zugriff aufs Repo hat.
+# (GitHub maskiert Secrets zwar in Protokollen, aber darauf baut hier nichts:
+# Ein Wert, der nie ausgegeben wird, kann auch nicht durchrutschen.)
+
+on:
+  workflow_dispatch:
+    inputs:
+      live_pruefen:
+        description: 'Auch bei Facebook nachfragen, ob die Token gelten (nur lesend)'
+        type: boolean
+        default: true
+
+jobs:
+  pruefen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Welche Zugaenge liegen vor?
+        env:
+          FB_SEITEN_TOKEN_ANIGOSHA: ${{ secrets.FB_SEITEN_TOKEN_ANIGOSHA }}
+          FB_SEITEN_TOKEN_MAHJONG: ${{ secrets.FB_SEITEN_TOKEN_MAHJONG }}
+          FB_SEITEN_TOKEN_WELLBOOKED: ${{ secrets.FB_SEITEN_TOKEN_WELLBOOKED }}
+          FB_SEITEN_TOKEN_FULLREP: ${{ secrets.FB_SEITEN_TOKEN_FULLREP }}
+          FB_SEITEN_TOKEN_SWAPLY: ${{ secrets.FB_SEITEN_TOKEN_SWAPLY }}
+          TIKTOK_CLIENT_KEY: ${{ secrets.TIKTOK_CLIENT_KEY }}
+          TIKTOK_CLIENT_SECRET: ${{ secrets.TIKTOK_CLIENT_SECRET }}
+          TIKTOK_REFRESH_TOKEN_ANIGOSHA: ${{ secrets.TIKTOK_REFRESH_TOKEN_ANIGOSHA }}
+          TIKTOK_REFRESH_TOKEN_MAHJONG: ${{ secrets.TIKTOK_REFRESH_TOKEN_MAHJONG }}
+          TIKTOK_REFRESH_TOKEN_WELLBOOKED: ${{ secrets.TIKTOK_REFRESH_TOKEN_WELLBOOKED }}
+          TIKTOK_REFRESH_TOKEN_FULLREP: ${{ secrets.TIKTOK_REFRESH_TOKEN_FULLREP }}
+          TIKTOK_REFRESH_TOKEN_SWAPLY: ${{ secrets.TIKTOK_REFRESH_TOKEN_SWAPLY }}
+          BLOB_TOKEN: ${{ secrets.BLOB_TOKEN }}
+          LIVE: ${{ inputs.live_pruefen }}
+        run: node tools/social/zugaenge-pruefen.mjs

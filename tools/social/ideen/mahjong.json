@@ -1,0 +1,154 @@
+{
+  "_quelle": "1392 deterministische Bretter (src/game/figures.ts), 36 zweisprachige Fakten (src/game/facts.ts), 4 Festivals (src/game/festivals.ts), Tagesbrett (src/game/daily.ts)",
+  "_regel": "Kein Chart- oder Trending-Sound. Nur der aus der App synthetisierte Ton (scripts/reel/synth.mjs) oder Stille. Kein Store-Link in der Caption.",
+  "winkel": [
+    {
+      "id": "paar",
+      "medium": "reel",
+      "format": "paar",
+      "status": "vorhanden",
+      "haken": "'Findest du das Paar?' — der staerkste Kommentartreiber im Bestand",
+      "schluessel": "level",
+      "bereich": {
+        "level": [
+          6,
+          52
+        ]
+      },
+      "_bereich_grund": "Brett muss klein bleiben, die Frage soll in zwei Sekunden beantwortbar sein",
+      "sprachen": [
+        "en"
+      ]
+    },
+    {
+      "id": "clear",
+      "medium": "reel",
+      "format": "clear",
+      "status": "vorhanden",
+      "haken": "Brett vollstaendig aufloesen — befriedigend, ASMR-nah",
+      "schluessel": "level",
+      "bereich": {
+        "level": [
+          40,
+          300
+        ]
+      },
+      "_bereich_grund": "Hier ist die Laenge gerade der Reiz, das Brett darf gross sein",
+      "sprachen": [
+        "en"
+      ]
+    },
+    {
+      "id": "fakt",
+      "medium": "reel",
+      "format": "fakt",
+      "status": "vorhanden",
+      "haken": "Kulturfakt als Text ueber echtem Spiel — Lesezeit ist Watchtime",
+      "schluessel": "fakt-index",
+      "bereich": {
+        "fakt": [
+          0,
+          35
+        ]
+      },
+      "sprachen": [
+        "en"
+      ]
+    },
+    {
+      "id": "blumen-falle",
+      "medium": "reel",
+      "format": "paar",
+      "status": "vorhanden",
+      "haken": "Der eigentliche Aufhaenger dieser App: JEDE Blume passt zu JEDER Blume, jede Jahreszeit zu jeder Jahreszeit (matchKey in src/game/tiles.ts). Wer 'das identische Paar' sucht, sucht falsch. Echte Ueberraschung statt Behauptung",
+      "schluessel": "level",
+      "bereich": {
+        "level": [
+          40,
+          120
+        ]
+      },
+      "_bedingung": "Brett muss mindestens 40 Steine haben, erst dann mischt deckForCount Blumen und Jahreszeiten hinein",
+      "sprachen": [
+        "en"
+      ]
+    },
+    {
+      "id": "figur-des-tages",
+      "medium": "reel",
+      "format": "clear",
+      "status": "vorhanden",
+      "haken": "Eine BENANNTE Figur im Zeitraffer aufloesen — Drache, Schildkroete, Schmetterling, Laterne, Krone. Die Form ist der Aufhaenger, nicht das Spiel",
+      "schluessel": "figur",
+      "quelle_fn": "figureByName",
+      "sprachen": [
+        "en"
+      ]
+    },
+    {
+      "id": "tagesbrett",
+      "medium": "reel",
+      "format": "clear",
+      "status": "neu",
+      "haken": "Das Tagesbrett aus makeDailyBoard(datum) — fuer jeden Spieler weltweit identisch. 'Schaffst du das heutige?' ist eine echte Einladung, keine Floskel",
+      "schluessel": "datum",
+      "saisonal": true,
+      "sprachen": [
+        "en"
+      ]
+    },
+    {
+      "id": "festival",
+      "medium": "reel",
+      "format": "clear",
+      "status": "neu",
+      "haken": "Laeuft nur im Zeitfenster von Laterne (10.2.-24.2.), Sakura (20.3.-10.4.), Drache (28.5.-10.6.) oder Mond (15.9.-1.10.). Aktualitaet ohne Aufwand",
+      "schluessel": "festival",
+      "saisonal": true,
+      "nur_im_fenster": true,
+      "sprachen": [
+        "en"
+      ]
+    },
+    {
+      "id": "yaku-nennen",
+      "medium": "bild",
+      "format": "yaku-karte",
+      "status": "neu",
+      "haken": "Eine Riichi-Hand zeigen, das Yaku raten lassen. Spricht die Kenner an, die sonst nichts fuer sich finden",
+      "schluessel": "yaku",
+      "quelle": "src/mahjong4/riichi.ts",
+      "sprachen": [
+        "en"
+      ]
+    },
+    {
+      "id": "paar-standbild",
+      "medium": "bild",
+      "format": "paar-standbild",
+      "status": "vorhanden",
+      "haken": "Brettausschnitt als reines Raetselbild. Billigster Post, funktioniert auch als Karussell-Blatt",
+      "schluessel": "level",
+      "bereich": {
+        "level": [
+          6,
+          52
+        ]
+      },
+      "sprachen": [
+        "en"
+      ]
+    },
+    {
+      "id": "figur-galerie",
+      "medium": "bild",
+      "format": "figur-galerie",
+      "status": "vorhanden",
+      "haken": "Vier Figurensilhouetten nebeneinander — zeigt auf einen Blick, dass es 370 gebaute Formen sind und nicht ein Brett mit Varianten. Direkte Antwort auf den 4.3(a)-Vorwurf",
+      "schluessel": "figur-vierer",
+      "sprachen": [
+        "en"
+      ]
+    }
+  ]
+}

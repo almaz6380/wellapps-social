@@ -1,0 +1,447 @@
+name: Social-Tageslauf
+
+# Erzeugt die Tagesbeitraege und laedt sie als ENTWURF in die Kanaele.
+#
+# ⚠ Warum dieser Workflow ueberhaupt existiert — die Transportfrage:
+# Die Zugangsdaten liegen in den GitHub-Secrets und duerfen nirgends sonst
+# hin. Die fertigen Videos entstehen dort, wo die fuenf App-Repos liegen. Bis
+# hierher trafen sich beide nirgends: Eine Cloud-Sitzung hat die Repos, aber
+# keine Secrets; ein Workflow hatte die Secrets, aber nur sein eigenes Repo.
+# Dieser Lauf checkt die fuenf App-Repos mit aus und bringt beides zusammen.
+#
+# ⚠ Seit dem Umzug (08.09.2026) ist anigosha ein App-Repo wie die vier
+# anderen: Es wird mit REPOS_TOKEN ausgecheckt, sein Reel-Generator und sein
+# Bild-Werkzeug laufen aus SEINEM Checkout. Dieses Repo hier steuert nur.
+#
+# ⚠ `modus: echt` sendet WIRKLICH — allerdings ueberall nur als Entwurf:
+# Facebook `published=false`, TikTok in den Posteingang der App. Instagram
+# bekommt nur das Bild an eine oeffentliche Adresse gelegt; der Container
+# entsteht erst beim Freigeben, weil er nach 24 Stunden verfaellt.
+# Oeffentlich wird nichts ohne einen Menschen.
+
+on:
+  # ⚠ 05:00 UTC = 07:00 im Sommer, 06:00 im Winter. GitHub kennt nur UTC;
+  # die Uhrzeit wandert also mit der Zeitumstellung um eine Stunde. Das ist
+  # hier egal — die Entwuerfe sollen nur vor dem Fruehstueck dastehen.
+  #
+  # ⚠ Ein geplanter Lauf hat KEINE Eingabefelder: `inputs.*` ist dann leer.
+  # Die Werte dafuer setzt der Schritt „Lauf planen" weiter unten. Wer hier
+  # etwas aendert, muss dort nachsehen.
+  #
+  # ⚠ Der Zeitplan ist in diesem Repo erst SCHARF, wenn die Repository-Variable
+  # SOCIAL_ZEITPLAN auf `an` steht — siehe Job „schalter". Bis dahin tut ein
+  # geplanter Lauf nichts (und wird nicht rot).
+  schedule:
+    - cron: '0 5 * * *'
+  workflow_dispatch:
+    inputs:
+      apps:
+        description: 'Welche Apps? Kommagetrennt (anigosha,mahjong,wellbooked,fullrep,swaply) oder alle'
+        type: string
+        default: anigosha
+      modus:
+        description: 'trocken = nur zeigen, was passieren wuerde · echt = Entwuerfe hochladen'
+        type: choice
+        options: [trocken, echt]
+        default: trocken
+      datum:
+        description: 'Anderer Tag als heute (JJJJ-MM-TT), leer = heute'
+        type: string
+        required: false
+      kanaele:
+        description: 'Nur diese Kanaele (facebook,tiktok,instagram) — leer = alle. Fuer das Nachholen eines einzelnen'
+        type: string
+        required: false
+      zweige:
+        description: 'Andere Zweige der App-Repos, z. B. swaply=claude/xy — leer = Standardzweig'
+        type: string
+        required: false
+
+# ⚠ Schreibrecht nur fuer den Ledger (siehe letzter Schritt). Ohne ihn
+# wiederholt der naechste Lauf dieselben Winkel — die Rotation lebt davon,
+# dass der Lauf sein eigenes Ergebnis zurueckschreibt.
+permissions:
+  contents: write
+
+jobs:
+  # ⚠ Der Schalter fuer den Zeitplan. Bis zum Umzug lief derselbe Zeitplan in
+  # almaz6380/anigosha. Zwei scharfe Zeitplaene hiessen: doppelte Entwuerfe in
+  # allen Kanaelen und zwei Ledger, die auseinanderlaufen. Deshalb faehrt ein
+  # GEPLANTER Lauf hier nur, wenn die Repository-Variable SOCIAL_ZEITPLAN auf
+  # `an` steht (Settings → Secrets and variables → Actions → Variables).
+  # Umschalten heisst: hier `an` setzen UND im alten Repo den Workflow
+  # abschalten (Actions → Social-Tageslauf → „…" → Disable workflow) — am
+  # selben Tag, in dieser Reihenfolge, damit kein Morgen doppelt laeuft.
+  #
+  # Ein Lauf VON HAND (workflow_dispatch) ist davon nicht betroffen.
+  schalter:
+    runs-on: ubuntu-latest
+    outputs:
+      aktiv: ${{ steps.s.outputs.aktiv }}
+    steps:
+      - name: Ist der Zeitplan hier scharf?
+        id: s
+        env:
+          GEPLANT: ${{ github.event_name == 'schedule' }}
+          ZEITPLAN: ${{ vars.SOCIAL_ZEITPLAN }}
+        run: |
+          if [ "$GEPLANT" = "true" ] && [ "$ZEITPLAN" != "an" ]; then
+            echo "aktiv=false" >> "$GITHUB_OUTPUT"
+            echo "Zeitplan in diesem Repo noch nicht scharf — Variable SOCIAL_ZEITPLAN steht nicht auf „an". Nichts getan." | tee -a "$GITHUB_STEP_SUMMARY"
+          else
+            echo "aktiv=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  lauf:
+    needs: schalter
+    if: needs.schalter.outputs.aktiv == 'true'
+    runs-on: ubuntu-latest
+    # ⚠ Grosszuegig, weil `apps: alle` fuenf Repos installiert, Mahjong baut
+    # und zehn Beitraege rendert. Ein Abbruch mittendrin liesse halb
+    # hochgeladene Tage zurueck.
+    timeout-minutes: 60
+
+    env:
+      # Die fuenf App-Repos und dieses Repo liegen hier nebeneinander, genau
+      # wie unter /home/user. ladeApps() ersetzt damit den vorderen Teil der
+      # Pfade aus apps.json.
+      SOCIAL_WURZEL: ${{ github.workspace }}
+      # Ein gemeinsamer Browser-Ort fuer alle Repos — sonst laedt jedes seinen
+      # eigenen Chromium (6 × 150 MB).
+      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.pw-browsers
+
+    steps:
+      # ⚠ Ein geplanter Lauf hat keine Eingabefelder — `inputs.*` ist leer.
+      # Deshalb entscheidet dieser Schritt EINMAL, was gilt, und alle
+      # folgenden lesen nur noch seine Ausgaben. Wer stattdessen `inputs.*`
+      # direkt liest, baut einen Schritt, der von Hand laeuft und nach
+      # Zeitplan stillschweigend nichts tut.
+      - name: Lauf planen
+        id: plan
+        env:
+          E_APPS: ${{ inputs.apps }}
+          E_MODUS: ${{ inputs.modus }}
+          E_DATUM: ${{ inputs.datum }}
+          E_KANAELE: ${{ inputs.kanaele }}
+          E_ZWEIGE: ${{ inputs.zweige }}
+          GEPLANT: ${{ github.event_name == 'schedule' }}
+        run: |
+          set -e
+          if [ "$GEPLANT" = "true" ]; then
+            # ⚠ Der Zeitplan-Notbehelf: Swaplys Motor liegt noch nicht auf
+            # dessen Standardzweig (siehe unten). Ohne diese Zeile faellt
+            # Swaply jeden Morgen aus. Sie gehoert weg, sobald der Zweig
+            # zusammengefuehrt ist — die Warnung unten erinnert taeglich daran.
+            APPS="alle"; MODUS="echt"; KANAELE=""
+            ZWEIGE="swaply=claude/swaply-icon-farben"
+          else
+            APPS="${E_APPS:-anigosha}"; MODUS="${E_MODUS:-trocken}"
+            KANAELE="$E_KANAELE"; ZWEIGE="$E_ZWEIGE"
+          fi
+          {
+            echo "apps=$APPS"
+            echo "modus=$MODUS"
+            echo "datum=$E_DATUM"
+            echo "kanaele=$KANAELE"
+          } >> "$GITHUB_OUTPUT"
+          echo "Apps: $APPS · Modus: $MODUS · Kanaele: ${KANAELE:-alle} · ausgeloest von ${{ github.event_name }}"
+
+          # ⚠ Warum es die Zweig-Angabe gibt (05.09.2026, Lauf #12):
+          # Der Motor eines Repos muss auf dessen STANDARDZWEIG liegen, sonst
+          # checkt dieser Workflow ihn nicht mit aus. Bei Swaply lagen
+          # `scripts/social-daten.mjs` und `scripts/post-bild.mjs` nur auf
+          # einem Feature-Zweig — der Lauf brach mit „Cannot find module" ab,
+          # obwohl lokal alles da war.
+          #
+          # ⚠ Notbehelf: Was von einem Feature-Zweig gerendert wird, entspricht
+          # nicht dem, was in jenem Repo gilt.
+          for repo in anigosha mahjong wellbooked fullrep swaply; do
+            wert=""
+            IFS=',' read -ra PAARE <<< "$ZWEIGE"
+            for eintrag in "${PAARE[@]}"; do
+              schluessel="$(echo "${eintrag%%=*}" | tr -d ' ')"
+              [ "$schluessel" = "$repo" ] || continue
+              wert="$(echo "${eintrag#*=}" | tr -d ' ')"
+            done
+            echo "$repo=$wert" >> "$GITHUB_OUTPUT"
+            if [ -n "$wert" ]; then
+              echo "⚠ $repo wird vom Zweig „$wert\" gerendert, nicht vom Standardzweig."
+              echo "> ⚠ **$repo** laeuft auf dem Notbehelf-Zweig \`$wert\`. Sobald er in main ist, gehoert die Angabe raus." >> "$GITHUB_STEP_SUMMARY"
+            fi
+          done
+          true
+
+      # Dieses Repo: Orchestrator, Kanaele, Ledger, reels-fremd. Der Ordner
+      # heisst wie das Repo, damit er neben den App-Repos liegt und nicht mit
+      # einem von ihnen verwechselt wird.
+      - name: wellapps-social auschecken
+        uses: actions/checkout@v4
+        with:
+          path: wellapps-social
+
+      # ⚠ Die fuenf App-Repos sind privat; der eingebaute GITHUB_TOKEN gilt nur
+      # fuer dieses Repo. REPOS_TOKEN ist ein fein granularer Token mit
+      # Contents:Read auf genau diese fuenf — seit dem Umzug gehoert anigosha
+      # dazu, vorher war es das Repo, in dem dieser Workflow selbst lag.
+      - name: anigosha auschecken
+        if: contains(steps.plan.outputs.apps, 'anigosha') || steps.plan.outputs.apps == 'alle'
+        uses: actions/checkout@v4
+        with:
+          repository: almaz6380/anigosha
+          ref: ${{ steps.plan.outputs.anigosha }}
+          token: ${{ secrets.REPOS_TOKEN }}
+          path: anigosha
+
+      - name: mahjong-app auschecken
+        if: contains(steps.plan.outputs.apps, 'mahjong') || steps.plan.outputs.apps == 'alle'
+        uses: actions/checkout@v4
+        with:
+          repository: almaz6380/mahjong-app
+          ref: ${{ steps.plan.outputs.mahjong }}
+          token: ${{ secrets.REPOS_TOKEN }}
+          path: mahjong-app
+
+      - name: wellbooked auschecken
+        if: contains(steps.plan.outputs.apps, 'wellbooked') || steps.plan.outputs.apps == 'alle'
+        uses: actions/checkout@v4
+        with:
+          repository: almaz6380/wellbooked
+          ref: ${{ steps.plan.outputs.wellbooked }}
+          token: ${{ secrets.REPOS_TOKEN }}
+          path: wellbooked
+
+      # ⚠ Das Repo heisst MyPeak, der Ordner muss mypeak heissen — apps.json
+      # fuehrt fullrep unter /home/user/mypeak, und ladeApps() nimmt den
+      # Ordnernamen woertlich.
+      - name: MyPeak (FullRep) auschecken
+        if: contains(steps.plan.outputs.apps, 'fullrep') || steps.plan.outputs.apps == 'alle'
+        uses: actions/checkout@v4
+        with:
+          repository: almaz6380/MyPeak
+          ref: ${{ steps.plan.outputs.fullrep }}
+          token: ${{ secrets.REPOS_TOKEN }}
+          path: mypeak
+
+      - name: swaply auschecken
+        if: contains(steps.plan.outputs.apps, 'swaply') || steps.plan.outputs.apps == 'alle'
+        uses: actions/checkout@v4
+        with:
+          repository: almaz6380/swaply
+          ref: ${{ steps.plan.outputs.swaply }}
+          token: ${{ secrets.REPOS_TOKEN }}
+          path: swaply
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Was liegt vor?
+        run: |
+          echo "Apps: ${{ steps.plan.outputs.apps }} · Modus: ${{ steps.plan.outputs.modus }}"
+          ls -d "$SOCIAL_WURZEL"/*/ 2>/dev/null
+
+      # Je ausgewaehlter App die Abhaengigkeiten. `npm ci` verlangt eine
+      # passende Lockdatei; weicht sie ab, ist `npm install` besser als ein
+      # Abbruch — gerendert wird mit dem, was das Repo mitbringt.
+      #
+      # ⚠ ZWEI Pakete stehen in KEINEM der App-Repos in package.json, weil sie
+      # gross sind und nur die Werkzeuge sie brauchen — geholt werden sie dort
+      # mit `npm i --no-save`:
+      #
+      #   playwright     rendert jede Seite (Bilder wie Reels)
+      #   ffmpeg-static  baut aus den Frames das MP4 (nur Reels)
+      #
+      # `npm ci` bringt beide nicht mit. Lauf 1 scheiterte an playwright
+      # („Cannot find package"), Lauf 2 dann nur noch am Reel, weil
+      # ffmpeg-static fehlte — das Bild braucht es nicht. Deshalb hier
+      # dasselbe --no-save, und zwar bevor irgendetwas rendert.
+      #
+      # ⚠⚠ BEIDE IN EINEM AUFRUF. Zwei Aufrufe nacheinander heben sich auf:
+      # npm raeumt bei jeder Installation weg, was nicht in package.json steht
+      # — und --no-save traegt es dort ja gerade nicht ein. In Lauf 3 hat das
+      # zweite `npm i --no-save ffmpeg-static` das eben installierte playwright
+      # wieder entfernt, und der Fehler von Lauf 1 war zurueck.
+      #
+      # In DIESEM Repo stehen beide ordentlich in package.json — hier reicht
+      # `npm ci`, und die Falle mit --no-save gibt es hier nicht mehr.
+      - name: Abhaengigkeiten
+        run: |
+          set -e
+          for ordner in anigosha mahjong-app wellbooked mypeak swaply; do
+            [ -f "$SOCIAL_WURZEL/$ordner/package.json" ] || continue
+            echo "━━ $ordner"
+            cd "$SOCIAL_WURZEL/$ordner"
+            npm ci --no-audit --no-fund || npm install --no-audit --no-fund
+            npm i --no-save --no-audit --no-fund playwright ffmpeg-static
+            for paket in playwright ffmpeg-static; do
+              [ -d "node_modules/$paket" ] || { echo "✗ $paket fehlt in $ordner"; exit 1; }
+            done
+          done
+          echo "━━ wellapps-social"
+          cd "$SOCIAL_WURZEL/wellapps-social"
+          npm ci --no-audit --no-fund
+          for paket in playwright ffmpeg-static @vercel/blob; do
+            [ -d "node_modules/$paket" ] || { echo "✗ $paket fehlt in wellapps-social"; exit 1; }
+          done
+
+      # ⚠ Erst NACH der Installation: Der Browser muss zu der Playwright-
+      # Fassung passen, die dann wirklich laeuft. PLAYWRIGHT_BROWSERS_PATH
+      # zeigt fuer alle Repos auf denselben Ordner, sonst laedt jedes seinen
+      # eigenen Chromium.
+      #
+      # ⚠ Die App-Repos holen playwright per --no-save, also die jeweils
+      # NEUESTE Fassung; dieses Repo hat seine in package-lock.json
+      # festgeschrieben. Die beiden koennen auseinanderliegen, und jede
+      # Fassung sucht IHRE Chromium-Bauart. Deshalb je Repo einmal
+      # `playwright install`: Bei gleicher Fassung ist das ein Leerlauf von
+      # zwei Sekunden, bei abweichender kommt die fehlende Bauart in denselben
+      # Ordner dazu. Die Systembibliotheken (--with-deps) braucht es nur einmal.
+      - name: Chromium fuer Playwright
+        run: |
+          set -e
+          cd "$SOCIAL_WURZEL/wellapps-social" && npx playwright install --with-deps chromium
+          for ordner in anigosha mahjong-app wellbooked mypeak swaply; do
+            [ -d "$SOCIAL_WURZEL/$ordner/node_modules/playwright" ] || continue
+            (cd "$SOCIAL_WURZEL/$ordner" && npx playwright install chromium)
+          done
+
+      # ⚠ Eine gescheiterte App darf die anderen nicht mitreissen (Lauf #12:
+      # Swaply brach ab, WELLbooked! kam deshalb gar nicht mehr dran und sah
+      # aus, als waere es ebenfalls kaputt). Gescheiterte Apps werden gemerkt
+      # und ganz am Ende gemeldet — die geglueckten laufen inzwischen durch
+      # bis in die Kanaele.
+      # ⚠ Mahjong ist die einzige App, deren Reel nicht gezeichnet, sondern
+      # ABGEFILMT wird: `record-solitaire.mjs` spielt eine Partie in einem
+      # echten Browser und nimmt sie auf. Dafuer braucht es die gebaute App
+      # unter http://localhost:5199 — das Skript startet den Server NICHT
+      # selbst, es erwartet ihn (`--server`, Vorgabe Port 5199).
+      #
+      # Deshalb faellt Mahjongs Reel ohne diesen Schritt aus, und zwar erst
+      # mitten im Lauf. Bis zum 07.09. war das der einzige Grund, warum
+      # `apps: alle` nie durchgetestet war.
+      #
+      # ⚠ `continue-on-error`: Ein misslungener Bau darf die vier anderen
+      # Apps nicht aufhalten. Faellt der Server aus, scheitert nur Mahjongs
+      # Reel — und der letzte Schritt faerbt den Lauf trotzdem rot.
+      - name: Mahjong-Vorschau starten
+        if: contains(steps.plan.outputs.apps, 'mahjong') || steps.plan.outputs.apps == 'alle'
+        continue-on-error: true
+        working-directory: mahjong-app
+        run: |
+          npm run build
+          nohup npx vite preview --port 5199 --strictPort > "$RUNNER_TEMP/mahjong-preview.log" 2>&1 &
+          # Warten, bis er antwortet — ein festes `sleep` ist entweder zu
+          # kurz (und der erste Aufruf laeuft ins Leere) oder verschenkt Zeit.
+          for i in $(seq 1 30); do
+            curl -sf -o /dev/null http://localhost:5199 && { echo "✓ Vorschau laeuft (nach ${i}s)"; exit 0; }
+            sleep 1
+          done
+          echo "✗ Vorschau antwortet nicht — Mahjongs Reel wird ausfallen:"
+          tail -20 "$RUNNER_TEMP/mahjong-preview.log" || true
+          exit 1
+
+      - name: Beitraege erzeugen
+        working-directory: wellapps-social
+        env:
+          APPS: ${{ steps.plan.outputs.apps }}
+          DATUM: ${{ steps.plan.outputs.datum }}
+        run: |
+          DATUM_ARG=""
+          [ -n "$DATUM" ] && DATUM_ARG="--datum $DATUM"
+          : > "$RUNNER_TEMP/gescheitert.txt"
+          if [ "$APPS" = "alle" ]; then
+            node tools/social/lauf.mjs --echt $DATUM_ARG || echo "alle" >> "$RUNNER_TEMP/gescheitert.txt"
+          else
+            IFS=',' read -ra LISTE <<< "$APPS"
+            for a in "${LISTE[@]}"; do
+              app="$(echo "$a" | tr -d ' ')"
+              node tools/social/lauf.mjs --echt --app "$app" $DATUM_ARG \
+                || echo "$app" >> "$RUNNER_TEMP/gescheitert.txt"
+            done
+          fi
+          if [ -s "$RUNNER_TEMP/gescheitert.txt" ]; then
+            echo "⚠ Nicht gerendert: $(tr '\n' ' ' < "$RUNNER_TEMP/gescheitert.txt")"
+          fi
+
+      - name: In die Kanaele
+        working-directory: wellapps-social
+        env:
+          FB_SEITEN_TOKEN_ANIGOSHA: ${{ secrets.FB_SEITEN_TOKEN_ANIGOSHA }}
+          FB_SEITEN_TOKEN_MAHJONG: ${{ secrets.FB_SEITEN_TOKEN_MAHJONG }}
+          FB_SEITEN_TOKEN_WELLBOOKED: ${{ secrets.FB_SEITEN_TOKEN_WELLBOOKED }}
+          FB_SEITEN_TOKEN_FULLREP: ${{ secrets.FB_SEITEN_TOKEN_FULLREP }}
+          FB_SEITEN_TOKEN_SWAPLY: ${{ secrets.FB_SEITEN_TOKEN_SWAPLY }}
+          TIKTOK_CLIENT_KEY: ${{ secrets.TIKTOK_CLIENT_KEY }}
+          TIKTOK_CLIENT_SECRET: ${{ secrets.TIKTOK_CLIENT_SECRET }}
+          TIKTOK_REFRESH_TOKEN_ANIGOSHA: ${{ secrets.TIKTOK_REFRESH_TOKEN_ANIGOSHA }}
+          TIKTOK_REFRESH_TOKEN_MAHJONG: ${{ secrets.TIKTOK_REFRESH_TOKEN_MAHJONG }}
+          TIKTOK_REFRESH_TOKEN_WELLBOOKED: ${{ secrets.TIKTOK_REFRESH_TOKEN_WELLBOOKED }}
+          TIKTOK_REFRESH_TOKEN_FULLREP: ${{ secrets.TIKTOK_REFRESH_TOKEN_FULLREP }}
+          TIKTOK_REFRESH_TOKEN_SWAPLY: ${{ secrets.TIKTOK_REFRESH_TOKEN_SWAPLY }}
+          BLOB_TOKEN: ${{ secrets.BLOB_TOKEN }}
+          APPS: ${{ steps.plan.outputs.apps }}
+          DATUM: ${{ steps.plan.outputs.datum }}
+          KANAELE: ${{ steps.plan.outputs.kanaele }}
+          MODUS: ${{ steps.plan.outputs.modus }}
+        run: |
+          DATUM_ARG=""
+          [ -n "$DATUM" ] && DATUM_ARG="--datum $DATUM"
+          KANAL_ARG=""
+          [ -n "$KANAELE" ] && KANAL_ARG="--kanal $KANAELE"
+          FLAGGE="--trocken"
+          [ "$MODUS" = "echt" ] && FLAGGE="--echt"
+          if [ "$APPS" = "alle" ]; then
+            node tools/social/posten.mjs $FLAGGE $DATUM_ARG $KANAL_ARG \
+              || echo "alle (Versand)" >> "$RUNNER_TEMP/gescheitert.txt"
+          else
+            IFS=',' read -ra LISTE <<< "$APPS"
+            for a in "${LISTE[@]}"; do
+              app="$(echo "$a" | tr -d ' ')"
+              # Was gar nicht gerendert wurde, braucht keinen Versandversuch.
+              grep -qx "$app" "$RUNNER_TEMP/gescheitert.txt" && continue
+              node tools/social/posten.mjs $FLAGGE --app "$app" $DATUM_ARG $KANAL_ARG \
+                || echo "$app (Versand)" >> "$RUNNER_TEMP/gescheitert.txt"
+            done
+          fi
+
+      # Damit sich das Ergebnis auch ohne Kanal ansehen laesst — und damit ein
+      # fehlgeschlagener Versand nicht bedeutet, dass die Arbeit weg ist.
+      - name: Beitraege als Artefakt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tagespaket
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            ${{ github.workspace }}/*/out/social/**
+
+      # ⚠ Der Ledger ist das Gedaechtnis der Rotation: Ohne ihn waehlt der
+      # naechste Lauf dieselben Winkel. Er wird deshalb nur nach einem ECHTEN
+      # Lauf zurueckgeschrieben — ein Trockenlauf hat nichts veroeffentlicht
+      # und darf keinen Winkel verbrauchen.
+      #
+      # [skip ci] haelt Vercel davon ab, fuer eine reine Datenzeile die
+      # Freigabe-Seite neu zu bauen.
+      - name: Ledger zurueckschreiben
+        if: steps.plan.outputs.modus == 'echt'
+        working-directory: wellapps-social
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tools/social/ledger.json
+          git diff --cached --quiet && { echo "Ledger unveraendert."; exit 0; }
+          git commit -m "Social: Ledger vom Tageslauf ${{ steps.plan.outputs.datum || 'heute' }} [skip ci]"
+          git push origin HEAD:${{ github.ref_name }}
+
+      # ⚠ Ganz zum Schluss, damit eine gescheiterte App die uebrigen weder am
+      # Versand noch am Ledger hindert — der Lauf wird trotzdem rot. Ein
+      # gruener Haken muss heissen: alles, was angefordert war, ist auch
+      # passiert.
+      - name: Gescheitertes melden
+        if: always()
+        run: |
+          [ -s "$RUNNER_TEMP/gescheitert.txt" ] || { echo "Alle angeforderten Apps sind durch."; exit 0; }
+          echo "✗ Nicht durchgelaufen:"
+          sed 's/^/   /' "$RUNNER_TEMP/gescheitert.txt"
+          exit 1
