@@ -47,7 +47,7 @@ function trockenlauf() {
 
   for (const k of appSchluessel) {
     const app = APPS[k];
-    const tage = vorschau({ app: k, start: HEUTE, tage: TAGE, anzahl: app.posts_pro_tag, nurVorhanden: NUR_VORHANDEN });
+    const tage = vorschau({ app: k, start: HEUTE, tage: TAGE, anzahl: app.posts_pro_tag, nurVorhanden: NUR_VORHANDEN, sprachen: app.sprachen });
     const gesamt = tage.flatMap((t) => t.posts);
 
     console.log(`━━ ${app.name}  (${app.nische})`);
@@ -254,7 +254,14 @@ async function tageslauf() {
   //
   // Ein Tageslauf ist ein ERSETZEN, kein Anhaengen: Was heute gilt, ist das,
   // was der letzte Lauf von heute erzeugt hat.
-  if (echt) {
+  //
+  // ⚠ AUSSER bei einem Nachlauf (`--variante N`). Der entsteht, wenn Josef
+  // einen Beitrag abgelehnt hat und einen anderen will — dann sollen die
+  // Winkel von heute GESPERRT bleiben, sonst zieht der Nachlauf als Erstes
+  // wieder den, der eben abgelehnt wurde. Ein Nachlauf ergaenzt, er ersetzt
+  // nicht.
+  const VARIANTE = Number(wert('variante', 0)) || 0;
+  if (echt && !VARIANTE) {
     const vorher = ledger.zeilen.length;
     ledger.zeilen = ledger.zeilen.filter(
       (z) => !(z.datum === HEUTE && appSchluessel.includes(z.app)),
@@ -262,6 +269,7 @@ async function tageslauf() {
     const weg = vorher - ledger.zeilen.length;
     if (weg) console.log(`(${weg} Ledger-Zeile(n) von heute ersetzt — es gab schon einen Lauf)\n`);
   }
+  if (VARIANTE) console.log(`Nachlauf, Variante ${VARIANTE} — die Winkel von heute bleiben gesperrt.\n`);
   // Jede App rendert in ihr eigenes out/social/<datum> — siehe die Erklaerung
   // zu ausgabeOrt() in motoren.mjs.
   const bericht = [];
@@ -276,7 +284,9 @@ async function tageslauf() {
       catch (e) { console.log(`   ✗ ${e.message}`); }
     }
     const posts = waehlePosts({
-      app: k, heute: HEUTE, ledger,
+      app: k, heute: HEUTE, ledger, variante: VARIANTE,
+      // ⚠ Die Sprache kommt aus apps.json, nicht mehr aus dem Winkel.
+      sprachen: app.sprachen,
       anzahl: Number(wert('anzahl', app.posts_pro_tag)),
       nurVorhanden: NUR_VORHANDEN || echt,
     });

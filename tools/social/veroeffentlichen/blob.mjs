@@ -58,19 +58,37 @@ export async function hochladen({ datei, token, praefix, trocken }) {
   const pfad = `${praefix}/${basename(datei)}`;
   if (trocken) return { trocken: true, pfad };
 
-  // allowOverwrite, weil ein zweiter Lauf desselben Tages sonst abbricht.
-  // addRandomSuffix bewusst NICHT: Der Pfad soll vorhersagbar bleiben,
-  // damit `aufraeumen` ihn spaeter wiederfindet.
+  // ⚠ addRandomSuffix seit 10.09.2026 AN. Vorher war der Pfad vorhersagbar
+  // (`social/<datum>/<dateiname>`) — wer die Kennung des Speichers kannte,
+  // konnte sich jede Adresse zusammenreimen.
+  //
+  // Ein Passwort ist hier keine Option und wird auch nie eine: Instagram holt
+  // die Datei SELBST ab, als anonymer Besucher („We will cURL your image using
+  // the passed in URL so it must be on a public server"). Jede Sperre traefe
+  // also Instagram. Unerratbar ist damit die Obergrenze des Machbaren.
+  //
+  // Die alte Begruendung gegen den Anhang („damit `aufraeumen` den Pfad
+  // wiederfindet") war falsch: `aufraeumen` bekommt die fertige URL aus der
+  // Merkliste, es baut nie einen Pfad zusammen.
+  //
+  // ⚠ Nebenwirkung: Ein zweiter Lauf ueberschreibt die Datei nicht mehr,
+  // sondern legt eine zweite daneben. Weggeraeumt wird die, die in der
+  // Merkliste steht; eine verwaiste kostet ein paar Kilobyte. `allowOverwrite`
+  // bleibt trotzdem stehen — es schadet nicht und faengt den Fall ab, falls
+  // der Anhang einmal ausbleibt.
   //
   // Als Strom, nicht als Puffer: Ein Reel sind vier Megabyte, und die muessen
   // nicht erst vollstaendig in den Speicher.
-  const { url } = await put(pfad, createReadStream(datei), {
+  const { url, pathname } = await put(pfad, createReadStream(datei), {
     access: 'public',
     token,
     allowOverwrite: true,
-    addRandomSuffix: false,
+    addRandomSuffix: true,
   });
-  return { url, pfad };
+  // ⚠ `pathname` aus der Antwort, nicht der Pfad von oben: Seit dem Anhang
+  // unterscheiden sich die beiden. Wer den angefragten zurueckgibt, meldet
+  // einen Ort, an dem nichts liegt.
+  return { url, pfad: pathname ?? pfad };
 }
 
 /**
@@ -90,7 +108,7 @@ export async function hochladen({ datei, token, praefix, trocken }) {
  * Je App eine eigene Datei, weil posten.mjs je App einmal laeuft; eine
  * gemeinsame wuerde sich beim zweiten Aufruf selbst ueberschreiben.
  */
-export async function merklisteAblegen({ datum, appSchluessel, eintraege, uebersicht, token, name }) {
+export async function merklisteAblegen({ datum, appSchluessel, eintraege, uebersicht, tiktok, token, name }) {
   const pfad = `social/${datum}/freigabe-${appSchluessel}.json`;
   // ⚠ `eintraege` ist der Vertrag mit freigeben.mjs und bleibt unangetastet:
   // Dort steht, was Instagram noch offen hat, und dort wird vermerkt, was
@@ -100,6 +118,8 @@ export async function merklisteAblegen({ datum, appSchluessel, eintraege, uebers
   // beim naechsten Umbau einen doppelten Instagram-Beitrag.
   const inhalt = { datum, app: appSchluessel, name: name ?? appSchluessel, eintraege };
   if (uebersicht) inhalt.uebersicht = uebersicht;
+  // Kontoauskunft fuer die TikTok-Oberflaeche der Freigabe-Seite.
+  if (tiktok) inhalt.tiktok = tiktok;
   const { url } = await put(pfad, JSON.stringify(inhalt, null, 2), {
     access: 'public',
     token,
@@ -136,6 +156,38 @@ export async function merklistenLesen({ datum, token }) {
  * Loeschen ist gratis und haelt den Speicher bei nahezu null. Ohne das waeren
  * es nach einem Jahr rund 400 MB toter Bilder.
  */
+/**
+ * Braucht noch irgendein Kanal diese Datei?
+ *
+ * ⚠ Seit es drei Wege gibt, die aus dem Blob-Speicher lesen (Instagram beim
+ * Freigeben, Facebook beim Freigeben, TikTok beim Direktversand), darf der
+ * erste von ihnen die Datei nicht mehr einfach wegraeumen. Wer das tut, nimmt
+ * den beiden anderen die Grundlage — und ihr Fehler liest sich dann wie ein
+ * kaputter Zugang („Video nicht erreichbar: HTTP 404"), obwohl nur zu frueh
+ * geloescht wurde.
+ *
+ * Gefragt wird gegen die frisch gelesene Merkliste, nicht gegen den Speicher:
+ * Was dort noch offen steht, ist noch offen.
+ */
+export function nochGebraucht({ liste, datei }) {
+  const post = (liste.uebersicht ?? []).find((p) => p.datei === datei);
+  // Ein abgelehnter Beitrag geht nirgends mehr hin — auch dann nicht, wenn ein
+  // Kanal ihn formal noch als „wartet" fuehrt.
+  if (post?.abgelehnt) return false;
+  const offenBeiInstagram = (liste.eintraege ?? [])
+    .some((e) => e.datei === datei && !e.veroeffentlicht);
+  const offenBeiFacebook = post?.kanaele?.facebook?.stand === 'wartet';
+  // Ein Beitrag im TikTok-Posteingang laesst sich von der Freigabe-Seite aus
+  // immer noch direkt posten — dafuer braucht es die Datei.
+  //
+  // ⚠ „uebersprungen" zaehlt NICHT: Das heisst, der Beitrag ist kein Video,
+  // und die Freigabe-Seite bietet fuer ihn gar keinen TikTok-Knopf an. Wer das
+  // mitzaehlt, raeumt die Datei nie wieder weg.
+  const offenBeiTiktok = ['posteingang', 'wartet']
+    .includes(post?.kanaele?.tiktok?.stand);
+  return Boolean(offenBeiInstagram || offenBeiFacebook || offenBeiTiktok);
+}
+
 export async function aufraeumen({ url, token }) {
   try {
     await del(url, { token });

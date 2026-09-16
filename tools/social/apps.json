@@ -14,10 +14,7 @@
       "android": true
     },
     "linkInBio": "anigosha.vercel.app/get",
-    "sprachen": [
-      "de",
-      "en"
-    ],
+    "sprachen": ["de"],
     "kanaele": [
       "tiktok",
       "instagram",
@@ -51,9 +48,7 @@
       "android": true
     },
     "linkInBio": "mahjong-app-plum.vercel.app/links",
-    "sprachen": [
-      "en"
-    ],
+    "sprachen": ["en"],
     "kanaele": [
       "tiktok",
       "instagram",
@@ -89,9 +84,7 @@
       "android": true
     },
     "linkInBio": "wellbooked.at",
-    "sprachen": [
-      "de"
-    ],
+    "sprachen": ["de"],
     "kanaele": [
       "instagram",
       "facebook",
@@ -128,10 +121,7 @@
       "android": true
     },
     "linkInBio": "my-peak.vercel.app",
-    "sprachen": [
-      "de",
-      "en"
-    ],
+    "sprachen": ["de"],
     "kanaele": [
       "tiktok",
       "facebook",
@@ -168,11 +158,7 @@
       "android": true
     },
     "linkInBio": "getswaply.vercel.app/app",
-    "sprachen": [
-      "de",
-      "en",
-      "es"
-    ],
+    "sprachen": ["de"],
     "kanaele": [
       "tiktok",
       "facebook",

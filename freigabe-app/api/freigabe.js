@@ -30,8 +30,44 @@ import { createHash, timingSafeEqual } from 'node:crypto';
 // Rest des Repos nicht zur Hand.
 const APPS = ['anigosha', 'mahjong', 'wellbooked', 'fullrep', 'swaply'];
 
-const REPO = 'almaz6380/wellapps-social';
+const REPO = 'almaz6380/anigosha';
 const WORKFLOW = 'social-freigabe.yml';
+const WORKFLOW_TIKTOK = 'social-tiktok-posten.yml';
+const WORKFLOW_FACEBOOK = 'social-facebook-posten.yml';
+const WORKFLOW_ABLEHNEN = 'social-ablehnen.yml';
+const WORKFLOW_TAGESLAUF = 'social-tageslauf.yml';
+
+// ⚠ Der Dateiname geht als Workflow-Eingabe weiter und landet dort in einer
+// Shell-Umgebung. Nur zulassen, was unsere Werkzeuge auch erzeugen.
+const DATEINAME = /^[A-Za-z0-9._-]{1,120}\.(mp4|mov|jpg|jpeg|png)$/;
+
+// ⚠ Fest, nicht durchgereicht. Diese Werte landen als Workflow-Eingabe in
+// einer Shell-Zeile; alles, was nicht aus dieser Liste stammt, hat dort nichts
+// verloren. TikTok nimmt ohnehin nur diese vier.
+const PRIVACY = ['PUBLIC_TO_EVERYONE', 'MUTUAL_FOLLOW_FRIENDS',
+  'FOLLOWER_OF_CREATOR', 'SELF_ONLY'];
+const ERLAUBT = ['kommentare', 'duett', 'stitch'];
+const WERBUNG = ['eigene', 'fremde'];
+
+/** Startet einen Workflow. Gibt nur zurueck, ob es geklappt hat. */
+async function laufStarten(token, workflow, inputs) {
+  const antwort = await fetch(
+    `https://api.github.com/repos/${REPO}/actions/workflows/${workflow}/dispatches`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ ref: 'main', inputs }),
+    },
+  );
+  if (antwort.status !== 204) {
+    throw new Error(`GitHub ${antwort.status}: ${(await antwort.text()).slice(0, 300)}`);
+  }
+}
 
 /** Vergleich ohne Zeitverrat — sonst liesse sich das Passwort erraten. */
 function passtDasPasswort(eingabe, erwartet) {
@@ -61,7 +97,7 @@ export default async function handler(req, res) {
     return;
   }
 
-  const { passwort, aktion, datum, app } = req.body ?? {};
+  const { passwort, aktion, datum, app, datei, privacy, erlaubt, werbung, variante } = req.body ?? {};
 
   if (!passtDasPasswort(passwort, process.env.FREIGABE_PASSWORT)) {
     // Kurz bremsen: Ohne das liesse sich ein kurzes Passwort in Minuten
@@ -90,40 +126,136 @@ export default async function handler(req, res) {
       return;
     }
 
+    const token = process.env.GITHUB_TOKEN;
+
     if (aktion === 'veroeffentlichen') {
-      const token = process.env.GITHUB_TOKEN;
       if (!token) {
         res.status(500).json({ fehler: 'GITHUB_TOKEN ist in Vercel nicht gesetzt.' });
         return;
       }
-      // ⚠ Nur bekannte App-Schluessel weiterreichen. Der Wert landet als
-      // Workflow-Eingabe in einer Shell-Zeile; alles andere waere eine
-      // offene Tuer.
+      // ⚠ Nur bekannte App-Schluessel weiterreichen (siehe oben).
       const nurApp = APPS.includes(app) ? app : '';
-
-      const antwort = await fetch(
-        `https://api.github.com/repos/${REPO}/actions/workflows/${WORKFLOW}/dispatches`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: 'application/vnd.github+json',
-            'X-GitHub-Api-Version': '2022-11-28',
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            ref: 'main',
-            inputs: { modus: 'veroeffentlichen', datum: tag, apps: nurApp },
-          }),
-        },
-      );
-
-      if (antwort.status !== 204) {
-        const text = (await antwort.text()).slice(0, 300);
-        res.status(502).json({ fehler: `GitHub ${antwort.status}: ${text}` });
+      // `datei` ist optional: Mit ihr wird genau EIN Beitrag freigegeben (so
+      // arbeitet die Seite), ohne sie alles Offene der App (so laesst sich der
+      // Lauf von Hand als Sammelfreigabe benutzen).
+      const nurDatei = DATEINAME.test(String(datei ?? '')) ? String(datei) : '';
+      if (datei && !nurDatei) {
+        res.status(400).json({ fehler: 'Unerwarteter Dateiname.' });
         return;
       }
-      res.status(200).json({ gestartet: true, datum: tag, app: nurApp || 'alle' });
+      await laufStarten(token, WORKFLOW,
+        { modus: 'veroeffentlichen', datum: tag, apps: nurApp, datei: nurDatei });
+      res.status(200).json({ gestartet: true, datum: tag, app: nurApp || 'alle', datei: nurDatei });
+      return;
+    }
+
+    // Ablehnen: EIN Beitrag wird als verworfen vermerkt. Das veroeffentlicht
+    // nichts und nimmt nichts zurueck — es verhindert nur, dass der Beitrag
+    // noch irgendwo hingeht.
+    if (aktion === 'ablehnen') {
+      if (!token) {
+        res.status(500).json({ fehler: 'GITHUB_TOKEN ist in Vercel nicht gesetzt.' });
+        return;
+      }
+      if (!APPS.includes(app)) {
+        res.status(400).json({ fehler: 'Unbekannte App.' });
+        return;
+      }
+      if (!DATEINAME.test(String(datei ?? ''))) {
+        res.status(400).json({ fehler: 'Unerwarteter Dateiname.' });
+        return;
+      }
+      await laufStarten(token, WORKFLOW_ABLEHNEN, { app, datei, datum: tag });
+      res.status(200).json({ gestartet: true, datum: tag, app, datei });
+      return;
+    }
+
+    // Ersatz erzeugen: der Tageslauf noch einmal, mit anderer Saat.
+    //
+    // ⚠ `modus: echt` heisst hier NICHT „oeffentlich" — der Lauf legt Dateien
+    // ab, laedt TikTok in den Posteingang und merkt Facebook und Instagram
+    // vor. Veroeffentlicht wird weiterhin nur auf Knopfdruck.
+    if (aktion === 'neu') {
+      if (!token) {
+        res.status(500).json({ fehler: 'GITHUB_TOKEN ist in Vercel nicht gesetzt.' });
+        return;
+      }
+      if (!APPS.includes(app)) {
+        res.status(400).json({ fehler: 'Unbekannte App.' });
+        return;
+      }
+      // ⚠ Die Variante geht als Workflow-Eingabe in eine Shell-Zeile. Nur eine
+      // kleine ganze Zahl zulassen — und nach oben deckeln, damit niemand
+      // versehentlich eine Kette von Nachlaeufen ausloest.
+      const n = Number(variante);
+      if (!Number.isInteger(n) || n < 1 || n > 20) {
+        res.status(400).json({ fehler: 'Variante muss zwischen 1 und 20 liegen.' });
+        return;
+      }
+      // ⚠ Swaplys Motor liegt noch nicht auf seinem Standardzweig; ohne diese
+      // Angabe bricht der Lauf mit „Cannot find module" ab. Die Zeile gehoert
+      // weg, sobald der Zweig zusammengefuehrt ist — dieselbe Stelle steht
+      // auch im Tageslauf-Workflow.
+      const zweige = app === 'swaply' ? 'swaply=claude/swaply-icon-farben' : '';
+      await laufStarten(token, WORKFLOW_TAGESLAUF, {
+        apps: app, modus: 'echt', datum: tag, variante: String(n), zweige,
+      });
+      res.status(200).json({ gestartet: true, datum: tag, app, variante: n });
+      return;
+    }
+
+    // Facebook: EIN Beitrag. Anders als bei Instagram und TikTok gibt es hier
+    // nichts zu waehlen — der Beitrag entsteht aus Datei und Text, so wie er
+    // auf der Seite steht.
+    if (aktion === 'facebook') {
+      if (!token) {
+        res.status(500).json({ fehler: 'GITHUB_TOKEN ist in Vercel nicht gesetzt.' });
+        return;
+      }
+      if (!APPS.includes(app)) {
+        res.status(400).json({ fehler: 'Unbekannte App.' });
+        return;
+      }
+      if (!DATEINAME.test(String(datei ?? ''))) {
+        res.status(400).json({ fehler: 'Unerwarteter Dateiname.' });
+        return;
+      }
+      await laufStarten(token, WORKFLOW_FACEBOOK, { app, datei, datum: tag });
+      res.status(200).json({ gestartet: true, datum: tag, app, datei });
+      return;
+    }
+
+    // TikTok: EIN Beitrag, mit der Auswahl, die der Mensch gerade getroffen
+    // hat. ⚠ Ohne `privacy` wird nichts gestartet — TikTok verlangt eine
+    // bewusste Wahl, und eine Voreinstellung hier waere genau der Verstoss.
+    if (aktion === 'tiktok') {
+      if (!token) {
+        res.status(500).json({ fehler: 'GITHUB_TOKEN ist in Vercel nicht gesetzt.' });
+        return;
+      }
+      if (!APPS.includes(app)) {
+        res.status(400).json({ fehler: 'Unbekannte App.' });
+        return;
+      }
+      if (!PRIVACY.includes(privacy)) {
+        res.status(400).json({ fehler: 'Bitte zuerst die Sichtbarkeit waehlen.' });
+        return;
+      }
+      // ⚠ Der Dateiname geht als Workflow-Eingabe weiter. Nur das erlauben,
+      // was unsere Werkzeuge auch erzeugen.
+      if (!/^[A-Za-z0-9._-]{1,120}\.(mp4|mov)$/.test(String(datei ?? ''))) {
+        res.status(400).json({ fehler: 'Unerwarteter Dateiname.' });
+        return;
+      }
+      const nurBekannt = (liste, erlaubteWerte) => (Array.isArray(liste) ? liste : [])
+        .filter((x) => erlaubteWerte.includes(x)).join(',');
+
+      await laufStarten(token, WORKFLOW_TIKTOK, {
+        app, datei, privacy, datum: tag,
+        erlaubt: nurBekannt(erlaubt, ERLAUBT),
+        werbung: nurBekannt(werbung, WERBUNG),
+      });
+      res.status(200).json({ gestartet: true, datum: tag, app, datei });
       return;
     }
 

@@ -56,6 +56,10 @@ on:
         description: 'Andere Zweige der App-Repos, z. B. swaply=claude/xy — leer = Standardzweig'
         type: string
         required: false
+      variante:
+        description: 'Ersatz nach einem Ablehnen: 1-20. Leer = der regulaere Beitrag des Tages'
+        type: string
+        required: false
 
 # ⚠ Schreibrecht nur fuer den Ledger (siehe letzter Schritt). Ohne ihn
 # wiederholt der naechste Lauf dieselben Winkel — die Rotation lebt davon,
@@ -124,9 +128,12 @@ jobs:
           E_DATUM: ${{ inputs.datum }}
           E_KANAELE: ${{ inputs.kanaele }}
           E_ZWEIGE: ${{ inputs.zweige }}
+          E_VARIANTE: ${{ inputs.variante }}
           GEPLANT: ${{ github.event_name == 'schedule' }}
         run: |
           set -e
+          # ⚠ Ein GEPLANTER Lauf hat nie eine Variante — die gibt es nur, wenn
+          # ein Mensch einen Beitrag abgelehnt hat und Ersatz will.
           if [ "$GEPLANT" = "true" ]; then
             # ⚠ Der Zeitplan-Notbehelf: Swaplys Motor liegt noch nicht auf
             # dessen Standardzweig (siehe unten). Ohne diese Zeile faellt
@@ -134,15 +141,18 @@ jobs:
             # zusammengefuehrt ist — die Warnung unten erinnert taeglich daran.
             APPS="alle"; MODUS="echt"; KANAELE=""
             ZWEIGE="swaply=claude/swaply-icon-farben"
+            VARIANTE=""
           else
             APPS="${E_APPS:-anigosha}"; MODUS="${E_MODUS:-trocken}"
             KANAELE="$E_KANAELE"; ZWEIGE="$E_ZWEIGE"
+            VARIANTE="$E_VARIANTE"
           fi
           {
             echo "apps=$APPS"
             echo "modus=$MODUS"
             echo "datum=$E_DATUM"
             echo "kanaele=$KANAELE"
+            echo "variante=$VARIANTE"
           } >> "$GITHUB_OUTPUT"
           echo "Apps: $APPS · Modus: $MODUS · Kanaele: ${KANAELE:-alle} · ausgeloest von ${{ github.event_name }}"
 
@@ -345,17 +355,23 @@ jobs:
         env:
           APPS: ${{ steps.plan.outputs.apps }}
           DATUM: ${{ steps.plan.outputs.datum }}
+          VARIANTE: ${{ steps.plan.outputs.variante }}
         run: |
           DATUM_ARG=""
           [ -n "$DATUM" ] && DATUM_ARG="--datum $DATUM"
+          # ⚠ Die Variante geht NUR in die Saat, nicht ins Datum. Ohne sie
+          # brachte ein zweiter Lauf desselben Tages denselben Beitrag zurueck —
+          # `waehlePosts` ist sonst rein deterministisch aus (Datum, App).
+          VARIANTE_ARG=""
+          [ -n "$VARIANTE" ] && VARIANTE_ARG="--variante $VARIANTE"
           : > "$RUNNER_TEMP/gescheitert.txt"
           if [ "$APPS" = "alle" ]; then
-            node tools/social/lauf.mjs --echt $DATUM_ARG || echo "alle" >> "$RUNNER_TEMP/gescheitert.txt"
+            node tools/social/lauf.mjs --echt $DATUM_ARG $VARIANTE_ARG || echo "alle" >> "$RUNNER_TEMP/gescheitert.txt"
           else
             IFS=',' read -ra LISTE <<< "$APPS"
             for a in "${LISTE[@]}"; do
               app="$(echo "$a" | tr -d ' ')"
-              node tools/social/lauf.mjs --echt --app "$app" $DATUM_ARG \
+              node tools/social/lauf.mjs --echt --app "$app" $DATUM_ARG $VARIANTE_ARG \
                 || echo "$app" >> "$RUNNER_TEMP/gescheitert.txt"
             done
           fi
@@ -404,17 +420,17 @@ jobs:
             done
           fi
 
-      # Damit sich das Ergebnis auch ohne Kanal ansehen laesst — und damit ein
-      # fehlgeschlagener Versand nicht bedeutet, dass die Arbeit weg ist.
-      - name: Beitraege als Artefakt
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: tagespaket
-          retention-days: 14
-          if-no-files-found: warn
-          path: |
-            ${{ github.workspace }}/*/out/social/**
+      # ⚠ Hier lud der Lauf bis zum 16.09.2026 das „tagespaket" als Artefakt
+      # hoch — bequem zum Nachsehen, aber jeden Tag ein paar Megabyte, 14 Tage
+      # lang aufbewahrt. Am 16.09. war der Actions-Speicher (0,5 GB im freien
+      # Kontingent, und zwar KONTOWEIT ueber alle Repos) damit voll, und der
+      # Schritt faerbte jeden Lauf rot, obwohl die Beitraege vollstaendig
+      # durchgelaufen waren.
+      #
+      # Weggelassen statt auf `continue-on-error` gesetzt: Ein Schritt, der
+      # immer scheitern darf, ist kein Schritt, sondern Rauschen. Das Ergebnis
+      # steht ohnehin an zwei Stellen, die laenger halten — die gerenderte
+      # Datei liegt im Blob-Speicher, und die Freigabe-Seite zeigt sie.
 
       # ⚠ Der Ledger ist das Gedaechtnis der Rotation: Ohne ihn waehlt der
       # naechste Lauf dieselben Winkel. Er wird deshalb nur nach einem ECHTEN

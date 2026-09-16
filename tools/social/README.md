@@ -3,13 +3,9 @@
 Erzeugt für Anigosha, Mahjong Royale, WELLbooked! und FullRep je zwei Posts am Tag
 (Reel oder Bild), passend zur Nische, ohne Wiederholung, mit fertiger Caption.
 
-**Wo das liegt:** seit dem 08.09.2026 im eigenen Repo `almaz6380/wellapps-social`.
-Bis dahin lag es in `anigosha`, weil das die reifste Generator-Architektur hatte —
-mit fünf Apps war ein Repo, das einer davon gehört, aber der falsche Ort für die
-Zugangsdaten aller fünf. Anigosha ist seither ein App-Repo wie die anderen: Sein
-Motor (`tools/reels/`, `tools/post-bild.mjs`) bleibt dort und läuft aus dessen
-Checkout. Was hier unter `tools/reels/` liegt, ist die Kopie, die
-`reels-fremd/` für Swaply und WELLbooked! braucht.
+**Warum das hier liegt und nicht in einem eigenen Repo:** Anigosha hat die reifste
+Generator-Architektur der vier, und `scripts/asc.py` wird ohnehin zwischen allen vier
+Repos kopiert. Ein fünftes Repo wäre für Handy-Betrieb Verwaltungslast ohne Gegenwert.
 
 ## Der Grundsatz: nichts neu bauen, was schon läuft
 

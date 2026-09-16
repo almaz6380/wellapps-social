@@ -1,0 +1,81 @@
+name: TikTok posten
+
+# Postet EINEN Beitrag auf TikTok — mit den Optionen, die ein Mensch auf der
+# Freigabe-Seite gewaehlt hat.
+#
+# ⚠ Warum das nicht im Tageslauf steckt: TikToks Richtlinie zum Direktversand
+# verlangt woertlich „API Clients must only start sending content materials to
+# TikTok after the user has expressly consented to the upload." Ein Zeitplan
+# hat keine Zustimmung. Deshalb loest diesen Lauf immer ein Mensch aus —
+# ueber die Freigabe-Seite oder von Hand.
+#
+# ⚠ Und deshalb gibt es hier auch KEINE Voreinstellung fuer `privacy`. Fehlt
+# sie, bricht das Skript ab. Das ist der Sinn, nicht ein fehlender Komfort.
+
+on:
+  workflow_dispatch:
+    inputs:
+      app:
+        description: 'Welche App? anigosha,mahjong,wellbooked,fullrep,swaply'
+        type: string
+        required: true
+      datei:
+        description: 'Dateiname des Videos, z. B. anigosha-fandom-de-s123.mp4'
+        type: string
+        required: true
+      privacy:
+        description: 'Privatsphaere — muss aus creator_info stammen'
+        type: choice
+        options:
+          - PUBLIC_TO_EVERYONE
+          - MUTUAL_FOLLOW_FRIENDS
+          - FOLLOWER_OF_CREATOR
+          - SELF_ONLY
+        required: true
+      datum:
+        description: 'Welcher Tag (JJJJ-MM-TT), leer = heute'
+        type: string
+        required: false
+      erlaubt:
+        description: 'Was erlaubt ist: kommentare,duett,stitch — leer = nichts'
+        type: string
+        required: false
+      werbung:
+        description: 'Werbekennzeichnung: eigene und/oder fremde — leer = keine'
+        type: string
+        required: false
+
+jobs:
+  posten:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # Nur die Bibliothek: Dieser Lauf rendert nichts, er holt ein fertiges
+      # Video aus dem Blob-Speicher und schickt es zu TikTok.
+      - name: Abhaengigkeiten
+        run: npm ci --no-audit --no-fund || npm install --no-audit --no-fund
+
+      - name: Posten
+        env:
+          TIKTOK_CLIENT_KEY: ${{ secrets.TIKTOK_CLIENT_KEY }}
+          TIKTOK_CLIENT_SECRET: ${{ secrets.TIKTOK_CLIENT_SECRET }}
+          TIKTOK_REFRESH_TOKEN_ANIGOSHA: ${{ secrets.TIKTOK_REFRESH_TOKEN_ANIGOSHA }}
+          TIKTOK_REFRESH_TOKEN_MAHJONG: ${{ secrets.TIKTOK_REFRESH_TOKEN_MAHJONG }}
+          TIKTOK_REFRESH_TOKEN_WELLBOOKED: ${{ secrets.TIKTOK_REFRESH_TOKEN_WELLBOOKED }}
+          TIKTOK_REFRESH_TOKEN_FULLREP: ${{ secrets.TIKTOK_REFRESH_TOKEN_FULLREP }}
+          TIKTOK_REFRESH_TOKEN_SWAPLY: ${{ secrets.TIKTOK_REFRESH_TOKEN_SWAPLY }}
+          BLOB_TOKEN: ${{ secrets.BLOB_TOKEN }}
+          APP: ${{ inputs.app }}
+          DATEI: ${{ inputs.datei }}
+          PRIVACY: ${{ inputs.privacy }}
+          DATUM: ${{ inputs.datum }}
+          ERLAUBT: ${{ inputs.erlaubt }}
+          WERBUNG: ${{ inputs.werbung }}
+        run: node tools/social/tiktok-posten.mjs

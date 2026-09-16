@@ -10,9 +10,28 @@ Gebaut, damit der Weg über GitHub Actions entfällt.
 
 | Kanal | hier |
 |---|---|
-| **Instagram** | Knopf „Auf Instagram veröffentlichen". Der einzige Kanal, der wirklich auf eine Freigabe wartet — Instagram kennt keine Entwürfe. |
-| **Facebook** | nur ansehen. Der Entwurf liegt schon auf der Seite; freigegeben wird er in der Meta Business Suite. |
-| **TikTok** | nur ansehen, Text zum Kopieren. TikToks Posteingang nimmt keinen Text an, und veröffentlichen kann ihn nur ein Mensch in der App. |
+| **Instagram** | ✅ Knopf „Auf Instagram veröffentlichen". |
+| **Facebook** | ✅ Knopf „Auf Facebook veröffentlichen" (zwei Tipper). |
+| **TikTok** | Knopf ist gebaut, wirkt aber erst nach TikToks App-Prüfung — bis dahin liegt der Beitrag im Posteingang der App und wird dort fertiggestellt. |
+
+Dazu hat jeder Beitrag einen **`Ablehnen`**-Knopf (ebenfalls zwei Tipper). Er
+verwirft ihn und fordert gleich einen Ersatz an — der Tageslauf läuft mit einer
+anderen Saat noch einmal für diese App und braucht dafür etwa zehn Minuten. Der
+abgelehnte Beitrag bleibt durchgestrichen stehen, damit am Abend nachvollziehbar
+ist, was verworfen wurde.
+
+⚠ **Was schon öffentlich ist, lässt sich nicht ablehnen** — dort erscheint der
+Knopf nicht. Zurückholen geht nur durch Löschen im jeweiligen Netzwerk. Ein
+TikTok-Entwurf, der schon im Posteingang der App liegt, muss ebenfalls dort
+verworfen werden.
+
+⚠ **Facebook legt seit dem 09.09.2026 keinen Entwurf mehr an.** Der Tageslauf
+legt nur die gerenderte Datei öffentlich ab; der Beitrag entsteht erst, wenn du
+hier drückst. Grund: Ein vorhandener Entwurf lässt sich per API nicht
+zuverlässig nachträglich veröffentlichen (ein unveröffentlichtes Foto geht
+einen anderen Weg als ein Feed-Beitrag), und wer beides baut, bekommt am Ende
+zwei Sachen auf der Seite. In der Meta Business Suite steht deshalb nichts mehr
+— die Vorschau ist diese Seite.
 
 ## Wie sie gebaut ist
 
@@ -30,19 +49,28 @@ in dieser Seite kann höchstens einen Lauf auslösen, den man auch von Hand
 auslösen könnte.
 
 ⚠ **Der Blob-Speicher ist öffentlich lesbar** — er muss es sein, weil
-Instagram die Bilder selbst dort abholt. Die Merklisten liegen darin und
-enthalten Bildadresse und Bildtext, also genau das, was ohnehin gleich
-veröffentlicht wird. Zugangsdaten stehen dort nicht und dürfen dort nie
-landen. Das Passwort schützt also die Bedienung, nicht die Bilder.
+Instagram die Bilder selbst dort abholt („We will cURL your image using the
+passed in URL so it must be on a public server"). Ein Passwort auf den Bildern
+träfe deshalb zuerst Instagram, nicht Fremde. Zugangsdaten stehen dort nicht
+und dürfen dort nie landen. Das Passwort schützt also die Bedienung, nicht die
+Bilder.
+
+Seit 10.09.2026 tragen die **Bilddateien einen Zufallsanhang** im Pfad — ihre
+Adressen lassen sich nicht mehr erraten. Die **Merklisten** bleiben dagegen
+vorhersagbar (`social/<datum>/freigabe-<app>.json`): Diese Seite findet sie nur
+so, weil ihre Funktion bewusst keinen Blob-Token hat. Sie enthalten Bildadresse
+und Bildtext — also das, was ohnehin gleich veröffentlicht wird.
+
+✅ **Eingerichtet am 09.09.2026: https://wellapps-freigabe.vercel.app**
 
 ## Einrichten (einmalig, ~5 Minuten)
 
 **1. Neues Vercel-Projekt.** vercel.com → Add New → Project → Repository
-`almaz6380/wellapps-social` importieren.
+`almaz6380/anigosha` importieren.
 
 ⚠ **Root Directory auf `freigabe-app` setzen** (unter „Build and Output
-Settings" bzw. beim Import auf „Edit" neben Root Directory). Ohne das nimmt
-Vercel die Wurzel des Repos, und dort liegt keine Seite — nur die Werkzeuge.
+Settings" bzw. beim Import auf „Edit" neben Root Directory). Ohne das baut
+Vercel die Anigosha-Spiel-App noch einmal.
 
 Framework Preset: **Other**. Build Command und Output Directory leer lassen.
 
@@ -65,7 +93,7 @@ Datei öffnen → aus der Adresse alles bis `.com` nehmen, also
 **Der `GITHUB_TOKEN`:** github.com → Settings → Developer settings →
 Personal access tokens → **Fine-grained tokens** → Generate new token.
 
-- Repository access: **Only select repositories** → `almaz6380/wellapps-social`
+- Repository access: **Only select repositories** → `almaz6380/anigosha`
 - Permissions → Repository permissions → **Actions: Read and write**
 - sonst nichts
 
@@ -85,6 +113,4 @@ Handy öffnen und zum Startbildschirm hinzufügen.
   unterscheiden; beides sieht wie 404 aus.
 - **„GitHub 404"** beim Veröffentlichen — der Token hat kein
   `Actions: Read and write`, oder er ist auf das falsche Repository
-  eingeschränkt. ⚠ Seit dem Umzug (08.09.2026) ist das richtige Repository
-  `almaz6380/wellapps-social`, nicht mehr `anigosha` — ein Token von vorher
-  zeigt auf das falsche und muss neu erzeugt werden.
+  eingeschränkt.

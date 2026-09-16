@@ -1,0 +1,50 @@
+name: Beitrag ablehnen
+
+# Vermerkt EINEN Beitrag als abgelehnt — ausgeloest von der Freigabe-Seite.
+#
+# Er geht danach nirgends mehr hin: Der Instagram-Eintrag wird entfernt, die
+# Freigabe-Seite zeigt ihn durchgestrichen, die abgelegte Datei wird
+# weggeraeumt. Was schon oeffentlich ist, laesst sich so NICHT zurueckholen —
+# das Skript bricht dann ab.
+#
+# Den Ersatz erzeugt dieser Lauf nicht. Das ist der Tageslauf mit
+# `variante: N`; die Freigabe-Seite loest beides nacheinander aus.
+
+on:
+  workflow_dispatch:
+    inputs:
+      app:
+        description: 'Welche App? anigosha,mahjong,wellbooked,fullrep,swaply'
+        type: string
+        required: true
+      datei:
+        description: 'Dateiname des Beitrags'
+        type: string
+        required: true
+      datum:
+        description: 'Welcher Tag (JJJJ-MM-TT), leer = heute'
+        type: string
+        required: false
+
+jobs:
+  ablehnen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Abhaengigkeiten
+        run: npm ci --no-audit --no-fund || npm install --no-audit --no-fund
+
+      - name: Ablehnen
+        env:
+          BLOB_TOKEN: ${{ secrets.BLOB_TOKEN }}
+          APP: ${{ inputs.app }}
+          DATEI: ${{ inputs.datei }}
+          DATUM: ${{ inputs.datum }}
+        run: node tools/social/ablehnen.mjs

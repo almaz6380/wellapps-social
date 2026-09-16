@@ -42,9 +42,20 @@ const CODE = (process.env.CODE || '').trim();
 // gemeint ist.
 const REDIRECT = 'https://anigosha.vercel.app/tiktok-fertig';
 
-// video.upload laedt in den Entwurfs-Posteingang. NICHT video.publish — das
-// waere Direktversand, und nichts soll ungelesen rausgehen.
-const SCOPE = 'video.upload';
+// ⚠ Seit 15.09.2026 auch `video.publish` — vorher stand hier ausdruecklich
+// NUR `video.upload`, mit der Begruendung „nichts soll ungelesen rausgehen".
+// Die Begruendung ist weggefallen, nicht die Regel: Direktversand geschieht
+// ausschliesslich, wenn Josef auf der Freigabe-Seite drueckt; `AUTOMATIK` in
+// posten.mjs steht fuer alle drei Kanaele fest auf `false`.
+//
+// Noetig wurde es, weil der Posteingang-Weg GAR KEIN Textfeld hat — die
+// Bildunterschrift gibt es nur bei `post/publish/video/init/`. Und ohne
+// `video.publish` antwortet `creator_info/query` nicht, weshalb die
+// Freigabe-Seite den TikTok-Block bisher gar nicht anzeigt.
+//
+// `video.upload` bleibt zusaetzlich drin: Es ist der Rueckfallweg, solange
+// TikToks App-Pruefung nicht durch ist.
+const SCOPE = 'user.info.basic,video.publish,video.upload';
 
 if (!KEY) {
   console.error('TIKTOK_CLIENT_KEY fehlt. Er steht in der TikTok-App unter');

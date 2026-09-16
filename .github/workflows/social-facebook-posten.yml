@@ -1,0 +1,57 @@
+name: Facebook posten
+
+# Veroeffentlicht EINEN Beitrag auf einer Facebook-Seite — ausgeloest von einem
+# Menschen auf der Freigabe-Seite.
+#
+# ⚠ Der Tageslauf legt seit dem 09.09.2026 keinen Facebook-Entwurf mehr an. Er
+# legt nur die gerenderte Datei oeffentlich ab und merkt sie vor; der Beitrag
+# entsteht erst hier. Grund und Abwaegung stehen in
+# tools/social/facebook-posten.mjs.
+#
+# ⚠ Dieser Lauf VEROEFFENTLICHT. Kein Entwurf, kein Zurueck ausser Loeschen.
+
+on:
+  workflow_dispatch:
+    inputs:
+      app:
+        description: 'Welche App? anigosha,mahjong,wellbooked,fullrep,swaply'
+        type: string
+        required: true
+      datei:
+        description: 'Dateiname, z. B. anigosha-fandom-de-s123.jpg'
+        type: string
+        required: true
+      datum:
+        description: 'Welcher Tag (JJJJ-MM-TT), leer = heute'
+        type: string
+        required: false
+
+jobs:
+  posten:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # Nur die Bibliothek: Dieser Lauf rendert nichts, er holt eine fertige
+      # Datei aus dem Blob-Speicher und schickt sie zu Facebook.
+      - name: Abhaengigkeiten
+        run: npm ci --no-audit --no-fund || npm install --no-audit --no-fund
+
+      - name: Posten
+        env:
+          FB_SEITEN_TOKEN_ANIGOSHA: ${{ secrets.FB_SEITEN_TOKEN_ANIGOSHA }}
+          FB_SEITEN_TOKEN_MAHJONG: ${{ secrets.FB_SEITEN_TOKEN_MAHJONG }}
+          FB_SEITEN_TOKEN_WELLBOOKED: ${{ secrets.FB_SEITEN_TOKEN_WELLBOOKED }}
+          FB_SEITEN_TOKEN_FULLREP: ${{ secrets.FB_SEITEN_TOKEN_FULLREP }}
+          FB_SEITEN_TOKEN_SWAPLY: ${{ secrets.FB_SEITEN_TOKEN_SWAPLY }}
+          BLOB_TOKEN: ${{ secrets.BLOB_TOKEN }}
+          APP: ${{ inputs.app }}
+          DATEI: ${{ inputs.datei }}
+          DATUM: ${{ inputs.datum }}
+        run: node tools/social/facebook-posten.mjs

@@ -1,35 +1,39 @@
-// Die erzeugten Beitraege in die Kanaele bringen — als ENTWURF, nie direkt.
+// Die erzeugten Beitraege in die Kanaele bringen.
 //
 //   node tools/social/posten.mjs --trocken           was passieren wuerde
 //   node tools/social/posten.mjs --trocken --app fullrep
-//   node tools/social/posten.mjs --echt              wirklich hochladen
+//   node tools/social/posten.mjs --echt              wirklich senden
 //
 // ⚠ Ohne --echt wird nichts gesendet. Und --echt bricht ab, wenn ein
 // Zugangsdatum fehlt, statt die Haelfte hochzuladen: Ein halb gepostetes
 // Tagespaket ist schlimmer als ein gar nicht gepostetes, weil niemand mehr
 // weiss, was schon draussen ist.
 //
-// --- Warum ueberall Entwurf und nirgends Direktversand ----------------------
+// --- Entwurf oder oeffentlich? Siehe AUTOMATIK weiter unten ------------------
 //
-// Josefs Entscheidung vom 30.08.2026. Sie passt zur Sache: Die Beitraege
-// tragen Saetze wie „Laut Studien". Solche Inhalte ungelesen oeffentlich zu
-// stellen waere die eine Automatisierung, die man hier nicht will.
+// Hier geht ALLES nur als Entwurf raus. Oeffentlich wird ein Beitrag erst,
+// wenn Josef ihn freigibt. Das war bis zum 07.09.2026 so, wurde an dem Tag
+// auf volle Automatik umgestellt — und am 09.09. nach dem ersten
+// Zeitplan-Lauf sofort wieder zurueckgenommen.
+//
+// Der Schalter dafuer steht an EINER Stelle, gleich unten. Wer wissen will,
+// was heute wirklich passiert, liest dort — nicht hier.
 //
 // --- Die drei Kanaele koennen NICHT dasselbe --------------------------------
 //
-//   Facebook   echter Entwurf (`published=false`), nimmt die Datei direkt.
-//              Josef gibt in der Meta Business Suite frei.
-//   TikTok     Entwurf im Posteingang der App, nimmt die Datei direkt.
-//              Josef gibt in der TikTok-App frei.
-//              (Automatisch oeffentlich geht ohnehin nicht — TikTok sperrt
-//              unauditierte Apps auf privat.)
+//   Facebook   nimmt die Datei direkt. `published` entscheidet zwischen
+//              Entwurf und Veroeffentlichung — ein einziges Feld.
 //   Instagram  KEIN Entwurf, und es nimmt KEINE Dateien, nur oeffentliche
-//              Links. Deshalb faellt es hier heraus: Der Container entsteht
-//              erst beim Freigeben, weil er nach 24 Stunden verfaellt.
+//              Links. Also erst in den Blob-Speicher, dann Container, dann
+//              veroeffentlichen. Drei Schritte fuer einen Beitrag.
+//   TikTok     zwei getrennte Wege. Der Posteingang (`video.upload`) legt
+//              einen Entwurf in die App; der Direktversand (`video.publish`)
+//              postet selbst — verlangt aber eine gepruefte App, sonst
+//              antwortet er mit
+//              `unaudited_client_can_only_post_to_private_accounts`.
 //
 // Diese Ungleichheit ist keine Nachlaessigkeit, sondern das, was die drei
-// Schnittstellen hergeben. Sie zu verstecken haette bedeutet, fuer Instagram
-// etwas zu versprechen, das es nicht gibt.
+// Schnittstellen hergeben.
 
 import { readFileSync, readdirSync, existsSync, appendFileSync } from 'node:fs';
 import { join, dirname, basename } from 'node:path';
@@ -38,8 +42,11 @@ import { fileURLToPath } from 'node:url';
 import { ladeApps } from './waehlen.mjs';
 import { bericht as geheimBericht, zugaenge } from './veroeffentlichen/geheimnisse.mjs';
 import { entwurfAnlegen } from './veroeffentlichen/facebook.mjs';
-import { inPosteingang, frischerToken } from './veroeffentlichen/tiktok.mjs';
-import { hochladen, merklisteAblegen } from './veroeffentlichen/blob.mjs';
+import { inPosteingang, direktPosten, kontoAuskunft, frischerToken }
+  from './veroeffentlichen/tiktok.mjs';
+import { hochladen, merklisteAblegen, merklistenLesen } from './veroeffentlichen/blob.mjs';
+import { containerAnlegen, aufBereitWarten, veroeffentlichen as igVeroeffentlichen }
+  from './veroeffentlichen/instagram.mjs';
 import { captionAus, riechtNachBeiblatt } from './vorflug.mjs';
 
 const HIER = dirname(fileURLToPath(import.meta.url));
@@ -57,6 +64,38 @@ const NUR_APP = wert('app', null);
 // ist. Mit `--kanal instagram` wird nur der offene nachgeholt.
 const NUR_KANAELE = (wert('kanal', '') || '')
   .split(',').map((s) => s.trim()).filter(Boolean);
+
+// --- Wie weit die Automatik geht --------------------------------------------
+//
+// ⚠ HIER STEHT DIE FOLGENSCHWERSTE ENTSCHEIDUNG DES GANZEN WERKZEUGS.
+//
+// `true` heisst: Der Beitrag geht OEFFENTLICH, ohne dass ihn jemand gelesen
+// hat. Kein Entwurf, keine zweite Ansicht, kein Zurueck ausser Loeschen.
+//
+// STAND 09.09.2026: ALLES AUS. Ohne Josefs Freigabe geht nichts raus.
+//
+// Die Geschichte dazu, damit sie niemand ein zweites Mal durchlaeuft:
+// Bis zum 30.08. ging alles als Entwurf raus, mit guter Begruendung (die
+// Beitraege tragen Saetze wie „Laut Studien"). Am 07.09. hat Josef das
+// ausdruecklich umgestossen und die volle Automatik verlangt. Am 09.09. um
+// 11:20 lief der erste Zeitplan-Lauf damit durch und postete auf allen fuenf
+// Konten oeffentlich — Facebook und Instagram, ungelesen. Josef hat das
+// sofort und unmissverstaendlich zurueckgenommen.
+//
+// ⚠ DIESE DREI WERTE STEHEN FEST UND KOMMEN NICHT MEHR AUS DER UMGEBUNG.
+// Vorher stand hier `process.env.AUTO_FACEBOOK !== 'aus'` — also „an, solange
+// niemand widerspricht". Eine vergessene Variable in einem Workflow reichte
+// damit fuer einen oeffentlichen Beitrag. Die Voreinstellung einer
+// folgenschweren Sache gehoert auf „passiert nicht", nicht auf „passiert,
+// wenn niemand aufpasst".
+//
+// Wer das je wieder aufdreht, braucht dafuer Josefs ausdrueckliches Wort zu
+// GENAU DIESEN ZEILEN — nicht zu „Automatik" im Allgemeinen.
+const AUTOMATIK = {
+  facebook: false,
+  instagram: false,
+  tiktok: false,
+};
 
 // ⚠ Ueber ladeApps(), NICHT direkt aus der Datei: Nur so greift die
 // SOCIAL_WURZEL-Weiche (siehe waehlen.mjs). Wer hier wieder selbst liest,
@@ -240,6 +279,32 @@ const nachzutragen = [];
 // Veroeffentlichung werden.
 const uebersicht = new Map();
 
+/**
+ * Legt die Datei EINMAL oeffentlich ab und merkt sich die Adresse an `spur`.
+ *
+ * ⚠ Zwei Kanaele brauchen sie inzwischen: Instagram holt das Bild von dort ab
+ * (seine API nimmt keine Dateien), und seit 09.09.2026 auch Facebook — dessen
+ * Beitrag entsteht erst bei der Freigabe, und die laeuft auf einer anderen
+ * Maschine, auf der die gerenderte Datei laengst weg ist.
+ *
+ * Ohne diese Klammer laedt jeder Kanal dieselbe Datei erneut hoch. Das ginge
+ * (der Pfad ist vorhersagbar, `allowOverwrite` steht), kostet aber bei einem
+ * Reel vier Megabyte Bandbreite fuer nichts.
+ */
+async function abgelegt(spur, p, z) {
+  // ⚠ Kein `pfad` im gemerkten Fall: Seit dem Zufallsanhang liesse er sich
+  // nicht mehr ausrechnen, und ein ausgerechneter waere eine Behauptung ueber
+  // einen Ort, an dem nichts liegt. Gebraucht wird er ohnehin nur in der
+  // Meldung des Trockenlaufs — und dort ist nichts gemerkt.
+  if (spur.url) return { url: spur.url };
+  const r = await hochladen({
+    datei: p.medium, token: z.blobToken,
+    praefix: `social/${DATUM}`, trocken: !ECHT,
+  });
+  if (r.url) spur.url = r.url;
+  return r;
+}
+
 let fertig = 0, offen = 0;
 for (const p of posten) {
   console.log(`━━ ${p.name} · ${basename(p.medium)}`);
@@ -251,15 +316,42 @@ for (const p of posten) {
   for (const kanal of p.kanaele) {
     try {
       if (kanal === 'facebook') {
-        const r = await entwurfAnlegen({
-          seitenId: z.fbSeitenId, token: z.fbToken,
-          datei: p.medium, text: p.text, trocken: !ECHT,
-        });
-        console.log(r.trocken
-          ? `   ▸ facebook   wuerde ${r.art}-Entwurf anlegen (${r.zeichen} Zeichen Text)`
-          : `   ✓ facebook   Entwurf ${r.id} — freigeben in der Meta Business Suite`);
-        fertig += r.trocken ? 0 : 1;
-        spur.kanaele.facebook = { stand: r.trocken ? 'trocken' : 'entwurf', id: r.id ?? null };
+        if (AUTOMATIK.facebook) {
+          const r = await entwurfAnlegen({
+            seitenId: z.fbSeitenId, token: z.fbToken,
+            datei: p.medium, text: p.text, veroeffentlicht: true, trocken: !ECHT,
+          });
+          console.log(r.trocken
+            ? `   ▸ facebook   wuerde ${r.art} OEFFENTLICH posten (${r.zeichen} Zeichen Text)`
+            : `   ✓ facebook   veroeffentlicht — Beitrag ${r.id}`);
+          fertig += r.trocken ? 0 : 1;
+          spur.kanaele.facebook = {
+            stand: r.trocken ? 'trocken' : 'veroeffentlicht', id: r.id ?? null,
+          };
+        } else {
+          // ⚠ Hier entsteht BEWUSST kein Facebook-Entwurf mehr (bis 09.09.2026
+          // legte dieser Zweig einen an, `published=false`).
+          //
+          // Grund: Josef gibt jetzt auf der Freigabe-Seite frei, und ein
+          // Entwurf laesst sich per API nicht zuverlaessig nachtraeglich
+          // veroeffentlichen — fuer ein unveroeffentlichtes Foto ist der Weg
+          // ein anderer als fuer einen Feed-Beitrag. Wer beides baut (Entwurf
+          // JETZT, Beitrag BEI DER FREIGABE), bekommt am Ende zwei Sachen auf
+          // der Seite: den liegengebliebenen Entwurf und den neuen Beitrag.
+          //
+          // Also derselbe Weg wie bei Instagram: Datei oeffentlich ablegen,
+          // vormerken, und der Beitrag entsteht erst beim Freigeben — aus
+          // genau dieser Datei und genau diesem Text.
+          const r = await abgelegt(spur, p, z);
+          if (r.trocken) {
+            console.log(`   ▸ facebook   wuerde die Datei ablegen unter ${r.pfad}`);
+            spur.kanaele.facebook = { stand: 'trocken' };
+          } else {
+            console.log('   ✓ facebook   liegt bereit — freigeben auf der Freigabe-Seite');
+            spur.kanaele.facebook = { stand: 'wartet' };
+          }
+          offen += 1;
+        }
 
       } else if (kanal === 'tiktok') {
         if (!istVideo) {
@@ -267,17 +359,43 @@ for (const p of posten) {
           spur.kanaele.tiktok = { stand: 'uebersprungen', grund: 'kein Video' };
           continue;
         }
-        const r = await inPosteingang({
-          token: await tiktokToken(p.app), datei: p.medium, trocken: !ECHT,
-        });
-        console.log(r.trocken
-          ? `   ▸ tiktok     wuerde ${r.mb} MB in den Posteingang laden`
-          : `   ✓ tiktok     im Posteingang (${r.mb} MB) — freigeben in der TikTok-App`);
+        // ⚠ Auch TikTok braucht die oeffentliche Ablage — seit es den Knopf
+        // „Auf TikTok posten" auf der Freigabe-Seite gibt. `tiktok-posten.mjs`
+        // laeuft auf einer anderen Maschine und holt sich das Video von genau
+        // dieser Adresse; ohne sie bricht es mit `fetch(undefined)` ab.
+        //
+        // ⚠ Gefunden am 16.09.2026, auf dem denkbar unguenstigsten Weg: Ein
+        // Lauf mit `--kanal tiktok` erzeugte einen Beitrag ohne Vorschau, und
+        // der Knopf darunter waere still kaputt gewesen. Vorher hing die
+        // Ablage allein an Facebook und Instagram — was stimmte, solange
+        // TikTok nur in den Posteingang lud und die Datei nie wieder brauchte.
+        //
+        // `abgelegt` merkt sich die Adresse je Beitrag, ein zweiter Kanal
+        // laedt also nicht noch einmal hoch.
+        const ablage = await abgelegt(spur, p, z);
+        if (!ablage.trocken && !ablage.url) {
+          throw new Error('TikTok: Die Datei liess sich nicht oeffentlich ablegen — '
+            + 'ohne ihre Adresse kann die Freigabe-Seite sie nicht posten.');
+        }
+
+        const token = await tiktokToken(p.app);
+        const direkt = AUTOMATIK.tiktok;
+        const r = direkt
+          ? await direktPosten({ token, datei: p.medium, titel: p.text, trocken: !ECHT })
+          : await inPosteingang({ token, datei: p.medium, trocken: !ECHT });
+        if (r.trocken) {
+          console.log(`   ▸ tiktok     wuerde ${r.mb} MB ${direkt ? 'OEFFENTLICH posten' : 'in den Posteingang laden'}`);
+        } else {
+          console.log(direkt
+            ? `   ✓ tiktok     veroeffentlicht (${r.mb} MB, ${r.zeichen} Zeichen Text)`
+            : `   ✓ tiktok     im Posteingang (${r.mb} MB) — freigeben in der TikTok-App`);
+        }
         fertig += r.trocken ? 0 : 1;
-        // Auch im Trockenlauf: Dann ist die Zusammenfassung die Vorschau auf
-        // den Text, der sonst nirgends zu sehen waere.
-        inTiktok = true;
-        spur.kanaele.tiktok = { stand: r.trocken ? 'trocken' : 'posteingang' };
+        // ⚠ Der Text muss nur nachgetragen werden, solange TikTok ueber den
+        // Posteingang laeuft — der nimmt keinen an. Beim Direktversand geht er
+        // mit, dann waere die Liste eine Einladung zum doppelten Posten.
+        inTiktok = !direkt;
+        spur.kanaele.tiktok = { stand: r.trocken ? 'trocken' : (direkt ? 'veroeffentlicht' : 'posteingang') };
 
       } else if (kanal === 'instagram') {
         // Instagram bekommt hier NUR das Bild an eine oeffentliche Adresse
@@ -286,24 +404,51 @@ for (const p of posten) {
         // ⚠ Beides zugleich waere ein Fehler: Der Container verfaellt nach 24
         // Stunden. Einer, der morgens entsteht und abends freigegeben wird,
         // kann tot sein, und die Meldung saehe aus wie ein kaputter Zugang.
-        const r = await hochladen({
-          datei: p.medium, token: z.blobToken,
-          praefix: `social/${DATUM}`, trocken: !ECHT,
-        });
-        console.log(r.trocken
-          ? `   ▸ instagram  wuerde das Bild ablegen unter ${r.pfad}`
-          : `   ✓ instagram  Bild liegt bereit — Container entsteht beim Freigeben`);
-        if (!r.trocken) {
+        const r = await abgelegt(spur, p, z);
+        if (r.trocken) {
+          console.log(`   ▸ instagram  wuerde das Bild ablegen unter ${r.pfad}`
+            + (AUTOMATIK.instagram ? ' und OEFFENTLICH posten' : ''));
+          spur.kanaele.instagram = { stand: 'trocken' };
+          offen += 1;
+        } else {
           console.log(`     ${r.url}`);
-          if (!merkliste.has(p.app)) merkliste.set(p.app, []);
-          merkliste.get(p.app).push({
-            datei: basename(p.medium), url: r.url, blobPfad: r.pfad,
-            text: p.text, istVideo,
-          });
           spur.url = r.url;
+
+          if (AUTOMATIK.instagram) {
+            // ⚠ Container und Veroeffentlichung im SELBEN Lauf. Das war lange
+            // verboten, weil der Container nach 24 Stunden verfaellt und die
+            // Freigabe Stunden spaeter kam. Genau dieser Abstand faellt jetzt
+            // weg — hier vergehen Sekunden, nicht Stunden.
+            const c = await containerAnlegen({
+              kontoId: z.igKontoId, token: z.fbToken,
+              bildUrl: r.url, text: p.text, istReel: istVideo, trocken: false,
+            });
+            // ⚠ Beim Reel laedt Instagram das Video erst herunter und kodiert
+            // es. Wer sofort veroeffentlicht, bekommt „Media ID is not
+            // available" — eine Meldung, die nach einem kaputten Container
+            // aussieht, obwohl er nur noch nicht fertig ist.
+            await aufBereitWarten({ containerId: c.containerId, token: z.fbToken });
+            const v = await igVeroeffentlichen({
+              kontoId: z.igKontoId, token: z.fbToken,
+              containerId: c.containerId, trocken: false,
+            });
+            console.log(`   ✓ instagram  veroeffentlicht — Beitrag ${v.id}`);
+            spur.kanaele.instagram = { stand: 'veroeffentlicht', id: v.id };
+            fertig += 1;
+            // Aufgeraeumt wird NICHT hier: Instagram holt das Bild beim
+            // Anlegen des Containers, aber ein spaeter Zugriff ist nicht
+            // ausgeschlossen. `aufraeumen` bleibt Sache des Freigabe-Laufs.
+          } else {
+            console.log(`   ✓ instagram  Bild liegt bereit — Container entsteht beim Freigeben`);
+            if (!merkliste.has(p.app)) merkliste.set(p.app, []);
+            merkliste.get(p.app).push({
+              datei: basename(p.medium), url: r.url, blobPfad: r.pfad,
+              text: p.text, istVideo,
+            });
+            spur.kanaele.instagram = { stand: 'wartet' };
+            offen += 1;
+          }
         }
-        spur.kanaele.instagram = { stand: r.trocken ? 'trocken' : 'wartet' };
-        offen += 1;
       }
     } catch (e) {
       console.log(`   ✗ ${kanal.padEnd(10)} ${e.message}`);
@@ -330,11 +475,73 @@ for (const p of posten) {
 // schreiben — und „trocken" heisst: es geht nichts raus, auch nicht dorthin.
 for (const [appSchluessel, u] of ECHT ? uebersicht : []) {
   const eintraege = merkliste.get(appSchluessel) ?? [];
+
+  // ⚠ Die Kontoauskunft von TikTok gehoert in die Merkliste, weil die
+  // Freigabe-Seite sie braucht: TikTok verlangt, dass die Privatsphaere-
+  // Optionen, die dem Menschen angezeigt werden, aus `creator_info` stammen —
+  // und die Seite selbst hat keine TikTok-Zugangsdaten (und soll auch keine).
+  //
+  // ⚠ Sie ist eine Momentaufnahme. Vor dem Posten wird SIE NOCH EINMAL
+  // abgefragt (siehe direktPosten); was hier steht, ist nur die Vorlage fuer
+  // die Anzeige. Wer sich allein darauf verliesse, postete mit veralteten
+  // Optionen und bekaeme `privacy_level_option_mismatch`.
+  let tiktok = null;
+  if (u.posten.some((p) => p.kanaele?.tiktok)) {
+    try {
+      const a = await kontoAuskunft({ token: await tiktokToken(appSchluessel) });
+      tiktok = {
+        nickname: a.creator_nickname,
+        username: a.creator_username,
+        avatar: a.creator_avatar_url,
+        privacyOptionen: a.privacy_level_options ?? [],
+        maxSekunden: a.max_video_post_duration_sec,
+        stand: new Date().toISOString(),
+      };
+    } catch (e) {
+      // Kein Grund, den ganzen Lauf zu verlieren — die Seite zeigt dann
+      // eben, dass TikTok gerade nicht antwortet.
+      console.log(`   ⚠ TikTok-Kontoauskunft fuer ${appSchluessel}: ${e.message}`);
+    }
+  }
+
+  // ⚠ ERGAENZEN, nicht ersetzen. Bis zum 09.09.2026 schrieb dieser Aufruf die
+  // Merkliste des Tages einfach neu — was fuer den einen Lauf am Morgen auch
+  // richtig war. Seit es den Nachlauf gibt (`--variante`, ausgeloest vom
+  // Ablehnen eines Beitrags), gilt das nicht mehr: Der Nachlauf rendert NUR
+  // den neuen Beitrag, und ein Ueberschreiben haette die uebrigen Beitraege
+  // des Tages mitsamt ihrem Stand geloescht — auch die schon
+  // veroeffentlichten. Auf der Seite waeren sie verschwunden, und die Sperre
+  // gegen einen doppelten Beitrag mit ihnen.
+  //
+  // Zusammengefuehrt wird ueber den Dateinamen. Was dieser Lauf erzeugt hat,
+  // gewinnt; alles andere bleibt so stehen, wie es war.
+  let alteListe = null;
+  try {
+    const vorhanden = await merklistenLesen({
+      datum: DATUM, token: zugaenge(appSchluessel).blobToken,
+    });
+    alteListe = vorhanden.find((l) => l.app === appSchluessel) ?? null;
+  } catch (e) {
+    // Kein Grund abzubrechen — beim ersten Lauf des Tages gibt es nichts.
+    console.log(`   ⚠ Alte Merkliste nicht lesbar (${e.message}) — es wird neu angelegt.`);
+  }
+
+  const neueDateien = new Set(u.posten.map((p) => p.datei));
+  const alteUebersicht = (alteListe?.uebersicht ?? [])
+    .filter((p) => !neueDateien.has(p.datei));
+  const alteEintraege = (alteListe?.eintraege ?? [])
+    .filter((e) => !neueDateien.has(e.datei));
+
+  const zusammen = [...alteUebersicht, ...u.posten];
+  const alleEintraege = [...alteEintraege, ...eintraege];
+
   const r = await merklisteAblegen({
-    datum: DATUM, appSchluessel, name: u.name, eintraege, uebersicht: u.posten,
-    token: zugaenge(appSchluessel).blobToken,
+    datum: DATUM, appSchluessel, name: u.name,
+    eintraege: alleEintraege, uebersicht: zusammen,
+    tiktok, token: zugaenge(appSchluessel).blobToken,
   });
-  console.log(`Merkliste: ${u.posten.length} Beitrag(e), davon ${eintraege.length} fuer Instagram offen → ${r.pfad}`);
+  console.log(`Merkliste: ${zusammen.length} Beitrag(e) (${u.posten.length} aus diesem Lauf), `
+    + `davon ${alleEintraege.length} fuer Instagram offen → ${r.pfad}`);
 }
 
 // Die Texte zu den TikTok-Entwuerfen in die Zusammenfassung des Laufs.
@@ -380,5 +587,5 @@ if (nachzutragen.length && process.env.GITHUB_STEP_SUMMARY) {
 }
 
 console.log(ECHT
-  ? `${fertig} Entwuerfe angelegt, ${offen} warten auf die Freigabe.`
-  : `Trockenlauf beendet — nichts gesendet. Mit --echt wirklich hochladen.`);
+  ? `${fertig} Beitrag/Beitraege gesendet, ${offen} warten auf die Freigabe.`
+  : `Trockenlauf beendet — nichts gesendet. Mit --echt wirklich senden.`);

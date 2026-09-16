@@ -157,11 +157,64 @@ function winkelErlaubt(w, heute) {
  * @param {boolean} o.nurVorhanden  nur Winkel, deren Format schon gebaut ist
  * @returns {Array} Posts mit Winkel, Seed und Begruendung
  */
-export function waehlePosts({ app, heute, ledger, anzahl = 2, nurVorhanden = false }) {
+export function waehlePosts({
+  app, heute, ledger, anzahl = 2, nurVorhanden = false, variante = 0, sprachen = null,
+}) {
+  // ⚠ DIE SPRACHE GEHOERT DER APP, NICHT DEM WINKEL — seit 15.09.2026.
+  //
+  // Vorher wurde sie je Beitrag aus `w.sprachen` gewuerfelt. Anigosha postete
+  // deshalb 6× deutsch und 4× englisch auf DASSELBE Konto, Swaply sogar in
+  // drei Sprachen. Josef ist es an den Zahlen aufgefallen: Beitraege, die
+  // vorher Views hatten, lagen ploetzlich bei null.
+  //
+  // Das ist derselbe Denkfehler, der in CLAUDE.md schon als Begruendung gegen
+  // einen Sammelaccount ueber alle fuenf Apps steht — „ein Kanal mit
+  // Anime-Quiz, Mahjong, Fitness und Sucht-Recovery lernt der Algorithmus nie
+  // zuzuordnen." Fuer drei Sprachen auf einem Konto gilt er genauso. Er ist
+  // nur niemandem aufgefallen, weil die Sprache tief in der Auswahl gewuerfelt
+  // wurde und nirgends als Entscheidung sichtbar war.
+  //
+  // `sprachen` kommt aus apps.json. Bleibt es leer, gilt wie frueher die Liste
+  // am Winkel — damit bleibt `vorschau()` und jeder Aufrufer ohne App-Kontext
+  // lauffaehig.
+  const appSprachen = (sprachen ?? []).filter(Boolean);
+  // ⚠ `variante` ist der einzige Weg, fuer DENSELBEN Tag etwas anderes zu
+  // bekommen. Alles hier ist bewusst deterministisch aus dem Datum abgeleitet
+  // — derselbe Tag, dieselben Beitraege. Genau das steht im Weg, wenn Josef
+  // einen Beitrag ablehnt und einen neuen will: Ein zweiter Lauf brachte
+  // wieder denselben.
+  //
+  // Die Variante geht NUR in die Saat, nicht in `datum`: Der Beitrag gehoert
+  // weiter zu diesem Tag, er ist nur anders gewuerfelt. Und der Ledger bleibt
+  // beim Nachlauf stehen (siehe lauf.mjs), damit der abgelehnte Winkel
+  // gesperrt ist und nicht als Erstes wieder gezogen wird.
+  const saatTag = variante ? `${heute}#${variante}` : heute;
   const alle = ladeWinkel(app);
-  const verfuegbar = alle
+
+  /** Welche Sprache bekommt dieser Winkel? Leer = er kann die App nicht bedienen. */
+  const sprachenFuer = (w) => {
+    const eigene = w.sprachen ?? [];
+    if (!appSprachen.length) return eigene;
+    return eigene.filter((s) => appSprachen.includes(s));
+  };
+
+  let verfuegbar = alle
     .filter((w) => winkelErlaubt(w, heute))
     .filter((w) => (nurVorhanden ? w.status === 'vorhanden' : true));
+
+  // ⚠ Winkel, die die Sprache der App gar nicht koennen, fallen raus. Heute
+  // trifft das keinen einzigen (alle fuenf Apps haben volle Abdeckung
+  // gemessen) — aber der naechste neue Winkel koennte nur englisch sein, und
+  // dann soll er auf einem deutschen Konto nicht mitspielen.
+  //
+  // Bleibt dabei NICHTS uebrig, gilt wieder die alte Regel. Lieber ein Beitrag
+  // in der falschen Sprache als gar keiner — und die Meldung sagt, dass etwas
+  // zu reparieren ist.
+  if (appSprachen.length) {
+    const passend = verfuegbar.filter((w) => sprachenFuer(w).length);
+    if (passend.length) verfuegbar = passend;
+    else console.log(`   ⚠ ${app}: kein Winkel spricht ${appSprachen.join('/')} — Sprache wird ignoriert.`);
+  }
 
   const sperre = winkelSperre(verfuegbar.length, anzahl);
   const gesperrt = gesperrteWinkel(ledger, app, heute, sperre);
@@ -180,7 +233,7 @@ export function waehlePosts({ app, heute, ledger, anzahl = 2, nurVorhanden = fal
   if (kandidaten.length === 0) return [];
 
   // Deterministisch mischen: derselbe Tag ergibt dieselbe Reihenfolge.
-  const wuerfel = mulberry32(saat(heute, app));
+  const wuerfel = mulberry32(saat(saatTag, app));
   const gemischt = [...kandidaten].sort(() => wuerfel() - 0.5);
 
   // Mischung aus Bild und Reel anstreben. Ein Kanal, der nur Videos postet,
@@ -211,8 +264,15 @@ export function waehlePosts({ app, heute, ledger, anzahl = 2, nurVorhanden = fal
     // Gesundheitshinweis auch auf einer reinen Uebungskarte.
     hinweis_pflicht: w.hinweis_pflicht === true,
     quelle_pflicht: w.quelle_pflicht === true,
-    sprache: w.sprachen[saat(heute, app, w.id) % w.sprachen.length],
-    seed: saat(heute, app, w.id, String(i)) % 100000,
+    // Gewuerfelt wird nur noch innerhalb dessen, was die App spricht. Bei
+    // einer einzigen Sprache — dem Normalfall seit 15.09.2026 — faellt das
+    // Wuerfeln damit ganz weg.
+    sprache: (() => {
+      const moeglich = sprachenFuer(w);
+      const liste = moeglich.length ? moeglich : w.sprachen;
+      return liste[saat(saatTag, app, w.id) % liste.length];
+    })(),
+    seed: saat(saatTag, app, w.id, String(i)) % 100000,
     gesperrteInhalte: [...inhalteWeg],
     winkelSperre: sperre,
     gelockert,
@@ -220,13 +280,15 @@ export function waehlePosts({ app, heute, ledger, anzahl = 2, nurVorhanden = fal
 }
 
 /** Trockenlauf ueber mehrere Tage — beweist die Nicht-Wiederholung. */
-export function vorschau({ app, start, tage = 14, anzahl = 2, nurVorhanden = false }) {
+export function vorschau({ app, start, tage = 14, anzahl = 2, nurVorhanden = false, sprachen = null }) {
   const ledger = ladeLedger();
   const zeilen = [...ledger.zeilen];
   const ergebnis = [];
   for (let i = 0; i < tage; i++) {
     const d = new Date(Date.parse(start) + i * TAG).toISOString().slice(0, 10);
-    const posts = waehlePosts({ app, heute: d, ledger: { zeilen }, anzahl, nurVorhanden });
+    // ⚠ `sprachen` muss mit: Sonst zeigte der Trockenlauf eine Mischung, die
+    // der echte Lauf gar nicht mehr erzeugt — eine Vorschau, die luegt.
+    const posts = waehlePosts({ app, heute: d, ledger: { zeilen }, anzahl, nurVorhanden, sprachen });
     ergebnis.push({ datum: d, posts });
     // So tun, als waeren sie gelaufen — sonst sieht jeder Tag gleich aus.
     for (const p of posts) {

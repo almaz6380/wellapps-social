@@ -25,13 +25,19 @@
 // weg. Statt vier Minuten neu zu rendern, liest dieses Werkzeug die Merkliste,
 // die posten.mjs im selben Speicher abgelegt hat.
 
-import { merklistenLesen, merklisteAblegen, aufraeumen } from './veroeffentlichen/blob.mjs';
+import { merklistenLesen, merklisteAblegen, aufraeumen, nochGebraucht } from './veroeffentlichen/blob.mjs';
 import { containerAnlegen, aufBereitWarten, veroeffentlichen } from './veroeffentlichen/instagram.mjs';
 import { zugaenge } from './veroeffentlichen/geheimnisse.mjs';
 
 const MODUS = (process.env.MODUS || 'zeigen').trim();
 const DATUM = (process.env.DATUM || new Date().toISOString().slice(0, 10)).trim();
 const APPS = (process.env.APPS || '').split(',').map((s) => s.trim()).filter(Boolean);
+// ⚠ Seit dem 09.09.2026 gibt die Freigabe-Seite Instagram BEITRAGSWEISE frei,
+// so wie Facebook. Vorher war Instagram der einzige Kanal mit einem Sammelknopf
+// je App — zwei Beitraege auf einmal, ohne dass man vorher sagen konnte
+// „diesen ja, jenen nicht". Bleibt DATEI leer, gilt weiterhin die ganze App;
+// so laesst sich der Lauf auch von Hand als Sammelfreigabe benutzen.
+const NUR_DATEI = (process.env.DATEI || '').trim();
 
 if (!['zeigen', 'veroeffentlichen'].includes(MODUS)) {
   console.error(`Unbekannter Modus „${MODUS}" — erlaubt sind zeigen und veroeffentlichen.`);
@@ -60,7 +66,7 @@ console.log(MODUS === 'zeigen'
   ? `Offene Instagram-Beitraege fuer ${DATUM} — es wird NICHTS veroeffentlicht.\n`
   : `Instagram veroeffentlichen fuer ${DATUM}. Das ist OEFFENTLICH.\n`);
 
-let veroeffentlicht = 0, uebersprungen = 0, fehler = 0;
+let veroeffentlicht = 0, uebersprungen = 0, fehler = 0, getroffen = 0;
 
 for (const liste of listen) {
   console.log(`━━ ${liste.app}`);
@@ -69,6 +75,10 @@ for (const liste of listen) {
 
   for (const [i, e] of liste.eintraege.entries()) {
     const nummer = `${i + 1}/${liste.eintraege.length}`;
+
+    // Beitragsweise Freigabe: alles andere still ueberspringen.
+    if (NUR_DATEI && e.datei !== NUR_DATEI) continue;
+    getroffen += 1;
 
     // ⚠ Die einzige Sperre gegen einen doppelten Beitrag. Instagram selbst hat
     // keine: Zweimal veroeffentlichen ergibt zwei Beitraege, und geloescht
@@ -112,7 +122,17 @@ for (const liste of listen) {
       // Containers; wer vorher loescht, bekommt einen Container, der ins Leere
       // greift. Und misslingt das Aufraeumen, bleibt der Beitrag trotzdem
       // gueltig — es kostet nur ein paar Kilobyte.
-      await aufraeumen({ url: e.url, token: z.blobToken });
+      //
+      // ⚠ Und nur, wenn kein anderer Kanal die Datei noch braucht. Seit dem
+      // 09.09.2026 entsteht auch der Facebook-Beitrag erst bei der Freigabe,
+      // und TikTok postet von hier aus direkt — beide lesen aus demselben
+      // Speicher. Wer hier blind loescht, laesst den naechsten Knopfdruck ins
+      // Leere greifen.
+      if (nochGebraucht({ liste, datei: e.datei })) {
+        console.log('        (Datei bleibt liegen — ein anderer Kanal ist noch offen)');
+      } else {
+        await aufraeumen({ url: e.url, token: z.blobToken });
+      }
     } catch (err) {
       fehler += 1;
       console.log(`        ✗ ${err.message}`);
@@ -131,7 +151,8 @@ for (const liste of listen) {
   if (geaendert) {
     await merklisteAblegen({
       datum: DATUM, appSchluessel: liste.app, name: liste.name,
-      eintraege: liste.eintraege, uebersicht: liste.uebersicht, token: z.blobToken,
+      eintraege: liste.eintraege, uebersicht: liste.uebersicht,
+      tiktok: liste.tiktok, token: z.blobToken,
     });
   }
   console.log();
@@ -141,6 +162,12 @@ if (MODUS === 'zeigen') {
   console.log('Zum Veroeffentlichen denselben Workflow mit modus: veroeffentlichen starten.');
 } else {
   console.log(`${veroeffentlicht} veroeffentlicht, ${uebersprungen} schon vorher, ${fehler} fehlgeschlagen.`);
+  // ⚠ Ein Lauf, der nichts gefunden hat, darf nicht gruen sein. Sonst sieht
+  // ein Tippfehler im Dateinamen wie eine gelungene Freigabe aus.
+  if (NUR_DATEI && !getroffen) {
+    console.error(`„${NUR_DATEI}" steht in keiner Merkliste vom ${DATUM} — nichts getan.`);
+    process.exit(1);
+  }
   // Ein Fehlschlag muss den Lauf roetlich faerben — sonst faellt er niemandem
   // auf, und der Beitrag fehlt still.
   if (fehler) process.exit(1);

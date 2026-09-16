@@ -1,11 +1,3 @@
-> ⚠ **Das ist die Kopie aus `almaz6380/anigosha`** (Stand 08.09.2026, ohne
-> `fertig/` und `spot/` — die fertigen Anigosha-Videos und der Werbespot sind
-> dort geblieben). Anigoshas eigene Reels rendert der Tageslauf aus dem
-> anigosha-Checkout, nicht von hier. Gebraucht wird diese Kopie von
-> `tools/social/reels-fremd/` (Swaply, WELLbooked!) und `tools/social/tiktok-demo/`:
-> `encode.mjs` und `assets/outfit.woff2`. Wer am Generator selbst arbeitet, tut
-> das in anigosha und zieht die Aenderung hierher nach.
-
 # Reel-Generator (Instagram / TikTok)
 
 Baut aus den 804 Quizfragen des Repos fertige Hochkant-Videos: 1080×1920, H.264,

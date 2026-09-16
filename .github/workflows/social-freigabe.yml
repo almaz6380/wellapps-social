@@ -38,6 +38,10 @@ on:
         description: 'Welcher Tag (JJJJ-MM-TT), leer = heute'
         type: string
         required: false
+      datei:
+        description: 'Nur DIESEN Beitrag — leer = alle offenen der App'
+        type: string
+        required: false
 
 jobs:
   freigeben:
@@ -53,10 +57,9 @@ jobs:
 
       # Nur die Bibliothek, kein Rendern: Dieser Lauf baut nichts, er liest die
       # Merkliste und spricht mit Instagram. Deshalb weder Playwright noch
-      # ffmpeg (beide stehen hier unter devDependencies, --omit=dev laesst sie
-      # weg) und keine App-Repos.
+      # ffmpeg und keine Schwester-Repos.
       - name: Abhaengigkeiten
-        run: npm ci --omit=dev --no-audit --no-fund || npm install --omit=dev --no-audit --no-fund
+        run: npm ci --no-audit --no-fund || npm install --no-audit --no-fund
 
       - name: Freigabe
         env:
@@ -69,4 +72,5 @@ jobs:
           MODUS: ${{ inputs.modus }}
           APPS: ${{ inputs.apps }}
           DATUM: ${{ inputs.datum }}
+          DATEI: ${{ inputs.datei }}
         run: node tools/social/freigeben.mjs
