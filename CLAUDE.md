@@ -22,6 +22,41 @@ der Überbau: Stand, Umzug, Ablauf, Fallen.
 
 ---
 
+## Warum dieses Repo öffentlich wird — und die drei Regeln dazu (16.09.2026)
+
+GitHub Actions ist auf **öffentlichen** Repos unbegrenzt und kostenlos, auf privaten
+nur 2000 Minuten im Monat. Am 16.09.2026 waren sie aufgebraucht: Der geplante
+Tageslauf starb nach zwei Sekunden, ohne Läufer und ohne Protokoll — und mit ihm
+jeder Build und jede Freigabe bis zum Monatswechsel. Genau dafür ist dieses Repo da.
+
+⚠ **Ein zweites kostenloses GitHub-Konto wäre der naheliegende, falsche Weg** — er
+verstößt gegen die Nutzungsbedingungen (eine Person, ein kostenloses Konto), und
+GitHub sperrt im Zweifel alle Konten desselben Menschen. Daran hingen die Repos aller
+fünf Apps. Der Gedanke wurde geprüft und verworfen; er soll nicht wiederkommen.
+
+**Die drei Regeln, ohne die „öffentlich" unsicher wäre:**
+
+1. **`tiktok-zugang` bleibt im privaten Repo.** Das Skript **druckt den Refresh-Token
+   im Klartext ins Protokoll** — es muss, denn nur ein Mensch kann ihn ins Secret
+   eintragen. Auf einem privaten Repo ist das vertretbar (danach Logs löschen); auf
+   einem öffentlichen wäre dieses Protokoll für jeden lesbar. ⚠ **GitHubs
+   Secret-Maskierung hilft dort nicht:** Der Wert kommt frisch von TikTok und ist zu
+   dem Zeitpunkt noch kein Secret.
+2. **Niemals `pull_request_target` oder `issue_comment` als Auslöser.** Beide laufen
+   MIT Secrets gegen fremden Code. Alle Workflows hier haben nur `workflow_dispatch`
+   und `schedule` — das ist der sichere Zuschnitt: Fremde können nichts auslösen, und
+   Läufe aus Forks bekommen grundsätzlich keine Secrets.
+3. **Keine Self-hosted Runner auf diesem Repo.** Dort liefe fremder Code auf eigener
+   Hardware.
+
+**Was öffentlich sichtbar wird** (am 16.09. gegen die üblichen Schlüsselmuster
+geprüft, null Treffer): der Generator-Code, die Winkel-Logik, die Workflows, die
+Facebook-Seiten- und Instagram-IDs in `apps.json` (ohnehin öffentlich), der Ledger,
+die Bio-Texte und Kanalbilder (stehen so auf den Profilen) und die **Namen** der
+Secrets — nicht deren Werte.
+
+---
+
 ## ⚠ Umzug — Stand 08.09.2026, und was noch von Hand zu tun ist
 
 Der Code ist vollständig hier. **Was NICHT mitkommen konnte, sind die Zugangsdaten:
@@ -37,7 +72,8 @@ Ledger, die auseinanderlaufen.
 | `tools/reels/` (Reel-Generator, den reels-fremd mitbenutzt) | ✅ hier, **ohne** `fertig/` und `spot/` — die sind Anigoshas Videos und bleiben dort |
 | `tools/pruefbrowser.mjs` (Browser-Unterbau für `kanal/tiktok-app-icon.mjs`) | ✅ hier |
 | `freigabe-app/` | ✅ hier; `api/freigabe.js` startet den Workflow jetzt in **diesem** Repo |
-| fünf Workflows (`social-*.yml`, `tiktok-zugang.yml`) | ✅ hier; der Tageslauf checkt anigosha jetzt als sechstes Repo mit aus |
+| sieben Workflows (`social-*.yml`) | ✅ hier; der Tageslauf checkt anigosha jetzt als sechstes Repo mit aus |
+| `tiktok-zugang.yml` + `tiktok-zugang.mjs` | ❌ **bewusst NICHT hier** — bleibt privat in `almaz6380/anigosha`, siehe „Warum dieses Repo öffentlich wird" |
 | `package.json` mit `@vercel/blob`, `playwright`, `ffmpeg-static` | ✅ neu — die `--no-save`-Falle gibt es in diesem Repo nicht mehr |
 | 15 Secrets + `REPOS_TOKEN` | ❌ **neu zu beschaffen** (Schritt 2 und 3) |
 | Repository-Variable `SOCIAL_ZEITPLAN` | ❌ erst beim Umschalten setzen (Schritt 4) |
