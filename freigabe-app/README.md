@@ -1,5 +1,14 @@
 # Freigabe-Seite
 
+⚠ **Das Vercel-Projekt `wellapps-freigabe` hängt seit 17.09.2026 an DIESEM Repo**
+(vorher `almaz6380/anigosha`). Root Directory bleibt `freigabe-app`.
+
+⚠ **„Redeploy" reicht beim Umhängen NICHT.** Er baut immer dieselbe Quelle neu —
+nach dem Umhängen also weiter den alten Stand aus dem alten Repo, erkennbar am
+Commit-Titel von dort. Erst ein **Push** in dieses Repo löst den ersten Build aus
+der neuen Quelle aus. Genau darüber ist die Umstellung am 17.09. zuerst
+gestolpert.
+
 Eine kleine Seite fürs Handy, die die Social-Entwürfe eines Tages zeigt —
 Video oder Bild, den Text zum Kopieren, und je Kanal, was schon passiert ist.
 Instagram lässt sich von hier freigeben.
