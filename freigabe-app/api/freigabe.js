@@ -30,7 +30,12 @@ import { createHash, timingSafeEqual } from 'node:crypto';
 // Rest des Repos nicht zur Hand.
 const APPS = ['anigosha', 'mahjong', 'wellbooked', 'fullrep', 'swaply'];
 
-const REPO = 'almaz6380/anigosha';
+// ⚠ Seit 17.09.2026 dieses Repo, nicht mehr `almaz6380/anigosha`. Es ist
+// oeffentlich, und damit kosten seine Actions-Laeufe keine Minuten — genau
+// deshalb liegt die Automatik hier. Der GitHub-Token in den Vercel-Variablen
+// muss `Actions: Read and write` auf GENAU dieses Repo haben; zeigt er noch
+// aufs alte, antwortet der Knopf mit „GitHub 404".
+const REPO = 'almaz6380/wellapps-social';
 const WORKFLOW = 'social-freigabe.yml';
 const WORKFLOW_TIKTOK = 'social-tiktok-posten.yml';
 const WORKFLOW_FACEBOOK = 'social-facebook-posten.yml';
