@@ -1,0 +1,88 @@
+name: TikTok-Zugang holen
+
+# Holt den Refresh-Token fuer EIN TikTok-Konto und schreibt ihn direkt in das
+# passende Secret. Je Konto einmal auszufuehren, in zwei Schritten.
+#
+# --- ⚠ Warum der Token nirgends im Protokoll steht ---------------------------
+#
+# Bis zum 16.09.2026 gab das Skript ihn im Klartext aus, mit der Auflage,
+# danach die Logs zu loeschen. In einem OEFFENTLICHEN Repo waere das eine
+# offene Tuer. Stattdessen legt das Skript den Wert in eine Datei, und der
+# Schritt darunter schiebt ihn mit `gh secret set … < datei` ins Secret — ohne
+# ihn je auszugeben.
+#
+# ⚠ GitHubs Secret-Maskierung haette hier nicht geholfen: Der Wert kommt
+# frisch von TikTok und ist in dem Moment noch kein Secret.
+#
+# --- ⚠ Der Client Key kommt als EINGABE, nicht aus den Secrets ----------------
+#
+# Er ist nicht geheim (er steht in der Adresse, die der Nutzer im Browser
+# oeffnet). Als Secret waere er im Protokoll zu `***` geschwaerzt — und genau
+# daran scheiterte der `link`-Schritt am 16.09.: Die ausgegebene Anmeldeadresse
+# war unbrauchbar.
+#
+# Der Client SECRET bleibt dagegen ein Secret.
+
+on:
+  workflow_dispatch:
+    inputs:
+      app:
+        description: 'Fuer welches Konto?'
+        type: choice
+        options: [anigosha, mahjong, wellbooked, fullrep, swaply]
+        required: true
+      schritt:
+        description: 'link = Anmeldeadresse erzeugen · tausch = Code einloesen'
+        type: choice
+        options: [link, tausch]
+        default: link
+      client_key:
+        description: 'Client Key aus der TikTok-App (nicht geheim)'
+        type: string
+        required: true
+      code:
+        description: 'Nur bei schritt=tausch: der Wert von der Landeseite'
+        type: string
+        required: false
+
+jobs:
+  zugang:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: TikTok-Zugang
+        env:
+          CLIENT_KEY: ${{ inputs.client_key }}
+          TIKTOK_CLIENT_SECRET: ${{ secrets.TIKTOK_CLIENT_SECRET }}
+          SCHRITT: ${{ inputs.schritt }}
+          CODE: ${{ inputs.code }}
+          ZIEL: ${{ runner.temp }}/refresh-token
+        run: node tools/social/tiktok-zugang.mjs
+
+      # ⚠ Nur beim Tausch — der `link`-Schritt erzeugt keinen Token.
+      #
+      # ⚠ Das Secret heisst je Konto anders. `tr` macht aus `anigosha` das
+      # ANIGOSHA im Secret-Namen; ein fest verdrahteter Name haette den Token
+      # des einen Kontos ueber den des anderen geschrieben, und aufgefallen
+      # waere es erst, wenn ein Beitrag auf dem falschen Konto landet.
+      - name: In das Secret schreiben
+        if: inputs.schritt == 'tausch'
+        env:
+          GH_TOKEN: ${{ secrets.GH_SECRETS_TOKEN }}
+        run: |
+          set -e
+          NAME="TIKTOK_REFRESH_TOKEN_$(echo '${{ inputs.app }}' | tr '[:lower:]' '[:upper:]')"
+          gh secret set "$NAME" --repo "${{ github.repository }}" < "${{ runner.temp }}/refresh-token"
+          echo "✓ $NAME gesetzt — der Wert stand in keinem Protokoll."
+          rm -f "${{ runner.temp }}/refresh-token"
+
+      - name: Was jetzt
+        if: inputs.schritt == 'tausch'
+        run: |
+          echo "Naechster Schritt: „Social-Zugaenge pruefen\" laufen lassen."
+          echo "Er sagt, ob der Token zum richtigen Konto gehoert — und sendet nichts."

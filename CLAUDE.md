@@ -7,7 +7,8 @@ WELLbooked!, FullRep, Swaply) Videos und Bilder, lädt sie als **Entwurf** zu Ti
 und Facebook, legt sie für Instagram bereit — und **öffentlich wird nichts ohne
 einen Menschen.**
 
-**Repository:** https://github.com/almaz6380/wellapps-social (privat)
+**Repository:** https://github.com/almaz6380/wellapps-social (**öffentlich seit 17.09.2026** —
+nur so laufen die Actions ohne Minutenkontingent; die drei Regeln dazu stehen unten)
 **Herkunft:** bis 08.09.2026 in `almaz6380/anigosha` (dort `tools/social/`,
 `freigabe-app/`, `.github/workflows/social-*.yml`; Stand beim Umzug: Commit `aa5a6eb`,
 Ledger bis einschließlich Tageslauf vom 08.09.). Die Geschichte davor steht in
@@ -36,12 +37,17 @@ fünf Apps. Der Gedanke wurde geprüft und verworfen; er soll nicht wiederkommen
 
 **Die drei Regeln, ohne die „öffentlich" unsicher wäre:**
 
-1. **`tiktok-zugang` bleibt im privaten Repo.** Das Skript **druckt den Refresh-Token
-   im Klartext ins Protokoll** — es muss, denn nur ein Mensch kann ihn ins Secret
-   eintragen. Auf einem privaten Repo ist das vertretbar (danach Logs löschen); auf
-   einem öffentlichen wäre dieses Protokoll für jeden lesbar. ⚠ **GitHubs
-   Secret-Maskierung hilft dort nicht:** Der Wert kommt frisch von TikTok und ist zu
-   dem Zeitpunkt noch kein Secret.
+1. **Kein Geheimnis darf je ins Protokoll.** `tiktok-zugang.mjs` druckte den
+   Refresh-Token bis zum 16.09. im Klartext, mit der Auflage, danach die Logs zu
+   löschen — in einem öffentlichen Repo eine offene Tür. Seit 17.09. schreibt es ihn
+   in eine Datei, und der Workflow schiebt sie mit `gh secret set … < datei` ins
+   Secret. Der Wert berührt das Protokoll nie.
+   ⚠ **Auf GitHubs Secret-Maskierung ist hier kein Verlass:** Der Wert kommt frisch
+   von TikTok und ist in dem Moment noch kein Secret.
+   ⚠ Umgekehrt gilt: Der **Client Key** ist KEIN Geheimnis (er steht in der Adresse,
+   die der Nutzer im Browser öffnet) und kommt deshalb als Workflow-**Eingabe** herein.
+   Als Secret wäre er zu `***` geschwärzt — genau daran war die vom `link`-Schritt
+   ausgegebene Anmeldeadresse am 16.09. unbrauchbar.
 2. **Niemals `pull_request_target` oder `issue_comment` als Auslöser.** Beide laufen
    MIT Secrets gegen fremden Code. Alle Workflows hier haben nur `workflow_dispatch`
    und `schedule` — das ist der sichere Zuschnitt: Fremde können nichts auslösen, und
@@ -73,7 +79,7 @@ Ledger, die auseinanderlaufen.
 | `tools/pruefbrowser.mjs` (Browser-Unterbau für `kanal/tiktok-app-icon.mjs`) | ✅ hier |
 | `freigabe-app/` | ✅ hier; `api/freigabe.js` startet den Workflow jetzt in **diesem** Repo |
 | sieben Workflows (`social-*.yml`) | ✅ hier; der Tageslauf checkt anigosha jetzt als sechstes Repo mit aus |
-| `tiktok-zugang.yml` + `tiktok-zugang.mjs` | ❌ **bewusst NICHT hier** — bleibt privat in `almaz6380/anigosha`, siehe „Warum dieses Repo öffentlich wird" |
+| `tiktok-zugang.yml` + `tiktok-zugang.mjs` | ✅ hier, seit 17.09. **umgebaut**: schreibt den Token direkt ins Secret statt ins Protokoll |
 | `package.json` mit `@vercel/blob`, `playwright`, `ffmpeg-static` | ✅ neu — die `--no-save`-Falle gibt es in diesem Repo nicht mehr |
 | 15 Secrets + `REPOS_TOKEN` | ❌ **neu zu beschaffen** (Schritt 2 und 3) |
 | Repository-Variable `SOCIAL_ZEITPLAN` | ❌ erst beim Umschalten setzen (Schritt 4) |
