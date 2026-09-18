@@ -244,6 +244,51 @@ Fehler, die keine sind): 48 Blöcke, 0 Syntaxfehler. Es wurde **zuerst an einer
 Kopie der kaputten Zeile geprüft** — eine Null von einem Prüfer, der nichts
 findet, ist nichts wert.
 
+### ⚠ Swaplys Bildbeiträge sind drei Wochen lang verschwunden (18.09.2026)
+
+Aufgefallen bei Josefs Frage „und fullrep?" — beim Nachzählen stimmte etwas
+anderes nicht. Gemessen an vier Stichtagen:
+
+| Tag | Ledger sagt | in der Freigabe-Seite |
+|---|---|---|
+| 05.09. | Reel + Karte | nichts |
+| 08.09. | Reel + Karte | nur das Reel |
+| 09.09. | Reel + Karte | nur das Reel |
+| 18.09. | Reel + Karte | nur das Reel |
+
+**Ursache:** `swaply/scripts/post-bild.mjs` schrieb kein Beiblatt (`.txt`), und
+`tagesposten()` in `posten.mjs` findet Beiträge **ausschließlich über deren
+.txt-Datei** — der Caption-Text kommt von dort. Ein Bild ohne Beiblatt
+existiert für den Versand nicht.
+
+**Das Teuerste war die Stille.** Der Lauf meldete „1 Beitrag" statt „einer
+fehlt", und weil in der Liste etwas stand, hat es niemand gemerkt. Ein grüner
+Haken, hinter dem die Hälfte fehlt.
+
+Behoben an zwei Stellen, und beide braucht es:
+
+1. **Swaplys Generator schreibt jetzt ein Beiblatt** (Commit `91b203d` auf
+   `claude/swaply-icon-farben` — main hat den Generator gar nicht, deshalb
+   dort). Die Caption besteht aus dem Aufhänger und genau den Texten, die auf
+   der Karte stehen; kein Satz wird frei formuliert.
+   ⚠ Die gewürfelten Texte werden dafür **vor** dem HTML gezogen — in genau
+   derselben Reihenfolge je Winkel. `waehle` dreht den Würfel weiter; alle
+   Werte unbedingt zu ziehen verschöbe die Folge, und jeder alte Seed zeigte
+   ein anderes Bild. Gegenprobe: 36 Bilder vorher/nachher, identische
+   Prüfsumme.
+2. **`posten.mjs` meldet den Verlust laut.** Was der Ledger für heute
+   verspricht und nicht ankommt, wird benannt, und der Lauf endet mit 1.
+   ⚠ Zwei Fälle, die nicht verwechselt werden dürfen: Datei da ohne Beiblatt =
+   echter Verlust (rot); Ordner existiert gar nicht = das Rendern lief auf
+   einer anderen Maschine (Hinweis, grün). Sonst stumpft der Alarm ab.
+
+**Alle neun Generatoren am 18.09. nachgeprüft** — Swaply war der einzige ohne
+Beiblatt.
+
+**Merksatz:** Der Ledger ist die Wahrheit darüber, was entstanden ist. Was dort
+steht und im Versand fehlt, ist unterwegs verloren gegangen — und das darf nie
+still passieren.
+
 ### Freie Karte — ein Beitrag auf Zuruf (18.09.2026)
 
 Alle Formate zeichnen aus den Daten der jeweiligen App. Für eine Ansage, die
