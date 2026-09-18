@@ -88,10 +88,26 @@ jobs:
         env:
           GEPLANT: ${{ github.event_name == 'schedule' }}
           ZEITPLAN: ${{ vars.SOCIAL_ZEITPLAN }}
+        # ⚠ KEINE deutschen Anfuehrungszeichen in diesem Skript.
+        #
+        # Hier stand `auf „an".` — die oeffnende Klammer ist U+201E (fuer bash
+        # ein harmloses Zeichen), die SCHLIESSENDE war ein gewoehnliches ",
+        # und das beendet die Zeichenkette mitten im Satz. bash bricht beim
+        # PARSEN ab, also unabhaengig davon, welcher Zweig genommen wird:
+        #
+        #   line 5: unexpected EOF while looking for matching `"'
+        #
+        # Folge: Der Zeitplan ist vom 11. bis 18.09.2026 jeden Morgen nach
+        # sieben Sekunden gestorben — acht Laeufe, alle rot, und die
+        # Freigabe-Seite blieb jeden Tag leer. Ein Schalter, der den Lauf
+        # abwuergt, den er nur ueberspringen sollte.
+        #
+        # Deshalb hier einfache Anfuehrungszeichen: In einer
+        # doppelt-gequoteten bash-Zeichenkette sind sie gewoehnliche Zeichen.
         run: |
           if [ "$GEPLANT" = "true" ] && [ "$ZEITPLAN" != "an" ]; then
             echo "aktiv=false" >> "$GITHUB_OUTPUT"
-            echo "Zeitplan in diesem Repo noch nicht scharf — Variable SOCIAL_ZEITPLAN steht nicht auf „an". Nichts getan." | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "Zeitplan in diesem Repo nicht scharf - Variable SOCIAL_ZEITPLAN steht nicht auf 'an'. Nichts getan." | tee -a "$GITHUB_STEP_SUMMARY"
           else
             echo "aktiv=true" >> "$GITHUB_OUTPUT"
           fi
