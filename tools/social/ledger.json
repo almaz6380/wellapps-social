@@ -480,10 +480,73 @@
     {
       "app": "anigosha",
       "datum": "2026-09-18",
-      "winkel": "freie-karte",
+      "winkel": "ladder",
+      "medium": "reel",
+      "schluessel": "fragen-ids",
+      "inhalt": "seed735",
+      "sprache": "de"
+    },
+    {
+      "app": "anigosha",
+      "datum": "2026-09-18",
+      "winkel": "wusstest-du-karte",
       "medium": "bild",
-      "schluessel": "frei",
-      "inhalt": "seed120391",
+      "schluessel": "fragen-ids",
+      "inhalt": "seed17940",
+      "sprache": "de"
+    },
+    {
+      "app": "mahjong",
+      "datum": "2026-09-18",
+      "winkel": "paar",
+      "medium": "reel",
+      "schluessel": "level",
+      "inhalt": "seed70665",
+      "sprache": "en"
+    },
+    {
+      "app": "wellbooked",
+      "datum": "2026-09-18",
+      "winkel": "mythos",
+      "medium": "reel",
+      "schluessel": "aussage",
+      "inhalt": "seed57437",
+      "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-18",
+      "winkel": "mythos-check",
+      "medium": "reel",
+      "schluessel": "wissensthema",
+      "inhalt": "seed75042",
+      "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-18",
+      "winkel": "rezept-karte",
+      "medium": "bild",
+      "schluessel": "rezept",
+      "inhalt": "seed83688",
+      "sprache": "de"
+    },
+    {
+      "app": "swaply",
+      "datum": "2026-09-18",
+      "winkel": "notfall-loop",
+      "medium": "reel",
+      "schluessel": "kategorie",
+      "inhalt": "seed27164",
+      "sprache": "de"
+    },
+    {
+      "app": "swaply",
+      "datum": "2026-09-18",
+      "winkel": "notfall",
+      "medium": "bild",
+      "schluessel": "kategorie",
+      "inhalt": "seed85100",
       "sprache": "de"
     }
   ]
