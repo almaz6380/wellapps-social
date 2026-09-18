@@ -3,15 +3,15 @@
  "swaply": {
   "name": "Swaply",
   "wortmarke": "Swaply",
-  "_farben_quelle": "Aus src/styles.css des STANDARDZWEIGS von almaz6380/swaply — also aus der App, die im Store liegt. ⚠ Bis 18.09.2026 standen hier die Werte eines nie zusammengefuehrten Zweigs (claude/swaply-profile-cover-images-mlgr9m): Grund #06171c Dunkeltuerkis, Akzent #46adc6 Blaucyan. Ausgeliefert wird aber #0b0c0e fast schwarz mit Mint #9be3b4. Die Beitraege sahen dadurch drei Wochen lang nach einer anderen App aus, und Josef hat es am fertigen Beitrag erkannt. Wer die Farben aendert, nimmt sie aus `git show origin/main:src/styles.css` — nicht aus dem Zweig, auf dem man gerade steht.",
+  "_farben_quelle": "GEMESSEN aus assets/icon-only.png des Repos almaz6380/swaply (1024×1024, Ecken und Mitte abgetastet, 18.09.2026): #4f8cfe Blau → #46adc6 Tuerkis → #40c79c Gruentuerkis; #46adc6 allein macht 23 % der Flaeche aus. ⚠ Swaply hat ZWEI Paletten, die nicht zueinander passen — die Oberflaeche (src/styles.css auf main) ist #0b0c0e Schwarz mit #9be3b4 Mint. Fuer Beitraege gilt das ICON: Es steht im Store und auf dem Homescreen, die Oberflaeche sieht man erst nach dem Installieren. Josefs Entscheidung, nachdem ein Zwischenstand am 18.09. versehentlich die Mint-Palette benutzt hatte. Wer das aendert, misst am Icon — nicht am Screenshot, nicht am CSS des Zweigs, auf dem er gerade steht. Und: dunkler Grund, Verlauf nur als AKZENT; als Flaeche wirkt er blass und beliebig.",
   "verlauf": [
-   "#9be3b4",
-   "#8ad9a8",
-   "#9be3b4"
+   "#4f8cfe",
+   "#46adc6",
+   "#40c79c"
   ],
-  "schrift": "#f4f5f2",
-  "gedaempft": "#a9aea7",
-  "kontrast": "#0b0c0e",
+  "schrift": "#eefaf7",
+  "gedaempft": "#9dbcbb",
+  "kontrast": "#0d2137",
   "stores": {
    "ios": true,
    "android": true
@@ -82,11 +82,11 @@
    "bio": "https://getswaply.vercel.app",
    "_hinweis": "getswaply.vercel.app traegt beide Store-Knoepfe und funktioniert. Die feineren Pfade /instagram, /tiktok und /app liegen im Branch claude/swaply-profile-cover-images-mlgr9m des Repos almaz6380/swaply und antworten bis zum Deploy mit 404."
   },
-  "grund": "#0b0c0e",
-  "grundTief": "#14161a",
-  "weich": "#cfd3cd",
+  "grund": "#06171c",
+  "grundTief": "#05252c",
+  "weich": "#cfe6e4",
   "linie": "rgba(255,255,255,.14)",
-  "mint": "#9be3b4",
+  "mint": "#46adc6",
   "mittel": {
    "icon": "marken-mittel/swaply/icon.png",
    "display": "marken-mittel/swaply/fredoka-latin.woff2",
