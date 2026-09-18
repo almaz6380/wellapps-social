@@ -41,6 +41,7 @@ const WORKFLOW_TIKTOK = 'social-tiktok-posten.yml';
 const WORKFLOW_FACEBOOK = 'social-facebook-posten.yml';
 const WORKFLOW_ABLEHNEN = 'social-ablehnen.yml';
 const WORKFLOW_TAGESLAUF = 'social-tageslauf.yml';
+const WORKFLOW_KARTE = 'social-karte.yml';
 
 // ⚠ Der Dateiname geht als Workflow-Eingabe weiter und landet dort in einer
 // Shell-Umgebung. Nur zulassen, was unsere Werkzeuge auch erzeugen.
@@ -206,6 +207,59 @@ export default async function handler(req, res) {
         apps: app, modus: 'echt', datum: tag, variante: String(n), zweige,
       });
       res.status(200).json({ gestartet: true, datum: tag, app, variante: n });
+      return;
+    }
+
+    // Freie Karte: ein Beitrag mit einem Text, den du hier tippst — statt aus
+    // den Daten der App gezogen. Er wird gezeichnet und in die Merkliste von
+    // heute gehaengt; oeffentlich wird er erst mit dem gewoehnlichen Knopf.
+    if (aktion === 'karte') {
+      if (!token) {
+        res.status(500).json({ fehler: 'GITHUB_TOKEN ist in Vercel nicht gesetzt.' });
+        return;
+      }
+      // ⚠ Nur Anigosha. Das Format steckt in anigosha/tools/post-bild.mjs; die
+      // vier anderen Apps haben es noch nicht. Hier abfangen statt den Lauf
+      // zehn Minuten spaeter scheitern zu lassen.
+      if (app !== 'anigosha') {
+        res.status(400).json({ fehler: 'Freie Karten gibt es bisher nur fuer Anigosha.' });
+        return;
+      }
+
+      const txt = String(req.body?.text ?? '').trim();
+      if (!txt) {
+        res.status(400).json({ fehler: 'Ohne Text gibt es nichts zu zeichnen.' });
+        return;
+      }
+      // ⚠ Die Obergrenze ist gemessen, nicht geraten: Der Generator bricht ab,
+      // wenn der Text nicht auf die Karte passt — bei ~240 Zeichen faellt er auf
+      // die kleinste Schrift, darueber laeuft er ueber. Hier schon zu bremsen
+      // spart zehn Minuten Lauf fuer einen Abbruch.
+      if (txt.length > 240) {
+        res.status(400).json({
+          fehler: `Zu lang: ${txt.length} Zeichen. Auf die Karte passen hoechstens 240.`,
+        });
+        return;
+      }
+      // Die drei Beiwerke sind kurz oder gar nicht da. Ein langer „Haken"
+      // druckt den eigentlichen Satz von der Karte.
+      const kurz = (v, feld) => {
+        const s = String(v ?? '').trim();
+        if (s.length > 60) throw new Error(`„${feld}" ist zu lang (hoechstens 60 Zeichen).`);
+        return s;
+      };
+      let haken, marke, cta;
+      try {
+        haken = kurz(req.body?.haken, 'Haken');
+        marke = kurz(req.body?.marke, 'Marke');
+        cta = kurz(req.body?.cta, 'Schlusszeile');
+      } catch (e) {
+        res.status(400).json({ fehler: e.message });
+        return;
+      }
+
+      await laufStarten(token, WORKFLOW_KARTE, { app, text: txt, haken, marke, cta });
+      res.status(200).json({ gestartet: true, app, zeichen: txt.length });
       return;
     }
 

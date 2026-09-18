@@ -204,6 +204,78 @@ vorderen Teil. Zwei Ausnahmen laufen aus DIESEM Repo: `tools/social/reels-fremd/
 | **Facebook-Entwuerfe** | unveröffentlichte Beiträge auflisten und (nur mit ausdrücklichen IDs) löschen |
 | **Social-Zugaenge pruefen** | sagt je App, ob der Token zur richtigen Seite gehört und ob er abläuft. Sendet nichts |
 | **TikTok-Zugang holen** | tauscht einen OAuth-Code gegen einen Refresh-Token. Protokoll danach löschen |
+| **Freie Karte** | eine Bildkarte mit eigenem Text, auf Zuruf. Ausgelöst von der Freigabe-Seite |
+
+### ⚠ Der Zeitplan war acht Tage tot — an EINEM Anführungszeichen (18.09.2026)
+
+Josef sah in der Freigabe-App nichts und fragte nach. Gemessen statt vermutet:
+Die Läufe 3 bis 10 (11.–18.09.) sind **alle** rot, jeder nach drei bis acht
+Sekunden. In der Meldung des Schalter-Schritts stand:
+
+```
+… steht nicht auf „an". Nichts getan.
+```
+
+Öffnend `„` (U+201E, für bash harmlos), **schließend ein gewöhnliches `"`** —
+das beendet die Zeichenkette mitten im Satz. bash bricht beim **Parsen** ab,
+also unabhängig davon, welcher Zweig genommen würde:
+
+```
+line 5: unexpected EOF while looking for matching `"'
+```
+
+Ein Schritt, der einen Lauf nur überspringen sollte, hat ihn getötet.
+`SOCIAL_ZEITPLAN` stand die ganze Zeit richtig auf `an`.
+
+**Zwei Lehren:**
+
+1. **Keine deutschen Anführungszeichen in `run:`-Blöcken.** In YAML-Kommentaren
+   und in Markdown gern, in bash nie — das schließende Zeichen ist dort ein
+   gewöhnliches `"`. Einfache Anführungszeichen sind in einer
+   doppelt-gequoteten bash-Zeichenkette gewöhnliche Zeichen und deshalb sicher.
+2. **Ein roter Lauf, den niemand ansieht, ist ein stummer Lauf.** Acht Tage
+   ohne einen einzigen Beitrag, und gemerkt hat es niemand, weil die leere
+   Freigabe-Seite wie „heute nichts dabei" aussah. Bei leerer Seite **zuerst
+   die Lauf-Liste ansehen**, nicht den Blob-Speicher.
+
+Gegenprobe ist ein Skript, das jeden `run:`-Block beider Repos durch `bash -n`
+jagt (`${{ … }}` vorher durch einen Platzhalter ersetzt, sonst meldet bash
+Fehler, die keine sind): 48 Blöcke, 0 Syntaxfehler. Es wurde **zuerst an einer
+Kopie der kaputten Zeile geprüft** — eine Null von einem Prüfer, der nichts
+findet, ist nichts wert.
+
+### Freie Karte — ein Beitrag auf Zuruf (18.09.2026)
+
+Alle Formate zeichnen aus den Daten der jeweiligen App. Für eine Ansage, die
+kein Generator kennen kann (neue Version, Hinweis, ein Satz, der unterwegs
+einfällt), gab es nichts. Jetzt: `--format freie-karte` in
+`anigosha/tools/post-bild.mjs`, bestellt über `lauf.mjs --karte` oder den
+Block „Neuen Beitrag bauen" auf der Freigabe-Seite.
+
+**Sie ist bewusst KEIN Winkel der Rotation.** Ein Winkel wird gewürfelt, diese
+Karte wird bestellt. Stünde sie in `ideen/anigosha.json`, zöge der Tageslauf
+sie irgendwann von selbst — und dann ohne Text, weil der nur von außen kommt.
+
+⚠ **`posten.mjs --seed` ist die ganze Sicherung gegen Doppelte.** Der
+Kartenlauf *ergänzt* den Tag, statt ihn zu ersetzen. Ein gewöhnlicher
+Versandlauf würde deshalb das Tagespaket von heute Morgen ein zweites Mal in
+den Blob schieben und ein zweites Mal vormerken — in der Freigabe-Seite stünde
+dann jeder Beitrag doppelt, und beim Instagram-Knopf wüsste niemand mehr,
+welcher der echte ist. Dieselbe Sorte Schutz wie `--kanal`, nur auf der
+anderen Achse.
+
+⚠ **Die Rubrik „ZUR KONTROLLE" im Beiblatt ist eine GRENZE, kein Text.**
+`captionAus()` schneidet die Caption an der nächsten unterstrichenen
+Überschrift ab. Sie war bei der freien Karte zuerst weggelassen — es gibt dort
+ja weder Lösung noch Erklärung zu kontrollieren. Inhaltlich richtig, technisch
+falsch: Die Caption lief bis ans Dateiende und nahm „Store-Satz im Bild: …"
+mit. Der Versand brach ab (*„Verräter: Store-Satz im Bild"*) — die Leitplanke
+hat genau das getan, wofür sie da ist.
+
+⚠ **Nur Anigosha.** Die Auswahl auf der Freigabe-Seite zeigt deshalb eine
+einzige Zeile, und `lauf.mjs --karte` bricht bei den anderen vier mit einer
+klaren Meldung ab, statt bis zum Motor durchzulaufen und dort mit „unbekanntes
+Format" zu scheitern.
 
 Lokal, ohne Zugangsdaten:
 

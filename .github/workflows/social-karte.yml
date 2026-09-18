@@ -1,0 +1,193 @@
+name: Freie Karte
+
+# Eine Bildkarte auf Zuruf, mit einem Text, den ein Mensch vorgibt.
+#
+# Ausgeloest von der Freigabe-Seite (Block „Neuer Beitrag") oder von Hand.
+# Der fertige Beitrag landet in der Merkliste des Tages und wartet dort auf
+# denselben Knopf wie jeder andere — veroeffentlicht wird hier NICHTS.
+#
+# --- Warum ein eigener Workflow und nicht der Tageslauf ----------------------
+#
+# Der Tageslauf ERSETZT den Tag: Er wirft die Ledger-Zeilen von heute weg und
+# rendert neu. Eine Karte, die mittags dazukommt, soll aber ergaenzen. Und sie
+# hat keinen Winkel, kein Los und keine Rotation — sie ist bestellt, nicht
+# gewuerfelt.
+#
+# ⚠ Deshalb postet der Versandschritt mit `--seed`: NUR diese eine Karte. Ohne
+# das ginge das Tagespaket von heute Morgen ein zweites Mal in den Blob und ein
+# zweites Mal in die Merkliste — in der Freigabe-Seite staende dann jeder
+# Beitrag doppelt.
+#
+# --- ⚠ Bisher kann das nur Anigosha ------------------------------------------
+#
+# Das Format `freie-karte` steckt in anigosha/tools/post-bild.mjs. Die vier
+# anderen Apps haben es noch nicht; `lauf.mjs --karte` bricht dort mit einer
+# klaren Meldung ab, statt bis zum Motor durchzulaufen.
+
+on:
+  workflow_dispatch:
+    inputs:
+      app:
+        description: 'Fuer welche App?'
+        type: choice
+        options: [anigosha]
+        default: anigosha
+        required: true
+      text:
+        description: 'Der Satz auf der Karte (Pflicht)'
+        type: string
+        required: true
+      haken:
+        description: 'Kleine Zeile darueber, z. B. „Wusstest du?" (optional)'
+        type: string
+        required: false
+      marke:
+        description: 'Pille ganz oben, z. B. „Anigosha 1.1" (optional)'
+        type: string
+        required: false
+      cta:
+        description: 'Zeile darunter, z. B. „Jetzt spielen" (optional)'
+        type: string
+        required: false
+
+jobs:
+  karte:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      SOCIAL_WURZEL: ${{ github.workspace }}
+      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.pw-browsers
+
+    steps:
+      - name: wellapps-social auschecken
+        uses: actions/checkout@v4
+        with:
+          path: wellapps-social
+
+      # ⚠ Die App-Repos sind privat; der eingebaute GITHUB_TOKEN gilt nur fuer
+      # dieses Repo. REPOS_TOKEN hat Contents:Read auf die fuenf.
+      #
+      # ⚠⚠ NOTBEHELF, und er gehoert weg, sobald der Zweig in main ist.
+      #
+      # Das Format `freie-karte` liegt bisher nur auf
+      # `claude/cross-project-task-4y6939`. Ein Checkout des Standardzweigs
+      # brachte hier „unbekanntes Format: freie-karte" — dieselbe Falle, an der
+      # am 05.09. schon Swaply haengengeblieben ist: Der Motor eines Repos muss
+      # auf dessen STANDARDZWEIG liegen, sonst sieht dieser Workflow ihn nicht.
+      # Lokal ist alles da, und genau deshalb faellt es erst im Lauf auf.
+      #
+      # Der Zweig wird nicht nach main gebracht, weil ein Push dorthin die
+      # Web-App auf Vercel neu ausliefert — das braucht Josefs Wort, nicht
+      # meins. Bis dahin steht die Quelle hier ausdruecklich und sichtbar.
+      - name: anigosha auschecken
+        uses: actions/checkout@v4
+        with:
+          repository: almaz6380/anigosha
+          ref: claude/cross-project-task-4y6939
+          token: ${{ secrets.REPOS_TOKEN }}
+          path: anigosha
+
+      - name: Woher der Motor kommt
+        run: |
+          echo "⚠ Anigosha wird vom Zweig 'claude/cross-project-task-4y6939' gerendert," >> "$GITHUB_STEP_SUMMARY"
+          echo "nicht vom Standardzweig. Sobald er in main ist, gehoert die ref-Zeile raus." >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # ⚠ BEIDE Pakete in EINEM `npm i --no-save`-Aufruf. Zwei Aufrufe
+      # nacheinander heben sich auf: npm raeumt bei jeder Installation weg, was
+      # nicht in package.json steht — und --no-save traegt es dort gerade nicht
+      # ein. Genau so verschwand im Tageslauf #3 das eben installierte
+      # playwright wieder.
+      #
+      # Fuer eine Karte reicht playwright; ffmpeg-static steht hier trotzdem
+      # mit, damit dieser Schritt derselbe ist wie im Tageslauf und nicht
+      # auseinanderlaeuft.
+      - name: Abhaengigkeiten
+        run: |
+          set -e
+          cd "$SOCIAL_WURZEL/anigosha"
+          npm ci --no-audit --no-fund || npm install --no-audit --no-fund
+          npm i --no-save --no-audit --no-fund playwright ffmpeg-static
+          [ -d node_modules/playwright ] || { echo "✗ playwright fehlt in anigosha"; exit 1; }
+          cd "$SOCIAL_WURZEL/wellapps-social"
+          npm ci --no-audit --no-fund
+          [ -d node_modules/@vercel/blob ] || { echo "✗ @vercel/blob fehlt"; exit 1; }
+
+      # Erst NACH der Installation — der Browser muss zu der Playwright-Fassung
+      # passen, die dann wirklich laeuft.
+      - name: Chromium fuer Playwright
+        run: |
+          set -e
+          cd "$SOCIAL_WURZEL/wellapps-social" && npx playwright install --with-deps chromium
+          cd "$SOCIAL_WURZEL/anigosha" && npx playwright install chromium
+
+      # ⚠ Die Texte kommen ueber `env`, NICHT direkt als ${{ inputs.text }} in
+      # die Kommandozeile. Sie sind vom Menschen getippt und koennen
+      # Anfuehrungszeichen, Apostrophe oder Zeilenumbrueche enthalten —
+      # eingesetzt in ein Shell-Skript waere jedes davon eine kaputte oder
+      # gefaehrliche Zeile. Als Umgebungsvariable ist der Wert ein Wert.
+      - name: Karte zeichnen
+        id: karte
+        working-directory: wellapps-social
+        env:
+          APP: ${{ inputs.app }}
+          TEXT: ${{ inputs.text }}
+          HAKEN: ${{ inputs.haken }}
+          MARKE: ${{ inputs.marke }}
+          CTA: ${{ inputs.cta }}
+        run: |
+          set -e
+          ARGS=(--karte --app "$APP" --text "$TEXT")
+          [ -n "$HAKEN" ] && ARGS+=(--haken "$HAKEN")
+          [ -n "$MARKE" ] && ARGS+=(--marke "$MARKE")
+          [ -n "$CTA" ]   && ARGS+=(--cta   "$CTA")
+          node tools/social/lauf.mjs "${ARGS[@]}"
+
+      # ⚠ `--seed` ist hier keine Feinheit, sondern die ganze Sicherung gegen
+      # doppelte Beitraege. Der Seed kommt aus dem Schritt darueber (er
+      # schreibt ihn nach GITHUB_OUTPUT), damit er nicht ein zweites Mal
+      # gewuerfelt wird und auf eine Datei zeigt, die es nicht gibt.
+      - name: In die Merkliste
+        working-directory: wellapps-social
+        env:
+          FB_SEITEN_TOKEN_ANIGOSHA: ${{ secrets.FB_SEITEN_TOKEN_ANIGOSHA }}
+          TIKTOK_CLIENT_KEY: ${{ secrets.TIKTOK_CLIENT_KEY }}
+          TIKTOK_CLIENT_SECRET: ${{ secrets.TIKTOK_CLIENT_SECRET }}
+          TIKTOK_REFRESH_TOKEN_ANIGOSHA: ${{ secrets.TIKTOK_REFRESH_TOKEN_ANIGOSHA }}
+          BLOB_TOKEN: ${{ secrets.BLOB_TOKEN }}
+          APP: ${{ inputs.app }}
+          SEED: ${{ steps.karte.outputs.seed }}
+        run: |
+          set -e
+          [ -n "$SEED" ] || { echo "✗ Kein Seed vom Zeichenschritt — nichts zu posten."; exit 1; }
+          node tools/social/posten.mjs --echt --app "$APP" --seed "$SEED"
+
+      # ⚠ Der Ledger ist das Gedaechtnis. Ohne das Zurueckschreiben findet der
+      # naechste Lauf die Karte nicht mehr — und `posten.mjs` postet nur, was
+      # im Ledger steht.
+      #
+      # [skip ci] haelt Vercel davon ab, fuer eine Datenzeile die Freigabe-Seite
+      # neu zu bauen.
+      - name: Ledger zurueckschreiben
+        working-directory: wellapps-social
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tools/social/ledger.json
+          git diff --cached --quiet && { echo "Ledger unveraendert."; exit 0; }
+          git commit -m "Social: freie Karte ${{ steps.karte.outputs.seed }} [skip ci]"
+          # ⚠ Erst holen, dann schieben: Zwischen dem Auschecken und hier liegen
+          # ein paar Minuten, in denen der Tageslauf seine eigene Ledger-Zeile
+          # geschrieben haben kann. Ohne Rebase scheitert der Push, und die
+          # Karte waere zwar abgelegt, aber nicht vermerkt.
+          git pull --rebase origin ${{ github.ref_name }}
+          git push origin HEAD:${{ github.ref_name }}
+
+      - name: Was jetzt
+        run: |
+          echo "Die Karte liegt in der Merkliste von heute."
+          echo "Sie wird oeffentlich, wenn du sie auf der Freigabe-Seite freigibst - sonst nie."

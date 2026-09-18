@@ -65,6 +65,19 @@ const NUR_APP = wert('app', null);
 const NUR_KANAELE = (wert('kanal', '') || '')
   .split(',').map((s) => s.trim()).filter(Boolean);
 
+// ⚠ --seed holt GENAU EINEN Beitrag nach, nicht das Tagespaket.
+//
+// Gebraucht fuer die freie Karte: Die entsteht mitten am Tag auf Zuruf,
+// waehrend die Beitraege von heute Morgen laengst abgelegt und vorgemerkt
+// sind. Ein gewoehnlicher Lauf wuerde sie alle noch einmal in den Blob
+// schieben und ein zweites Mal in die Merkliste haengen — in der
+// Freigabe-Seite staende dann jeder Beitrag doppelt, und beim
+// Instagram-Knopf wuesste niemand mehr, welcher der echte ist.
+//
+// Dieselbe Sorte Schutz wie --kanal, nur auf der anderen Achse: dort ein
+// Kanal von dreien, hier ein Beitrag von mehreren.
+const NUR_SEED = wert('seed', null);
+
 // --- Wie weit die Automatik geht --------------------------------------------
 //
 // ⚠ HIER STEHT DIE FOLGENSCHWERSTE ENTSCHEIDUNG DES GANZEN WERKZEUGS.
@@ -149,6 +162,7 @@ function tagesposten() {
       // einem frueheren Lauf desselben Tages. Ueberspringen, nicht posten.
       const seed = stamm.match(/-s(\d+)(?:-[a-z]+)?$/)?.[1];
       if (seeds && !(seed && seeds.get(k)?.has(seed))) continue;
+      if (NUR_SEED && seed !== String(NUR_SEED)) continue;
       // Das Feed-Bild ist das zu postende; das Story-Bild ist eine Beigabe.
       const medium = ['.mp4', '-feed.jpg', '.jpg'].map((e) => join(ordner, stamm + e))
         .find(existsSync);

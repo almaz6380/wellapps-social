@@ -51,6 +51,21 @@
   .hinweis { font-size: 13px; color: var(--leise); margin-top: 8px; }
   [hidden] { display: none !important; }
 
+  /* Block „Neuen Beitrag bauen". Er teilt sich das Aussehen der Eingabefelder
+     mit dem Rest; nur textarea und select brauchen es ausdruecklich, weil die
+     Regel oben nur `input` nennt. */
+  textarea, select {
+    font: inherit; width: 100%; padding: 12px; border-radius: 11px;
+    border: 1px solid var(--rand); background: #12101c; color: var(--tinte);
+  }
+  textarea { resize: vertical; min-height: 84px; }
+  .feldname { display: block; font-size: 13px; color: var(--leise); margin: 12px 0 5px; }
+  summary { font-weight: 600; cursor: pointer; }
+  /* ⚠ Der Zaehler faerbt sich, BEVOR der Lauf abbricht. Der Generator lehnt
+     zu langen Text erst nach zehn Minuten ab — das hier ist die Antwort in
+     Echtzeit. */
+  .voll { color: #ff8f8f; }
+
   /* TikTok-Block. Er sieht bewusst nach Formular aus: TikTok verlangt, dass
      der Mensch hier aktiv waehlt, und das soll man sehen. */
   .tt { border-top: 1px solid var(--rand); margin-top: 12px; padding-top: 12px; }
@@ -86,6 +101,50 @@
     <input id="datum" type="date">
     <button class="rand" id="neu">Laden</button>
   </div>
+
+  <!--
+    Neuer Beitrag auf Zuruf.
+
+    ⚠ Zugeklappt, und das ist Absicht: Diese Seite ist zum FREIGEBEN da. Ein
+    aufgeklapptes Formular ganz oben verdraengt jeden Tag die Beitraege, die
+    eigentlich auf einen Knopfdruck warten.
+
+    ⚠ Nur Anigosha in der Auswahl. Das Format „freie-karte" steckt in
+    anigosha/tools/post-bild.mjs; die vier anderen Apps haben es noch nicht.
+    Lieber ein Menue mit einer Zeile als vier, von denen drei eine
+    Fehlermeldung liefern.
+  -->
+  <details id="neuer" class="karte">
+    <summary>Neuen Beitrag bauen</summary>
+    <p class="leise" style="margin:10px 0 0">
+      Eine Karte im Design der App, mit deinem Text. Sie ist in etwa zehn
+      Minuten hier und wartet dann auf deinen Knopf — von allein geht nichts
+      raus.
+    </p>
+
+    <label class="feldname" for="k-app">App</label>
+    <select id="k-app"><option value="anigosha">Anigosha</option></select>
+
+    <label class="feldname" for="k-text">Text auf der Karte</label>
+    <textarea id="k-text" maxlength="240" enterkeyhint="done"
+      placeholder="Wer drei Tage nicht spielt, verliert seinen Streak."></textarea>
+    <p class="hinweis" id="k-zaehler">0 / 240</p>
+
+    <label class="feldname" for="k-haken">Kleine Zeile darüber (optional)</label>
+    <input id="k-haken" maxlength="60" placeholder="Wusstest du?">
+
+    <label class="feldname" for="k-marke">Pille ganz oben (optional)</label>
+    <input id="k-marke" maxlength="60" placeholder="Anigosha 1.1">
+
+    <label class="feldname" for="k-cta">Schlusszeile (optional)</label>
+    <input id="k-cta" maxlength="60" placeholder="anigosha.vercel.app/get">
+
+    <div class="reihe" style="margin-top:14px">
+      <button id="k-bauen">Bauen</button>
+    </div>
+    <p class="hinweis" id="k-stand"></p>
+  </details>
+
   <div id="liste"></div>
 </section>
 
@@ -444,6 +503,46 @@ async function anmelden(eingabe) {
   $('#inhalt').hidden = false;
   laden();
 }
+
+// ------------------------------------------------- Neuen Beitrag bauen
+const zaehler = () => {
+  const n = $('#k-text').value.trim().length;
+  const z = $('#k-zaehler');
+  z.textContent = `${n} / 240`;
+  z.classList.toggle('voll', n > 240);
+};
+$('#k-text').addEventListener('input', zaehler);
+
+$('#k-bauen').onclick = async () => {
+  const knopf = $('#k-bauen');
+  const stand = $('#k-stand');
+  const text = $('#k-text').value.trim();
+
+  if (!text) { stand.textContent = 'Ohne Text gibt es nichts zu zeichnen.'; return; }
+
+  // ⚠ Knopf sperren, BEVOR gesendet wird. Ein zweiter Tipper während des
+  // Wartens startet einen zweiten Lauf — und damit eine zweite Karte, die
+  // dann ebenfalls in der Merkliste steht und freigegeben werden will.
+  knopf.disabled = true;
+  stand.textContent = 'Wird gestartet …';
+  try {
+    await ruf('karte', {
+      app: $('#k-app').value,
+      text,
+      haken: $('#k-haken').value.trim(),
+      marke: $('#k-marke').value.trim(),
+      cta: $('#k-cta').value.trim(),
+    });
+    stand.textContent = 'Läuft. In etwa zehn Minuten steht die Karte unten — '
+      + 'dann oben auf „Laden" tippen.';
+    // Die Felder NICHT leeren: Geht etwas schief, wäre der getippte Text weg.
+    // Der Knopf bleibt gesperrt, damit nicht aus Versehen dieselbe Karte
+    // zweimal entsteht; ein Neuladen der Seite gibt ihn frei.
+  } catch (e) {
+    stand.textContent = `Ging nicht: ${e.message}`;
+    knopf.disabled = false;
+  }
+};
 
 $('#datum').value = new Date().toISOString().slice(0, 10);
 $('#neu').onclick = laden;

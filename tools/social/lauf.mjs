@@ -13,7 +13,7 @@
 // dem Rendern nachsieht, hat 20 Minuten pro Antwort bezahlt.
 
 import { execFileSync, spawn } from 'node:child_process';
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, mkdirSync, appendFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -169,9 +169,123 @@ function vorflugProbe() {
   return fehler;
 }
 
+// ------------------------------------------------------------- Kartenlauf
+//
+//   node tools/social/lauf.mjs --karte --app anigosha --text "Dein Satz."
+//
+// Eine freie Karte auf Zuruf. Sie ist KEIN Winkel der Rotation, und das ist
+// Absicht: Ein Winkel wird gewuerfelt, diese Karte wird bestellt. Stuende sie
+// in ideen/<app>.json, zoege der Tageslauf sie irgendwann von selbst — und
+// dann ohne Text, weil der nur von aussen kommen kann.
+//
+// Was sie mit dem Tageslauf teilt: denselben Motor, dieselbe Leitplanke,
+// denselben Ledger. Was sie nicht teilt: Sie ERSETZT den Tag nicht, sondern
+// haengt genau eine Zeile an. Deshalb darf danach nur ihr eigener Seed
+// gepostet werden (`posten.mjs --seed`), sonst geht das Tagespaket von heute
+// Morgen ein zweites Mal raus.
+async function kartenlauf() {
+  const k = NUR_APP;
+  const text = wert('text', null);
+
+  if (!k || !APPS[k]) {
+    console.error(`--app fehlt oder ist unbekannt. Moeglich: ${appSchluessel.join(', ')}`);
+    process.exit(1);
+  }
+  if (!text) {
+    console.error('--text fehlt. Die freie Karte hat keine Datenquelle, aus der');
+    console.error('sich ein fehlender Text ersetzen liesse.');
+    process.exit(1);
+  }
+  // ⚠ Nur Anigoshas Generator kennt `freie-karte`. Ohne diese Probe liefe der
+  // Lauf bei den anderen vier bis zum Motor durch und schluege dort mit
+  // „unbekanntes Format" fehl — eine Meldung, die nach einem kaputten
+  // Werkzeug aussieht statt nach einem, das es fuer diese App noch nicht gibt.
+  if (k !== 'anigosha') {
+    console.error(`Fuer ${APPS[k].name} ist das Format „freie-karte" noch nicht gebaut.`);
+    console.error('Bisher kann es nur Anigosha (tools/post-bild.mjs).');
+    process.exit(1);
+  }
+
+  const app = APPS[k];
+  const sprache = (app.sprachen ?? ['de'])[0];
+  // Der Seed identifiziert den Beitrag gegenueber posten.mjs. Er muss deshalb
+  // eindeutig sein, auch wenn am selben Tag zwei Karten bestellt werden — aus
+  // Datum und App abgeleitet waere er beide Male derselbe.
+  const seed = Math.floor(Math.random() * 900000) + 100000;
+
+  const post = {
+    winkel: 'freie-karte', format: 'freie-karte', medium: 'bild',
+    sprache, seed, schluessel: 'frei',
+    frei: {
+      text,
+      haken: wert('haken', null),
+      marke: wert('marke', null),
+      cta: wert('cta', null),
+    },
+    dateiname: `${k}-freie-karte-${sprache}-s${seed}`,
+  };
+
+  app.storeSatz = storeSatz(app, sprache);
+  const ort = ausgabeOrt(k, app, HEUTE);
+  const plan = aufruf({
+    appSchluessel: k, app, post,
+    wuerfel: mulberry32(saat(HEUTE, k, 'freie-karte', String(seed))),
+    out: ort.fuerMotor,
+  });
+
+  console.log(`Freie Karte fuer ${app.name} · ${sprache} · Seed ${seed}\n`);
+  console.log(`   „${text}"\n`);
+
+  for (const s of plan.schritte) {
+    execFileSync(s.cmd, s.args, {
+      cwd: s.cwd, stdio: 'inherit',
+      env: { ...process.env, ...browserUmgebung() },
+    });
+  }
+
+  const dateien = ergebnisse(ort.abs, post.dateiname, seed);
+  const captionDatei = dateien.find((f) => f.endsWith('.txt'));
+  if (!captionDatei) {
+    console.error('\n✗ Der Generator hat keine Caption-Datei hinterlassen.');
+    process.exit(1);
+  }
+  const beiblatt = readFileSync(captionDatei, 'utf8');
+
+  // ⚠ Dieselbe Leitplanke wie im Tageslauf, und hier ist sie WICHTIGER:
+  // Im Tageslauf kommt der Text aus geprueften Daten, hier tippt ihn ein
+  // Mensch am Handy. Eine Karte, die hier durchfaellt, wird nicht abgelegt.
+  const pruefung = pruefe({
+    appSchluessel: k, app, post,
+    texte: { caption: captionAus(beiblatt), medienherkunft: 'typografie' },
+  });
+  if (!pruefung.bestanden) {
+    console.error(berichte(pruefung, 'freie-karte'));
+    process.exit(1);
+  }
+
+  // Ein Nachlauf ERGAENZT den Tag. Die Zeilen von heute Morgen bleiben stehen
+  // — sonst waeren die Beitraege des Tages fuer posten.mjs nicht mehr da.
+  const ledger = ladeLedger();
+  ledger.zeilen.push({
+    app: k, datum: HEUTE, winkel: 'freie-karte', medium: 'bild',
+    schluessel: 'frei', inhalt: `seed${seed}`, sprache,
+  });
+  writeFileSync(join(HIER, 'ledger.json'), JSON.stringify(ledger, null, 2) + '\n');
+
+  console.log(`\n✓ ${dateien.map((f) => f.split('/').pop()).join(', ')}`);
+  console.log(`\nNaechster Schritt — NUR diesen Beitrag ablegen:`);
+  console.log(`   node tools/social/posten.mjs --echt --app ${k} --seed ${seed}`);
+  // Der Workflow liest den Seed hier heraus, statt ihn noch einmal zu wuerfeln.
+  if (process.env.GITHUB_OUTPUT) {
+    appendFileSync(process.env.GITHUB_OUTPUT, `seed=${seed}\n`);
+  }
+}
+
 // ------------------------------------------------------------------- Einstieg
 if (hat('pruefung')) {
   process.exit(vorflugProbe() === 0 ? 0 : 1);
+} else if (hat('karte')) {
+  await kartenlauf();
 } else if (hat('trocken')) {
   trockenlauf();
 } else {

@@ -81,12 +81,25 @@ export function aufruf({ appSchluessel, app, post, wuerfel, out }) {
       }
       return { schritte: [n(...args)], endung: '.mp4' };
     }
-    return {
-      schritte: [n('tools/post-bild.mjs', '--format', post.format,
-        '--lang', post.sprache, '--seed', String(post.seed), '--out', out,
-        '--store', app.storeSatz)],
-      endung: '.jpg',
-    };
+    const bild = ['tools/post-bild.mjs', '--format', post.format,
+      '--lang', post.sprache, '--seed', String(post.seed), '--out', out,
+      '--store', app.storeSatz];
+
+    // Die freie Karte ist der einzige Beitrag, dessen Inhalt nicht aus den
+    // 804 Fragen kommt, sondern von aussen. Er haengt als `post.frei` am
+    // Beitrag — gesetzt vom Kartenlauf in lauf.mjs, nie von der Rotation.
+    //
+    // ⚠ Leere Werte NICHT durchreichen. `--haken` ohne Wert wuerde das
+    // naechste Argument als seinen Wert schlucken, und der Generator saehe
+    // `--haken --marke` — mit „--marke" als Hakentext im fertigen Bild.
+    if (post.format === 'freie-karte') {
+      for (const feld of ['text', 'haken', 'marke', 'cta']) {
+        const v = post.frei?.[feld];
+        if (v) bild.push(`--${feld}`, String(v));
+      }
+    }
+
+    return { schritte: [n(...bild)], endung: '.jpg' };
   }
 
   if (appSchluessel === 'mahjong') {
