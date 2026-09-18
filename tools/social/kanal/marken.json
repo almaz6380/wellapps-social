@@ -95,7 +95,15 @@
   "zusatz": {
    "de": "Kostenlos · Kein Konto · Alles bleibt auf deinem Gerät",
    "en": "Free · No account · Everything stays on your device"
-  }
+  },
+  "grundVerlauf": [
+   "#4f8cfe",
+   "#46adc6",
+   "#40c79c"
+  ],
+  "tinte": "#06171c",
+  "tinteLeise": "rgba(6,23,28,.62)",
+  "_grund_hinweis": "grundVerlauf macht den Icon-Verlauf zum HINTERGRUND (Josefs Entscheidung, 18.09.2026). ⚠ Dann MUSS die Schrift dunkel sein: Weiss misst auf den drei Punkten des Verlaufs 3,22 / 2,61 / 2,13:1 — noetig sind 4,5:1 fuer Fliesstext. Mit #06171c sind es 5,68 / 7,02 / 8,60:1. Wer den Schluessel entfernt, faellt auf das dunkle Schema zurueck; wer ihn setzt, ohne die Tinte umzustellen, macht den Beitrag unlesbar, ohne dass es im Entwurf auffaellt. Marken ohne diesen Schluessel (WELLbooked!) bleiben unberuehrt."
  },
  "anigosha": {
   "name": "Anigosha",

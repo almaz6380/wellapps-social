@@ -113,6 +113,25 @@ function storeBadges() {
   return raus;
 }
 
+// --- Heller oder dunkler Grund? ---------------------------------------------
+//
+// ⚠ Marken MIT `grundVerlauf` (Swaply seit 18.09.2026) tragen den Icon-Verlauf
+// als HINTERGRUND — und dann MUSS die Schrift dunkel sein. Weiss misst auf den
+// drei Punkten des Swaply-Verlaufs 3,22 / 2,61 / 2,13:1; noetig sind 4,5:1 fuer
+// Fliesstext. Mit #06171c sind es 5,68 / 7,02 / 8,60:1.
+//
+// Marken OHNE den Schluessel (WELLbooked!) bleiben beim dunklen Schema — hier
+// aendert sich fuer sie nichts.
+const HELL = Array.isArray(M.grundVerlauf) && M.grundVerlauf.length >= 2;
+const GRUND = HELL
+  ? `linear-gradient(135deg, ${M.grundVerlauf.join(', ')})`
+  : M.grund;
+const TINTE = HELL ? (M.tinte ?? '#06171c') : M.schrift;
+const TINTE_LEISE = HELL ? (M.tinteLeise ?? 'rgba(6,23,28,.62)') : M.gedaempft;
+// Der Schimmer von oben: auf dunklem Grund ein farbiger Hauch, auf hellem ein
+// heller — ein dunkler Fleck saehe dort wie ein Druckfehler aus.
+const SCHIMMER = HELL ? 'rgba(255,255,255,.22)' : M.grundTief;
+
 const wuerfel = mulberry32(SEED * 2654435761);
 const waehle = (a) => a[Math.floor(wuerfel() * a.length)];
 
@@ -205,28 +224,28 @@ function html() {
 @font-face{font-family:Outfit;src:url(data:font/woff2;base64,${schrift}) format('woff2');
   font-weight:100 900;font-display:block}
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{width:${B}px;height:${H}px;overflow:hidden;background:${M.grund}}
-body{font-family:Outfit,sans-serif;color:${M.schrift}}
+html,body{width:${B}px;height:${H}px;overflow:hidden;background:${GRUND}}
+body{font-family:Outfit,sans-serif;color:${TINTE}}
 .buehne{position:relative;width:100%;height:100%}
 .buehne::before{content:'';position:absolute;inset:0;
-  background:radial-gradient(90% 55% at 50% 12%, ${M.grundTief}, transparent 70%)}
+  background:radial-gradient(90% 55% at 50% 12%, ${SCHIMMER}, transparent 70%)}
 .karte{position:absolute;inset:0;display:flex;flex-direction:column;
   align-items:center;justify-content:center;padding:150px 90px;text-align:center;opacity:0}
 .marke{position:absolute;top:96px;left:0;right:0;text-align:center;
-  font-size:34px;font-weight:600;letter-spacing:.18em;color:${M.mint};opacity:.9}
+  font-size:34px;font-weight:700;letter-spacing:.18em;color:${TINTE};opacity:.9}
 .fuss{position:absolute;bottom:110px;left:0;right:0;text-align:center;
-  font-size:32px;font-weight:500;color:${M.gedaempft}}
+  font-size:32px;font-weight:500;color:${TINTE_LEISE}}
 .kopfzeile{font-size:88px;font-weight:700;line-height:1.08;max-width:860px}
-.vorherWort{font-size:40px;font-weight:600;letter-spacing:.14em;color:${M.gedaempft};
+.vorherWort{font-size:40px;font-weight:600;letter-spacing:.14em;color:${TINTE_LEISE};
   margin-bottom:26px}
 .vorherText{font-size:76px;font-weight:600;line-height:1.15;max-width:860px;
-  text-decoration:line-through;text-decoration-thickness:5px;color:${M.gedaempft}}
+  text-decoration:line-through;text-decoration-thickness:5px;color:${TINTE_LEISE}}
 .zahl{width:120px;height:120px;border-radius:50%;display:flex;align-items:center;
   justify-content:center;font-size:56px;font-weight:700;margin-bottom:46px;
-  border:3px solid ${inhalt.akzent};color:${inhalt.akzent}}
+  border:3px solid ${HELL ? TINTE : inhalt.akzent};color:${HELL ? TINTE : inhalt.akzent}}
 .text{font-size:70px;font-weight:600;line-height:1.2;max-width:880px}
 .schluss{font-size:80px;font-weight:700;line-height:1.1;max-width:880px}
-.schlussZusatz{font-size:36px;font-weight:400;color:${M.gedaempft};margin-top:36px;
+.schlussZusatz{font-size:36px;font-weight:400;color:${TINTE_LEISE};margin-top:36px;
   line-height:1.4;max-width:820px}
 /* ⚠ Store-Knoepfe: feste HOEHE, Breite aus dem Bild — so bleibt jedes Badge in
    seinem eigenen Seitenverhaeltnis. Apple und Google untersagen in ihren
