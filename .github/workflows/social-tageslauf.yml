@@ -310,6 +310,32 @@ jobs:
             [ -d "node_modules/$paket" ] || { echo "✗ $paket fehlt in wellapps-social"; exit 1; }
           done
 
+          # ⚠ WELLbooked! rendert seine Bildkarten mit PYTHON, nicht mit
+          # Playwright: docs/social/post-bild.mjs ruft docs/reels/anzeige.py
+          # auf, und das braucht Pillow und numpy.
+          #
+          # Diese Zeile fehlte, und zwar von Anfang an. Am 18.09.2026 fiel es
+          # auf, weil der Lauf mitten in der Liste stehenblieb:
+          #
+          #   rechenbeispiel - de - Seed 36244
+          #     ModuleNotFoundError: No module named 'PIL'
+          #
+          # ⚠ apps.json fuehrt unter `vorbereitung` genau diesen Befehl — aber
+          # NICHTS liest das Feld (nachgemessen: kein Treffer im ganzen Repo).
+          # Eine Konfiguration, die niemand ausfuehrt, ist keine
+          # Konfiguration, sondern eine Notiz. Die uebrigen
+          # `vorbereitung`-Eintraege stehen hier bewusst nicht blind mit drin:
+          # Mahjongs startet einen Server (`vite preview`), der nie
+          # zurueckkehrt — dafuer gibt es weiter unten einen eigenen Schritt.
+          #
+          # ⚠ `--break-system-packages`: Ubuntu 24.04 markiert sein Python als
+          # extern verwaltet (PEP 668) und weist ein schlichtes `pip install`
+          # ab. Der Runner ist Wegwerfware, das Aufweichen also folgenlos.
+          echo "━━ Python fuer WELLbooked! (Pillow, numpy)"
+          python3 -m pip install --quiet --break-system-packages Pillow numpy \
+            || python3 -m pip install --quiet Pillow numpy
+          python3 -c "import PIL, numpy; print('  Pillow', PIL.__version__, 'numpy', numpy.__version__)"
+
       # ⚠ Erst NACH der Installation: Der Browser muss zu der Playwright-
       # Fassung passen, die dann wirklich laeuft. PLAYWRIGHT_BROWSERS_PATH
       # zeigt fuer alle Repos auf denselben Ordner, sonst laedt jedes seinen

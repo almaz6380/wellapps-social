@@ -145,6 +145,25 @@ function tagesSeeds() {
   return raus;
 }
 
+/**
+ * Die Ledger-Zeilen von heute, nach Seed.
+ *
+ * Bewusst neben tagesSeeds(): Das liefert nur die Seeds je App und wird an
+ * einer heissen Stelle benutzt. Wer die ganze Zeile braucht — etwa um zu
+ * sehen, WOHER ein Beitrag kommt — holt sie hier.
+ */
+function tagesZeilen() {
+  const pfad = join(HIER, 'ledger.json');
+  if (!existsSync(pfad)) return new Map();
+  const ledger = JSON.parse(readFileSync(pfad, 'utf8'));
+  const raus = new Map();
+  for (const z of ledger.zeilen ?? []) {
+    if (z.datum !== DATUM) continue;
+    raus.set(String(z.inhalt ?? '').replace(/^seed/, ''), z);
+  }
+  return raus;
+}
+
 function tagesposten() {
   const seeds = tagesSeeds();
   const raus = [];
@@ -210,6 +229,7 @@ function tagesposten() {
 function fehlendeBeitraege(gefunden) {
   const seeds = tagesSeeds();
   if (!seeds) return [];
+  const zeilen = tagesZeilen();
   const da = new Set(gefunden.map((p) => basename(p.medium).match(/-s(\d+)/)?.[1]));
   const fehlt = [];
   for (const [k, menge] of seeds) {
@@ -228,6 +248,24 @@ function fehlendeBeitraege(gefunden) {
     for (const seed of menge) {
       if (NUR_SEED && seed !== String(NUR_SEED)) continue;
       if (da.has(seed)) continue;
+      // ⚠ Eine freie Karte ist NICHT verloren, wenn sie hier fehlt.
+      //
+      // Sie entsteht in `social-karte.yml` — einem eigenen Lauf auf einem
+      // eigenen Runner — und wird von DORT ausgeliefert. Ihre Datei hat auf
+      // dieser Maschine nie gelegen, ihre Ledger-Zeile bleibt aber stehen
+      // (lauf.mjs raeumt sie bewusst nicht weg, sonst verschwaende der
+      // Tageslauf sie).
+      //
+      // `fremdeMaschine` faengt das nicht ab: Es prueft den Ordner der ganzen
+      // App, und der EXISTIERT hier — der Tageslauf hat ja gerade zwei andere
+      // Anigosha-Beitraege hineingerendert. Am 18.09.2026 hat der Lauf genau
+      // deshalb rot gemeldet „1 Beitrag nie angekommen", waehrend die Karte
+      // seit Stunden brav in der Freigabe-Seite stand.
+      //
+      // Ein Fehlalarm ist hier teurer als anderswo: Diese Pruefung existiert,
+      // damit ein echter Verlust auffaellt. Wer sie regelmaessig grundlos
+      // rot sieht, sieht irgendwann gar nichts mehr.
+      if (zeilen.get(seed)?.schluessel === 'frei') continue;
       fehlt.push({ app: k, seed, fremdeMaschine });
     }
   }
