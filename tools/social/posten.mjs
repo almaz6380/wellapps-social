@@ -47,7 +47,8 @@ import { inPosteingang, direktPosten, kontoAuskunft, frischerToken }
 import { hochladen, merklisteAblegen, merklistenLesen } from './veroeffentlichen/blob.mjs';
 import { containerAnlegen, aufBereitWarten, veroeffentlichen as igVeroeffentlichen }
   from './veroeffentlichen/instagram.mjs';
-import { captionAus, riechtNachBeiblatt } from './vorflug.mjs';
+import { riechtNachBeiblatt } from './vorflug.mjs';
+import { beschreibungBauen } from './beschreibung.mjs';
 
 const HIER = dirname(fileURLToPath(import.meta.url));
 const wert = (n, s) => { const i = process.argv.indexOf(`--${n}`); return i === -1 ? s : process.argv[i + 1]; };
@@ -171,8 +172,16 @@ function tagesposten() {
         ? app.kanaele.filter((x) => NUR_KANAELE.includes(x))
         : app.kanaele;
       if (!kanaele.length) continue;
-      raus.push({ app: k, name: app.name, kanaele, medium,
-        text: captionAus(beiblatt).trim() });
+      // Die Sprache steht im Dateinamen („…-de-s84273"). Seit 15.09.2026
+      // fuehrt jede App ohnehin genau eine — der Rueckfall auf apps.json
+      // ist deshalb kein Raten, sondern derselbe Wert auf anderem Weg.
+      const sprache = stamm.match(/-([a-z]{2})-s\d+/)?.[1] ?? app.sprachen?.[0] ?? 'de';
+
+      // ⚠ NICHT mehr nur captionAus(). Seit 18.09.2026 gehen App-Link und
+      // hoechstens fuenf Hashtags mit raus — beides Josefs Regel, beides an
+      // EINER Stelle fuer alle fuenf Apps (siehe beschreibung.mjs).
+      raus.push({ app: k, name: app.name, kanaele, medium, sprache,
+        text: beschreibungBauen({ app, beiblatt, sprache }).trim() });
     }
   }
   return raus;

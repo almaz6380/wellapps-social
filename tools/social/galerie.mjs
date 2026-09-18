@@ -14,6 +14,8 @@ import { execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { basename, join } from 'node:path';
 
+import { beschreibungBauen, hashtagsFuer } from './beschreibung.mjs';
+
 const require = createRequire(import.meta.url);
 
 const AKZENTE = {
@@ -73,9 +75,17 @@ export function baueGalerie({ datum, apps, bericht, tmp }) {
     const video = b.dateien.find((f) => f.endsWith('.mp4'));
     const bilder = b.dateien.filter((f) => /\.(jpg|png)$/.test(f));
     const beiblattPfad = b.dateien.find((f) => f.endsWith('.txt'));
-    const { caption, hashtags, kontrolle } = zerlege(
-      beiblattPfad ? readFileSync(beiblattPfad, 'utf8') : '',
-    );
+    const beiblatt = beiblattPfad ? readFileSync(beiblattPfad, 'utf8') : '';
+    const { kontrolle } = zerlege(beiblatt);
+
+    // ⚠ Gezeigt wird, was WIRKLICH rausgeht — Caption, App-Link und die
+    // hoechstens fuenf Hashtags, genau so zusammengesetzt wie in posten.mjs.
+    // Vorher zerlegte diese Seite das Beiblatt selbst und zeigte damit die
+    // volle Hashtag-Liste, von der nur fuenf gepostet werden. Eine Vorschau,
+    // die etwas anderes zeigt als den Beitrag, ist schlimmer als keine: Man
+    // gibt frei, was man gesehen hat.
+    const caption = beschreibungBauen({ app, beiblatt, sprache: b.post.sprache });
+    const hashtags = hashtagsFuer(beiblatt).map((t) => `#${t}`).join(' ');
 
     // Vorschau: bei einem Video das Standbild, sonst das erste Bild
     // (Feed-Format bevorzugt, falls es mehrere gibt).

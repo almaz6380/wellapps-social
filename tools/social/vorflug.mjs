@@ -85,6 +85,16 @@ export function riechtNachBeiblatt(text) {
   return verraeter.find((r) => r.test(text))?.source ?? null;
 }
 
+/**
+ * Hoechstens so viele Hashtags gehen an ein Netzwerk (Josef, 18.09.2026).
+ *
+ * ⚠ Die Zahl steht HIER, bei den Regeln, und wird von beschreibung.mjs
+ * importiert — nicht umgekehrt. vorflug.mjs ist die Datei, in der jemand
+ * nachsieht, was erlaubt ist; und so zeigt die Abhaengigkeit in eine
+ * Richtung (beschreibung → vorflug), statt einen Ring zu bilden.
+ */
+export const MAX_HASHTAGS = 5;
+
 /** Ein Befund. `hart: true` verwirft den Post. */
 const befund = (hart, regel, text) => ({ hart, regel, text });
 
@@ -127,10 +137,37 @@ export function pruefe({ appSchluessel, app, post, texte }) {
     }
   }
 
-  // --- Regel fuer alle: kein Store-Link in der Caption ---------------------
+  // --- Regel fuer alle: keine ROHE Store-Adresse in der Caption ------------
+  //
+  // ⚠ Seit 18.09.2026 steht sehr wohl ein Link im Post — aber die eigene
+  // Landeseite (`linkInBio` in apps.json), nicht apps.apple.com oder
+  // play.google.com. Warum, steht ausfuehrlich in beschreibung.mjs bei
+  // linkZeile(). Kurz: eine rohe Store-Adresse trifft die falsche Haelfte
+  // der Leser, ist unmerkbar lang und veraltet mit jedem Store-Umbau.
+  //
+  // Der Schluessel heisst weiterhin `store_link_in_caption` — er meint jetzt
+  // genau das: die rohe Store-Adresse, nicht den App-Link.
   if (r.store_link_in_caption === false && /https?:\/\/\S*(apps\.apple|play\.google)/i.test(alles)) {
     funde.push(befund(true, 'store-link',
-      'Store-Link in der Caption drosselt die Reichweite. Gehoert in die Bio, nicht in den Post.'));
+      'Rohe Store-Adresse in der Caption. Richtig ist die eigene Landeseite '
+      + '(linkInBio in apps.json) — sie erkennt die Plattform und leitet weiter.'));
+  }
+
+  // --- Regel fuer alle: hoechstens fuenf Hashtags --------------------------
+  //
+  // ⚠ Josefs Regel vom 18.09.2026. Geprueft wird das Feld `hashtags`, das
+  // lauf.mjs mit dem fuellt, was beschreibung.mjs tatsaechlich anhaengt —
+  // NICHT die Liste im Beiblatt. Die darf laenger sein: sie ist zugleich die
+  // Vorlage zum Kopieren fuer einen Beitrag von Hand, und dort schneidet
+  // niemand automatisch ab.
+  if (texte.hashtags) {
+    const anzahl = (String(texte.hashtags).match(/#[\p{L}\p{N}_]+/gu) ?? []).length;
+    if (anzahl > MAX_HASHTAGS) {
+      funde.push(befund(true, 'hashtag-anzahl',
+        `${anzahl} Hashtags im Beitrag, erlaubt sind ${MAX_HASHTAGS}. `
+        + 'Gekuerzt wird in beschreibung.mjs — schlaegt diese Regel an, '
+        + 'ist der Text an der Kuerzung vorbeigelaufen.'));
+    }
   }
 
   // --- Regel fuer alle: KI-erzeugte Menschen muessen gekennzeichnet sein ----

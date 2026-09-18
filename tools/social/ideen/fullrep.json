@@ -24,6 +24,10 @@
       "sprachen": [
         "de",
         "en"
+      ],
+      "stile": [
+        "mix",
+        "poster"
       ]
     },
     {
@@ -84,6 +88,11 @@
       "sprachen": [
         "de",
         "en"
+      ],
+      "stile": [
+        "mix",
+        "poster",
+        "zahl"
       ]
     },
     {
@@ -96,6 +105,10 @@
       "sprachen": [
         "de",
         "en"
+      ],
+      "stile": [
+        "mix",
+        "premium"
       ]
     },
     {
@@ -108,6 +121,11 @@
       "sprachen": [
         "de",
         "en"
+      ],
+      "stile": [
+        "mix",
+        "poster",
+        "zahl"
       ]
     },
     {
@@ -120,6 +138,11 @@
       "sprachen": [
         "de",
         "en"
+      ],
+      "stile": [
+        "mix",
+        "poster",
+        "zahl"
       ]
     },
     {
@@ -134,5 +157,6 @@
         "en"
       ]
     }
-  ]
+  ],
+  "_stile": "Je Bild-Winkel die Stile von scripts/post-bild.mjs, die dort WIRKLICH tragen — waehlen.mjs wuerfelt daraus, motoren.mjs reicht sie als --stil durch. Bis 18.09.2026 gab es das Feld nicht und jeder Bildpost lief im Vorgabestil mix. NICHT einfach alle vier ueberall eintragen: premium hat keinen Block fuer den Studienwert (eine Studienkarte steht dort halb leer), und zahl faellt still auf premium zurueck, wo es keine Zahl gibt — studien-fakt liefert keine."
 }

@@ -21,6 +21,7 @@ import {
   ladeApps, ladeLedger, waehlePosts, vorschau, aktivesFestival, mulberry32, saat,
 } from './waehlen.mjs';
 import { pruefe, berichte, storeSatz, captionAus } from './vorflug.mjs';
+import { hashtagsFuer, linkZeile } from './beschreibung.mjs';
 import { aufruf, ergebnisse, ausgabeOrt } from './motoren.mjs';
 import { baueGalerie } from './galerie.mjs';
 
@@ -111,6 +112,11 @@ function vorflugProbe() {
     { name: 'Store-Link in der Caption',
       app: 'anigosha', post: { sprache: 'de' },
       texte: { caption: 'Hol es dir: https://apps.apple.com/app/id6797757350' } },
+
+    { name: 'Sechs Hashtags (erlaubt sind fuenf)',
+      app: 'anigosha', post: { sprache: 'de' },
+      texte: { caption: 'Nur echte Fans schaffen 3/3.',
+        hashtags: '#anigosha #anime #animequiz #quiz #otaku #weeb' } },
   ];
 
   const gut = [
@@ -146,6 +152,21 @@ function vorflugProbe() {
       app: 'anigosha', post: { sprache: 'de', medium: 'reel' },
       texte: { caption: 'Nur echte One-Piece-Fans schaffen 3/3. Gratis im App Store und bei Google Play.',
         medienherkunft: 'typografie' } },
+
+    { name: 'Genau fuenf Hashtags und der App-Link gehen durch',
+      app: 'anigosha', post: { sprache: 'de', medium: 'bild' },
+      texte: { caption: 'Nur echte Fans schaffen 3/3.',
+        applink: 'Hier laden: anigosha.vercel.app/get',
+        hashtags: '#anigosha #anime #animequiz #quiz #otaku',
+        medienherkunft: 'typografie' } },
+
+    { name: 'WELLbooked!-Hashtag ohne Ausrufezeichen ist erlaubt',
+      // ⚠ In #WELLbooked ist das „!" nicht moeglich. Die Marken-Regel nimmt
+      // das Feld `hashtags` deshalb aus — seit die Hashtags wirklich mit
+      // rausgehen, muss dieser Fall geprueft sein.
+      app: 'wellbooked', post: { sprache: 'de' },
+      texte: { caption: 'WELLbooked! zeigt freie Termine in deiner Naehe.',
+        tonquelle: 'stille', hashtags: '#WELLbooked #Wellness #Tirol' } },
   ];
 
   let fehler = 0;
@@ -271,7 +292,14 @@ async function kartenlauf() {
   // Mensch am Handy. Eine Karte, die hier durchfaellt, wird nicht abgelegt.
   const pruefung = pruefe({
     appSchluessel: k, app, post,
-    texte: { caption: captionAus(beiblatt), medienherkunft: 'typografie' },
+    texte: {
+      caption: captionAus(beiblatt),
+      // Getrennt, aus demselben Grund wie im Tageslauf oben: die Regel
+      // „Marke mit Ausrufezeichen" nimmt das Feld `hashtags` aus.
+      hashtags: hashtagsFuer(beiblatt).map((t) => `#${t}`).join(' '),
+      applink: linkZeile(app, post.sprache),
+      medienherkunft: 'typografie',
+    },
   });
   if (!pruefung.bestanden) {
     console.error(berichte(pruefung, 'freie-karte'));
@@ -491,12 +519,24 @@ async function tageslauf() {
       // Geprueft wird, was gepostet wird — nicht die Anleitung drumherum.
       const caption = captionAus(beiblatt);
 
+      // ⚠ Die Hashtags gehen als EIGENES Feld in die Pruefung, nicht als Teil
+      // der Caption. Die Regel „Marke mit Ausrufezeichen" nimmt das Feld
+      // `hashtags` naemlich ausdruecklich aus — in #WELLbooked ist das
+      // Ausrufezeichen nicht moeglich. Steckten sie in `caption`, verwuerfe
+      // die Leitplanke jeden WELLbooked!-Beitrag.
+      //
+      // Und es sind genau die fuenf, die beschreibung.mjs anhaengt, nicht
+      // die laengere Liste aus dem Beiblatt. Geprueft wird, was rausgeht.
+      const hashtags = hashtagsFuer(beiblatt).map((t) => `#${t}`).join(' ');
+
       // Leitplanke auf dem FERTIGEN Text, nicht auf der Absicht. Ein Post,
       // der hier durchfaellt, wird nicht ausgeliefert.
       const pruefung = pruefe({
         appSchluessel: k, app, post,
         texte: {
           caption,
+          hashtags,
+          applink: linkZeile(app, post.sprache),
           tonquelle: post.medium === 'reel'
             ? (k === 'mahjong' ? 'synth' : k === 'wellbooked' ? 'stille' : 'eigen')
             : undefined,

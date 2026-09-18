@@ -13,6 +13,7 @@
 // unabhaengig voneinander — deshalb Faelle statt Vertrauen.
 
 import { captionAus, riechtNachBeiblatt } from './vorflug.mjs';
+import { beschreibungBauen, hashtagsFuer } from './beschreibung.mjs';
 
 const faelle = [
   {
@@ -115,6 +116,89 @@ for (const [name, text, sollAnschlagen] of netzFaelle) {
     console.log(`✗ Netz: ${name} — ${traf ? 'schlug an' : 'schlug NICHT an'}, erwartet war das Gegenteil`);
   } else {
     console.log(`✓ Netz: ${name}`);
+  }
+}
+
+// --------------------------------------------------------------------------
+// Beschreibung: hoechstens fuenf Hashtags, App-Link immer dabei
+// (Josefs Regeln vom 18.09.2026)
+//
+// ⚠ Der zweite Fall ist der wichtige. Anigoshas Reel-Beiblatt schreibt die
+// Hashtags MITTEN in die Caption, ohne eigenen Abschnitt — gemessen am
+// 18.09.2026: elf bei `fandom`, vierzehn bei `ladder`. Ein Test, der nur den
+// Markdown-Stil der anderen vier Repos prueft, haette die Fuenfer-Grenze fuer
+// jeden Anigosha-Reel stillschweigend verfehlt.
+console.log('\nBeschreibung — Link und Hashtag-Grenze:\n');
+
+const testApp = { name: 'Testapp', linkInBio: 'beispiel.app/get', stores: { ios: true, android: true } };
+
+const bFaelle = [
+  {
+    name: 'Sieben Hashtags im eigenen Abschnitt → fuenf',
+    ein: ['## Caption (kopieren)', '', 'Kraft folgt der Wiederholung.', '',
+      '## Hashtags', '', '#fullrep #fitness #gym #training #uebung #muskelaufbau #workout'].join('\n'),
+    sollTags: ['fullrep', 'fitness', 'gym', 'training', 'uebung'],
+    sollLink: true,
+  },
+  {
+    name: 'Acht Hashtags INNERHALB der Caption (Anigosha-Reel) → fuenf',
+    ein: ['── CAPTION ZUM KOPIEREN ──────', '', 'Nur echte Fans schaffen alle drei.', '',
+      '#onepiece #onepiecefan #anigosha #animequiz #anime #quiz #otaku #luffy', '',
+      '── VOR DEM POSTEN ────────────', '', '• Trending-Sound drueberlegen.'].join('\n'),
+    sollTags: ['onepiece', 'onepiecefan', 'anigosha', 'animequiz', 'anime'],
+    sollLink: true,
+  },
+  {
+    name: 'Gar keine Hashtags (Swaply) — Link trotzdem dran',
+    ein: ['## Caption (kopieren)', '', 'Der Ausloeser bleibt, die Routine wird getauscht.', '',
+      '## Beim Hochladen', '', '- Nichts dazuerfinden.'].join('\n'),
+    sollTags: [],
+    sollLink: true,
+  },
+  {
+    name: 'Doppelte Tags zaehlen einmal',
+    ein: ['## Caption (kopieren)', '', 'Text.', '',
+      '## Hashtags', '', '#a #A #b #c #d #e #f'].join('\n'),
+    sollTags: ['a', 'b', 'c', 'd', 'e'],
+    sollLink: true,
+  },
+  {
+    name: 'Keine Caption → keine Beschreibung (kein Link-und-Tag-Spam)',
+    ein: 'Text ohne Ueberschrift.',
+    sollTags: [],
+    sollLink: false,
+    sollLeer: true,
+  },
+];
+
+for (const f of bFaelle) {
+  const tags = hashtagsFuer(f.ein);
+  const text = beschreibungBauen({ app: testApp, beiblatt: f.ein, sprache: 'de' });
+  const probleme = [];
+
+  if (JSON.stringify(tags) !== JSON.stringify(f.sollTags)) {
+    probleme.push(`Tags ${JSON.stringify(tags)} statt ${JSON.stringify(f.sollTags)}`);
+  }
+  if (f.sollLeer && text !== '') probleme.push(`Text sollte leer sein, ist ${JSON.stringify(text)}`);
+  if (!f.sollLeer) {
+    if (text.includes(testApp.linkInBio) !== f.sollLink) {
+      probleme.push(f.sollLink ? 'App-Link fehlt' : 'App-Link steht drin, sollte aber nicht');
+    }
+    // ⚠ Die Tags duerfen im fertigen Text kein ZWEITES Mal auftauchen. Genau
+    // das passiert, wenn inlineHashtags() sie zwar findet, aber nicht aus der
+    // Caption entfernt: einmal im Text, einmal im angehaengten Block.
+    const imText = (text.match(/#[\p{L}\p{N}_]+/gu) ?? []).length;
+    if (imText !== f.sollTags.length) {
+      probleme.push(`${imText} Hashtags im Text, erwartet ${f.sollTags.length}`);
+    }
+  }
+
+  if (probleme.length) {
+    fehler += 1;
+    console.log(`✗ ${f.name}`);
+    for (const p of probleme) console.log(`   ${p}`);
+  } else {
+    console.log(`✓ ${f.name}`);
   }
 }
 

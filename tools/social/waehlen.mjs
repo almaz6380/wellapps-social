@@ -273,6 +273,24 @@ export function waehlePosts({
       return liste[saat(saatTag, app, w.id) % liste.length];
     })(),
     seed: saat(saatTag, app, w.id, String(i)) % 100000,
+    // Der Stil, in dem der Motor die Karte baut — heute nur FullRep.
+    //
+    // ⚠ Bis zum 18.09.2026 gab es das Feld nicht, und motoren.mjs rief ohne
+    // --stil auf. FullRep hat vier Stile im Generator, und JEDER Post seit
+    // Beginn lief im Vorgabestil `mix`. Vier gebaute Stile, einer im Feed.
+    //
+    // Gewuerfelt wird aus `w.stile` — je Winkel die Stile, die dort auch
+    // wirklich tragen. Nicht jeder passt zu jedem Inhalt: `poster` ist auf
+    // ein randloses Foto gebaut und laeuft ohne Bildmaterial halb leer,
+    // `premium` hat keinen Block fuer den Studienwert.
+    //
+    // ⚠ `saat()` ist ein Hash, KEINE Ziehung aus dem Winkel-Wuerfel. Ein
+    // zusaetzlicher Wuerfelwurf haette die Reihenfolge verschoben und damit
+    // jeden historischen Seed anders ausfallen lassen.
+    stil: (() => {
+      if (!w.stile?.length) return null;
+      return w.stile[saat(saatTag, app, w.id, 'stil') % w.stile.length];
+    })(),
     gesperrteInhalte: [...inhalteWeg],
     winkelSperre: sperre,
     gelockert,

@@ -184,9 +184,18 @@ export function aufruf({ appSchluessel, app, post, wuerfel, out }) {
 
   if (appSchluessel === 'fullrep') {
     const skript = post.medium === 'reel' ? 'scripts/post-reel.mjs' : 'scripts/post-bild.mjs';
+    // ⚠ `--stil` NUR beim Bild. post-reel.mjs kennt die Option nicht; ein
+    // unbekanntes Argument stuende dort still im argv herum, statt zu
+    // scheitern — die Wirkung waere null und die Ursache unauffindbar.
+    //
+    // Ohne diese Zeile lief bis 18.09.2026 JEDER FullRep-Bildpost im
+    // Vorgabestil `mix`; die drei anderen Stile des Generators hat nie
+    // jemand im Feed gesehen. Welcher Stil je Winkel erlaubt ist, steht in
+    // ideen/fullrep.json unter `stile`; gewaehlt wird in waehlen.mjs.
+    const stil = post.medium === 'bild' && post.stil ? ['--stil', post.stil] : [];
     return {
       schritte: [n(skript, '--format', post.format, '--lang', post.sprache,
-        '--seed', String(post.seed), '--name', post.dateiname, '--out', out)],
+        ...stil, '--seed', String(post.seed), '--name', post.dateiname, '--out', out)],
       endung: post.medium === 'reel' ? '.mp4' : '.jpg',
     };
   }
