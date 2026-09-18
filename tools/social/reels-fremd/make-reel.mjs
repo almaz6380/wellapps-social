@@ -85,6 +85,34 @@ function mulberry32(a) {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
+/**
+ * Die Store-Knoepfe fuer den Abspann, als data:-URI.
+ *
+ * ⚠ Die Seite wird mit `setContent()` geladen und hat deshalb keinen Origin:
+ * `file://` laedt dort nicht, die Bilder MUESSEN eingebettet sein. Dieselbe
+ * Regel wie fuer Schrift und Logo.
+ *
+ * ⚠ Gezeigt wird nur, was `apps.json` unter `stores` bestaetigt. Ein Badge fuer
+ * einen Store, in dem es die App nicht gibt, ist eine Falschaussage im Video —
+ * dieselbe Regel, nach der FullReps Bildposts ihre Badges waehlen.
+ *
+ * Bis zum 18.09.2026 gab es hier ueberhaupt keine. Josef hat sie im fertigen
+ * Reel vermisst; Anigoshas Vorlage konnte sie da laengst, nur hat sie nie
+ * jemand angeschlossen.
+ */
+function storeBadges() {
+  const ordner = join(WURZEL, 'tools', 'social', 'kanal', 'badges');
+  const raus = [];
+  const dazu = (bedingung, datei) => {
+    if (!bedingung) return;
+    const voll = join(ordner, datei);
+    if (existsSync(voll)) raus.push(`data:image/png;base64,${readFileSync(voll).toString('base64')}`);
+  };
+  dazu(APP.stores?.ios, 'appstore-en.png');
+  dazu(APP.stores?.android, 'googleplay-en.png');
+  return raus;
+}
+
 const wuerfel = mulberry32(SEED * 2654435761);
 const waehle = (a) => a[Math.floor(wuerfel() * a.length)];
 
@@ -169,7 +197,9 @@ const SZENEN = [
 
 function html() {
   const schrift = readFileSync(join(WURZEL, 'tools', 'reels', 'assets', 'outfit.woff2')).toString('base64');
-  const daten = JSON.stringify({ szenen: SZENEN, inhalt, marke: M, fps: FPS, lang: LANG });
+  const daten = JSON.stringify({
+    szenen: SZENEN, inhalt, marke: M, fps: FPS, lang: LANG, badges: storeBadges(),
+  });
 
   return `<!doctype html><html><head><meta charset="utf-8"><style>
 @font-face{font-family:Outfit;src:url(data:font/woff2;base64,${schrift}) format('woff2');
@@ -198,6 +228,12 @@ body{font-family:Outfit,sans-serif;color:${M.schrift}}
 .schluss{font-size:80px;font-weight:700;line-height:1.1;max-width:880px}
 .schlussZusatz{font-size:36px;font-weight:400;color:${M.gedaempft};margin-top:36px;
   line-height:1.4;max-width:820px}
+/* ⚠ Store-Knoepfe: feste HOEHE, Breite aus dem Bild — so bleibt jedes Badge in
+   seinem eigenen Seitenverhaeltnis. Apple und Google untersagen in ihren
+   Richtlinien beides: verzerren und nachzeichnen. Und sie werden NICHT
+   animiert; die Einblendung der ganzen Szene genuegt. */
+.badges{display:flex;flex-direction:column;align-items:center;gap:24px;margin-top:48px}
+.badges img{height:108px;width:auto;display:block}
 </style></head><body><div class="buehne" id="b"></div><script>
 const D = ${daten};
 const b = document.getElementById('b');
@@ -225,9 +261,18 @@ const bloecke = D.szenen.map((s) => {
     d.querySelector('.zahl').textContent = k.zahl;
     d.querySelector('.text').textContent = k.text;
   } else {
-    d.innerHTML = '<div class="schluss"></div><div class="schlussZusatz"></div>';
+    d.innerHTML = '<div class="schluss"></div><div class="schlussZusatz"></div>'
+      + '<div class="badges"></div>';
     d.querySelector('.schluss').textContent = D.marke.spruch[D.lang] || D.marke.spruch.de;
     d.querySelector('.schlussZusatz').textContent = D.marke.zusatz[D.lang] || D.marke.zusatz.de;
+    // ⚠ Nur die Stores, in denen es die App wirklich gibt — D.badges ist leer,
+    // wenn apps.json das sagt oder eine Datei fehlt.
+    const kasten = d.querySelector('.badges');
+    for (const quelle of D.badges) {
+      const img = document.createElement('img');
+      img.src = quelle;
+      kasten.appendChild(img);
+    }
   }
   b.appendChild(d);
   return d;
