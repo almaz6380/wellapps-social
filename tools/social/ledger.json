@@ -548,6 +548,15 @@
       "schluessel": "kategorie",
       "inhalt": "seed85100",
       "sprache": "de"
+    },
+    {
+      "app": "anigosha",
+      "datum": "2026-09-18",
+      "winkel": "freie-karte",
+      "medium": "reel",
+      "schluessel": "frei",
+      "inhalt": "seed329323",
+      "sprache": "de"
     }
   ]
 }
