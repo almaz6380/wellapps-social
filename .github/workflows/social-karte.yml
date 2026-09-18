@@ -96,30 +96,19 @@ jobs:
       # ⚠ Die App-Repos sind privat; der eingebaute GITHUB_TOKEN gilt nur fuer
       # dieses Repo. REPOS_TOKEN hat Contents:Read auf die fuenf.
       #
-      # ⚠⚠ NOTBEHELF, und er gehoert weg, sobald der Zweig in main ist.
-      #
-      # Das Format `freie-karte` liegt bisher nur auf
-      # `claude/cross-project-task-4y6939`. Ein Checkout des Standardzweigs
-      # brachte hier „unbekanntes Format: freie-karte" — dieselbe Falle, an der
-      # am 05.09. schon Swaply haengengeblieben ist: Der Motor eines Repos muss
-      # auf dessen STANDARDZWEIG liegen, sonst sieht dieser Workflow ihn nicht.
-      # Lokal ist alles da, und genau deshalb faellt es erst im Lauf auf.
-      #
-      # Der Zweig wird nicht nach main gebracht, weil ein Push dorthin die
-      # Web-App auf Vercel neu ausliefert — das braucht Josefs Wort, nicht
-      # meins. Bis dahin steht die Quelle hier ausdruecklich und sichtbar.
+      # ⚠ KEIN `ref:` — der Standardzweig ist richtig so. Bis zum 18.09.2026
+      # stand hier ein Notbehelf auf einen Feature-Zweig, weil `freie-karte`
+      # und `ansage` nur dort lagen; ein Checkout von main brachte
+      # „unbekanntes Format". Dieselbe Falle wie bei Swaply am 05.09.: Der
+      # Motor eines Repos muss auf dessen STANDARDZWEIG liegen, sonst sieht
+      # dieser Workflow ihn nicht — und lokal ist alles da, weshalb es erst im
+      # Lauf auffaellt. Seit dem Zusammenfuehren ist der Notbehelf weg.
       - name: anigosha auschecken
         uses: actions/checkout@v4
         with:
           repository: almaz6380/anigosha
-          ref: claude/cross-project-task-4y6939
           token: ${{ secrets.REPOS_TOKEN }}
           path: anigosha
-
-      - name: Woher der Motor kommt
-        run: |
-          echo "⚠ Anigosha wird vom Zweig 'claude/cross-project-task-4y6939' gerendert," >> "$GITHUB_STEP_SUMMARY"
-          echo "nicht vom Standardzweig. Sobald er in main ist, gehoert die ref-Zeile raus." >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/setup-node@v4
         with:

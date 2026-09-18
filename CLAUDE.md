@@ -277,6 +277,12 @@ einzige Zeile, und `lauf.mjs --karte` bricht bei den anderen vier mit einer
 klaren Meldung ab, statt bis zum Motor durchzulaufen und dort mit „unbekanntes
 Format" zu scheitern.
 
+⚠ **Beide Formate liegen seit 18.09. auf Anigoshas `main`.** Vorher checkte der
+Workflow einen Feature-Zweig aus — nötig, aber falsch: Der Motor eines Repos
+muss auf dessen **Standardzweig** liegen, sonst sieht der Workflow ihn nicht.
+Genau daran hing am 05.09. schon Swaply. Lokal ist immer alles da; deshalb
+fällt es erst im Lauf auf, nie davor.
+
 ### Karte oder Video — und warum das über die Kanäle entscheidet
 
 `--medium bild` (Vorgabe) zeichnet die Karte, `--medium reel` das Video
