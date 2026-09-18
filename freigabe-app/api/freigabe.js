@@ -226,6 +226,10 @@ export default async function handler(req, res) {
         return;
       }
 
+      // ⚠ Fest, nicht durchgereicht — wie PRIVACY weiter oben. Der Wert landet
+      // als Workflow-Eingabe in einer Shell-Umgebung.
+      const medium = req.body?.medium === 'reel' ? 'reel' : 'bild';
+
       const txt = String(req.body?.text ?? '').trim();
       if (!txt) {
         res.status(400).json({ fehler: 'Ohne Text gibt es nichts zu zeichnen.' });
@@ -258,8 +262,15 @@ export default async function handler(req, res) {
         return;
       }
 
-      await laufStarten(token, WORKFLOW_KARTE, { app, text: txt, haken, marke, cta });
-      res.status(200).json({ gestartet: true, app, zeichen: txt.length });
+      // ⚠ Haken und Marke gehen beim Reel NICHT mit. Die Reel-Vorlage kennt
+      // sie nicht; mitzuschicken hiesse, sie stillschweigend zu verlieren —
+      // und der Mensch sucht sie dann im fertigen Video.
+      await laufStarten(token, WORKFLOW_KARTE, {
+        app, medium, text: txt, cta,
+        haken: medium === 'reel' ? '' : haken,
+        marke: medium === 'reel' ? '' : marke,
+      });
+      res.status(200).json({ gestartet: true, app, medium, zeichen: txt.length });
       return;
     }
 

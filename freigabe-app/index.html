@@ -125,16 +125,31 @@
     <label class="feldname" for="k-app">App</label>
     <select id="k-app"><option value="anigosha">Anigosha</option></select>
 
-    <label class="feldname" for="k-text">Text auf der Karte</label>
+    <label class="feldname" for="k-medium">Als was?</label>
+    <select id="k-medium">
+      <option value="bild">Karte — Facebook und Instagram</option>
+      <option value="reel">Video — auch TikTok</option>
+    </select>
+    <p class="hinweis" id="k-medienhinweis"></p>
+
+    <label class="feldname" for="k-text">Text</label>
     <textarea id="k-text" maxlength="240" enterkeyhint="done"
       placeholder="Wer drei Tage nicht spielt, verliert seinen Streak."></textarea>
     <p class="hinweis" id="k-zaehler">0 / 240</p>
 
-    <label class="feldname" for="k-haken">Kleine Zeile darüber (optional)</label>
-    <input id="k-haken" maxlength="60" placeholder="Wusstest du?">
+    <!--
+      ⚠ Haken und Marke verschwinden beim Video, statt wirkungslos dazustehen.
+      Die Reel-Vorlage kennt beide nicht. Ein Feld, das man ausfüllen kann und
+      das dann nichts tut, ist schlimmer als keines — man sucht den Fehler
+      später im fertigen Video.
+    -->
+    <div id="k-nurbild">
+      <label class="feldname" for="k-haken">Kleine Zeile darüber (optional)</label>
+      <input id="k-haken" maxlength="60" placeholder="Wusstest du?">
 
-    <label class="feldname" for="k-marke">Pille ganz oben (optional)</label>
-    <input id="k-marke" maxlength="60" placeholder="Anigosha 1.1">
+      <label class="feldname" for="k-marke">Pille ganz oben (optional)</label>
+      <input id="k-marke" maxlength="60" placeholder="Anigosha 1.1">
+    </div>
 
     <label class="feldname" for="k-cta">Schlusszeile (optional)</label>
     <input id="k-cta" maxlength="60" placeholder="anigosha.vercel.app/get">
@@ -513,6 +528,19 @@ const zaehler = () => {
 };
 $('#k-text').addEventListener('input', zaehler);
 
+// Video oder Karte: Das entscheidet über die Kanäle, nicht nur über das
+// Aussehen — TikTok nimmt nur Videos. Und es blendet die zwei Felder aus, die
+// es im Video nicht gibt.
+const medium = () => {
+  const reel = $('#k-medium').value === 'reel';
+  $('#k-nurbild').hidden = reel;
+  $('#k-medienhinweis').textContent = reel
+    ? 'Ein Video geht auf alle drei Kanäle. Dauert etwa drei Minuten länger.'
+    : 'Eine Karte geht auf Facebook und Instagram. TikTok nimmt nur Videos.';
+};
+$('#k-medium').addEventListener('change', medium);
+medium();
+
 $('#k-bauen').onclick = async () => {
   const knopf = $('#k-bauen');
   const stand = $('#k-stand');
@@ -526,15 +554,18 @@ $('#k-bauen').onclick = async () => {
   knopf.disabled = true;
   stand.textContent = 'Wird gestartet …';
   try {
+    const reel = $('#k-medium').value === 'reel';
     await ruf('karte', {
       app: $('#k-app').value,
+      medium: reel ? 'reel' : 'bild',
       text,
-      haken: $('#k-haken').value.trim(),
-      marke: $('#k-marke').value.trim(),
+      // Beim Video leer — die Vorlage kennt sie nicht (siehe oben).
+      haken: reel ? '' : $('#k-haken').value.trim(),
+      marke: reel ? '' : $('#k-marke').value.trim(),
       cta: $('#k-cta').value.trim(),
     });
-    stand.textContent = 'Läuft. In etwa zehn Minuten steht die Karte unten — '
-      + 'dann oben auf „Laden" tippen.';
+    stand.textContent = `Läuft. In etwa ${reel ? 'fünfzehn' : 'zehn'} Minuten steht `
+      + `${reel ? 'das Video' : 'die Karte'} unten — dann oben auf „Laden" tippen.`;
     // Die Felder NICHT leeren: Geht etwas schief, wäre der getippte Text weg.
     // Der Knopf bleibt gesperrt, damit nicht aus Versehen dieselbe Karte
     // zweimal entsteht; ein Neuladen der Seite gibt ihn frei.

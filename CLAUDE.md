@@ -277,6 +277,28 @@ einzige Zeile, und `lauf.mjs --karte` bricht bei den anderen vier mit einer
 klaren Meldung ab, statt bis zum Motor durchzulaufen und dort mit „unbekanntes
 Format" zu scheitern.
 
+### Karte oder Video — und warum das über die Kanäle entscheidet
+
+`--medium bild` (Vorgabe) zeichnet die Karte, `--medium reel` das Video
+(`--format ansage` im Reel-Generator). Der Unterschied ist nicht das Aussehen,
+sondern die **Reichweite**:
+
+| | Facebook | Instagram | TikTok |
+|---|---|---|---|
+| Karte (Bild) | ✅ | ✅ | ❌ |
+| Reel (Video) | ✅ | ✅ | ✅ |
+
+`posten.mjs:371` überspringt bei jedem Bild TikTok mit „kein Video". Das ist
+keine Lücke, sondern die Schnittstelle — TikToks Content-Posting-API kennt auf
+unserem Weg keinen Bildbeitrag.
+
+⚠ **Haken und Marke gibt es nur auf der Karte.** Die Reel-Vorlage kennt beide
+nicht. Sie werden deshalb an drei Stellen unterdrückt statt stillschweigend
+geschluckt: Die Seite blendet die Felder aus, die Vercel-Funktion sendet sie
+leer, und `motoren.mjs` reicht beim `ansage`-Format nur Text und Schlusszeile
+durch. Ein Feld, das man ausfüllen kann und das dann nichts tut, ist schlimmer
+als keines — man sucht den Fehler später im fertigen Video.
+
 Lokal, ohne Zugangsdaten:
 
 ```bash

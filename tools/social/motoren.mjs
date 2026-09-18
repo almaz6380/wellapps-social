@@ -79,6 +79,16 @@ export function aufruf({ appSchluessel, app, post, wuerfel, out }) {
       if (post.format === 'fandom') {
         args.push('--category', kat[Math.floor(wuerfel() * kat.length)]);
       }
+      // Das freie Reel — dasselbe wie die freie Karte, nur als Video. Es kennt
+      // nur Text und Schlusszeile: Haken und Marke gibt es in der Reel-Vorlage
+      // nicht, und sie stillschweigend zu schlucken waere schlimmer, als sie
+      // gar nicht anzubieten (siehe die Oberflaeche der Freigabe-Seite).
+      if (post.format === 'ansage') {
+        for (const feld of ['text', 'cta']) {
+          const v = post.frei?.[feld];
+          if (v) args.push(`--${feld}`, String(v));
+        }
+      }
       return { schritte: [n(...args)], endung: '.mp4' };
     }
     const bild = ['tools/post-bild.mjs', '--format', post.format,

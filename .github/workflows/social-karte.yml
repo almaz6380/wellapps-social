@@ -33,16 +33,28 @@ on:
         options: [anigosha]
         default: anigosha
         required: true
+      # ⚠ Bild oder Video entscheidet ueber die KANAELE, nicht nur ueber das
+      # Aussehen: TikTok nimmt nur Videos. Eine Karte geht auf Facebook und
+      # Instagram, ein Reel auf alle drei.
+      medium:
+        description: 'bild = Karte (Facebook, Instagram) · reel = Video (auch TikTok)'
+        type: choice
+        options: [bild, reel]
+        default: bild
+        required: true
       text:
-        description: 'Der Satz auf der Karte (Pflicht)'
+        description: 'Der Satz auf der Karte bzw. im Video (Pflicht)'
         type: string
         required: true
       haken:
-        description: 'Kleine Zeile darueber, z. B. „Wusstest du?" (optional)'
+        description: 'Kleine Zeile darueber, z. B. „Wusstest du?" (optional, nur bild)'
         type: string
         required: false
+      # ⚠ Haken und Marke gibt es NUR auf der Karte. Die Reel-Vorlage kennt
+      # beide nicht — sie stillschweigend zu schlucken waere schlimmer, als es
+      # hier zu sagen.
       marke:
-        description: 'Pille ganz oben, z. B. „Anigosha 1.1" (optional)'
+        description: 'Pille ganz oben, z. B. „Anigosha 1.1" (optional, nur bild)'
         type: string
         required: false
       cta:
@@ -151,13 +163,14 @@ jobs:
         working-directory: wellapps-social
         env:
           APP: ${{ inputs.app }}
+          MEDIUM: ${{ inputs.medium }}
           TEXT: ${{ inputs.text }}
           HAKEN: ${{ inputs.haken }}
           MARKE: ${{ inputs.marke }}
           CTA: ${{ inputs.cta }}
         run: |
           set -e
-          ARGS=(--karte --app "$APP" --text "$TEXT")
+          ARGS=(--karte --app "$APP" --medium "${MEDIUM:-bild}" --text "$TEXT")
           [ -n "$HAKEN" ] && ARGS+=(--haken "$HAKEN")
           [ -n "$MARKE" ] && ARGS+=(--marke "$MARKE")
           [ -n "$CTA" ]   && ARGS+=(--cta   "$CTA")

@@ -206,6 +206,16 @@ async function kartenlauf() {
     process.exit(1);
   }
 
+  // ⚠ Bild oder Video, und das entscheidet mehr als das Aussehen: TikTok nimmt
+  // NUR Videos. Eine freie Karte geht deshalb nur auf Facebook und Instagram,
+  // ein freies Reel auf alle drei (posten.mjs:371 ueberspringt TikTok bei
+  // jedem Bild mit „kein Video").
+  const MEDIUM = wert('medium', 'bild');
+  if (!['bild', 'reel'].includes(MEDIUM)) {
+    console.error(`--medium ${MEDIUM} gibt es nicht. Erlaubt: bild, reel.`);
+    process.exit(1);
+  }
+
   const app = APPS[k];
   const sprache = (app.sprachen ?? ['de'])[0];
   // Der Seed identifiziert den Beitrag gegenueber posten.mjs. Er muss deshalb
@@ -213,8 +223,12 @@ async function kartenlauf() {
   // Datum und App abgeleitet waere er beide Male derselbe.
   const seed = Math.floor(Math.random() * 900000) + 100000;
 
+  // ⚠ Der Winkel heisst bei beiden „freie-karte" — er ist die Kennung im
+  // Ledger, und dort zaehlt, dass es eine Bestellung war und kein gewuerfelter
+  // Winkel. Das FORMAT unterscheidet sich, weil es den Motor waehlt.
+  const format = MEDIUM === 'reel' ? 'ansage' : 'freie-karte';
   const post = {
-    winkel: 'freie-karte', format: 'freie-karte', medium: 'bild',
+    winkel: 'freie-karte', format, medium: MEDIUM,
     sprache, seed, schluessel: 'frei',
     frei: {
       text,
@@ -222,7 +236,7 @@ async function kartenlauf() {
       marke: wert('marke', null),
       cta: wert('cta', null),
     },
-    dateiname: `${k}-freie-karte-${sprache}-s${seed}`,
+    dateiname: `${k}-${format}-${sprache}-s${seed}`,
   };
 
   app.storeSatz = storeSatz(app, sprache);
@@ -233,7 +247,8 @@ async function kartenlauf() {
     out: ort.fuerMotor,
   });
 
-  console.log(`Freie Karte fuer ${app.name} · ${sprache} · Seed ${seed}\n`);
+  console.log(`${MEDIUM === 'reel' ? 'Freies Reel' : 'Freie Karte'} fuer ${app.name}`
+    + ` · ${sprache} · Seed ${seed}\n`);
   console.log(`   „${text}"\n`);
 
   for (const s of plan.schritte) {
@@ -267,7 +282,7 @@ async function kartenlauf() {
   // — sonst waeren die Beitraege des Tages fuer posten.mjs nicht mehr da.
   const ledger = ladeLedger();
   ledger.zeilen.push({
-    app: k, datum: HEUTE, winkel: 'freie-karte', medium: 'bild',
+    app: k, datum: HEUTE, winkel: 'freie-karte', medium: MEDIUM,
     schluessel: 'frei', inhalt: `seed${seed}`, sprache,
   });
   writeFileSync(join(HIER, 'ledger.json'), JSON.stringify(ledger, null, 2) + '\n');
