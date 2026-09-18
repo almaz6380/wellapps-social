@@ -480,6 +480,15 @@
     {
       "app": "anigosha",
       "datum": "2026-09-18",
+      "winkel": "freie-karte",
+      "medium": "reel",
+      "schluessel": "frei",
+      "inhalt": "seed329323",
+      "sprache": "de"
+    },
+    {
+      "app": "anigosha",
+      "datum": "2026-09-18",
       "winkel": "ladder",
       "medium": "reel",
       "schluessel": "fragen-ids",
@@ -502,6 +511,15 @@
       "medium": "reel",
       "schluessel": "level",
       "inhalt": "seed70665",
+      "sprache": "en"
+    },
+    {
+      "app": "mahjong",
+      "datum": "2026-09-18",
+      "winkel": "figur-galerie",
+      "medium": "bild",
+      "schluessel": "figur-vierer",
+      "inhalt": "seed24577",
       "sprache": "en"
     },
     {
@@ -547,15 +565,6 @@
       "medium": "bild",
       "schluessel": "kategorie",
       "inhalt": "seed85100",
-      "sprache": "de"
-    },
-    {
-      "app": "anigosha",
-      "datum": "2026-09-18",
-      "winkel": "freie-karte",
-      "medium": "reel",
-      "schluessel": "frei",
-      "inhalt": "seed329323",
       "sprache": "de"
     }
   ]
