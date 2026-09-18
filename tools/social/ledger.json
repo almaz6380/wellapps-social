@@ -476,6 +476,15 @@
       "schluessel": "fragen-ids",
       "inhalt": "seed35551",
       "sprache": "de"
+    },
+    {
+      "app": "anigosha",
+      "datum": "2026-09-18",
+      "winkel": "freie-karte",
+      "medium": "bild",
+      "schluessel": "frei",
+      "inhalt": "seed120391",
+      "sprache": "de"
     }
   ]
 }

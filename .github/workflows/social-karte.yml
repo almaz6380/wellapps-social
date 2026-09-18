@@ -50,6 +50,22 @@ on:
         type: string
         required: false
 
+# ⚠ Schreibrecht nur fuer den Ledger (letzter Schritt) — wie im Tageslauf.
+#
+# Hier fehlte es im ersten Lauf, und der Fehler kam ganz zum Schluss:
+#
+#   remote: Permission to almaz6380/wellapps-social.git denied to
+#           github-actions[bot]
+#   fatal: … The requested URL returned error: 403
+#
+# Tueckisch daran ist der Zeitpunkt: Die Karte war da, abgelegt und
+# vorgemerkt — nur ihre Ledger-Zeile blieb liegen. Der Lauf war rot, obwohl
+# alles Sichtbare geklappt hatte, und ohne die Zeile findet ein spaeterer
+# Versandlauf den Beitrag nicht mehr (posten.mjs postet nur, was im Ledger
+# steht).
+permissions:
+  contents: write
+
 jobs:
   karte:
     runs-on: ubuntu-latest
