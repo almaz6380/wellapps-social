@@ -178,8 +178,86 @@ function tagesposten() {
   return raus;
 }
 
+/**
+ * Was der Ledger fuer heute verspricht, aber hier nicht ankommt.
+ *
+ * ⚠ DIESE PRUEFUNG FEHLTE, UND SIE HAT SIEBEN BEITRAEGE GEKOSTET.
+ *
+ * Gefunden am 18.09.2026: Swaplys Bildbeitraege standen an jedem Lauftag im
+ * Ledger und sind NIE in der Freigabe-Seite erschienen — am 05., 08., 09. und
+ * heute, jedes Mal nur das Reel. Ursache: `swaply/scripts/post-bild.mjs`
+ * schreibt kein Beiblatt (.txt), und `tagesposten()` findet Beitraege
+ * ausschliesslich ueber deren .txt-Datei. Ohne Beiblatt existiert der Beitrag
+ * fuer den Versand schlicht nicht.
+ *
+ * Das Tueckische war die Stille: Der Lauf meldete „1 Beitrag", nicht „einer
+ * fehlt". Gemerkt hat es niemand, weil in der Liste ja etwas stand.
+ *
+ * Der Ledger ist die Wahrheit darueber, was heute entstanden ist — er wird
+ * erst geschrieben, nachdem der Beitrag gerendert wurde UND die Leitplanke
+ * bestanden hat. Was dort steht und hier fehlt, ist unterwegs verloren
+ * gegangen, und das muss laut sein.
+ */
+function fehlendeBeitraege(gefunden) {
+  const seeds = tagesSeeds();
+  if (!seeds) return [];
+  const da = new Set(gefunden.map((p) => basename(p.medium).match(/-s(\d+)/)?.[1]));
+  const fehlt = [];
+  for (const [k, menge] of seeds) {
+    if (NUR_APP && k !== NUR_APP) continue;
+    const app = (APPS.apps ?? APPS)[k];
+    if (!app?.kanaele?.length) continue;
+
+    // ⚠ Gibt es den Ausgabeordner gar nicht, ist das KEIN verlorener Beitrag —
+    // dann laeuft dies nur auf einer anderen Maschine als das Rendern. Genau
+    // so ist es beim Entwickeln: Der Tageslauf rendert im Runner, die Dateien
+    // liegen dort und nie hier. Das als Fehlschlag zu melden hiesse, den
+    // Alarm abzustumpfen, auf den es ankommt.
+    const ordner = join(app.pfad, 'out', 'social', DATUM);
+    const fremdeMaschine = !existsSync(ordner);
+
+    for (const seed of menge) {
+      if (NUR_SEED && seed !== String(NUR_SEED)) continue;
+      if (da.has(seed)) continue;
+      fehlt.push({ app: k, seed, fremdeMaschine });
+    }
+  }
+  return fehlt;
+}
+
 // --- Lauf -------------------------------------------------------------------
 const posten = tagesposten();
+const fehlt = fehlendeBeitraege(posten);
+
+// Nur die echten Verluste faerben den Lauf rot — siehe `fremdeMaschine`.
+const verloren = fehlt.filter((f) => !f.fremdeMaschine);
+
+if (fehlt.length) {
+  if (fehlt.length !== verloren.length) {
+    const n = fehlt.length - verloren.length;
+    console.log(`(${n} Beitrag/Beitraege aus dem Ledger liegen nicht auf dieser`
+      + ' Maschine — gerendert wurde woanders. Kein Fehler.)\n');
+  }
+}
+
+if (verloren.length) {
+  console.error('⚠ Im Ledger steht mehr, als hier ankommt:\n');
+  for (const f of verloren) {
+    const ordner = join((APPS.apps ?? APPS)[f.app].pfad, 'out', 'social', DATUM);
+    const dateien = existsSync(ordner)
+      ? readdirSync(ordner).filter((x) => x.includes(`-s${f.seed}`))
+      : [];
+    console.error(`  ${f.app} · Seed ${f.seed}`);
+    console.error(dateien.length
+      ? `    auf der Platte: ${dateien.join(', ')}`
+      : '    auf der Platte: nichts');
+    console.error(dateien.some((x) => x.endsWith('.txt'))
+      ? '    → Beiblatt da, aber keine Mediendatei dazu.'
+      : '    → KEIN Beiblatt (.txt). Ohne das findet der Versand den Beitrag nicht.');
+  }
+  console.error('\n  Der Generator dieser App muss ein Beiblatt schreiben —');
+  console.error('  der Versand nimmt den Caption-Text von dort.\n');
+}
 
 console.log(`${ECHT ? 'Hochladen' : 'Trockenlauf (ohne --echt wird nichts gesendet)'} `
   + `fuer ${DATUM}\n`);
@@ -190,7 +268,10 @@ if (!posten.length) {
   console.log('    node tools/social/lauf.mjs --echt');
   console.log('  oder in apps.json steht bei "kanaele" noch nichts. Solange die');
   console.log('  Profile nicht angelegt sind, ist das richtig so.');
-  process.exit(0);
+  // ⚠ NICHT immer 0. „Nichts zu posten" ist harmlos, solange der Ledger auch
+  // nichts verspricht — sagt er das Gegenteil, ist es der schlimmste Fall von
+  // allen: Es war etwas da, und es ist komplett verschwunden.
+  process.exit(verloren.length ? 1 : 0);
 }
 
 // ⚠ Je APP und Kanal, nicht je Kanal: Jede App hat eigene Konten. Eine
@@ -603,3 +684,15 @@ if (nachzutragen.length && process.env.GITHUB_STEP_SUMMARY) {
 console.log(ECHT
   ? `${fertig} Beitrag/Beitraege gesendet, ${offen} warten auf die Freigabe.`
   : `Trockenlauf beendet — nichts gesendet. Mit --echt wirklich senden.`);
+
+// ⚠ GANZ ZUM SCHLUSS rot faerben, nicht vorher abbrechen.
+//
+// Was durchkam, soll durchkommen — ein fehlender Beitrag darf die geglueckten
+// nicht aufhalten (dieselbe Regel wie im Tageslauf, wo eine gescheiterte App
+// die anderen nicht mitreisst). Aber der Lauf darf nicht gruen sein: Genau
+// dieser gruene Haken hat sieben Swaply-Bildbeitraege verschwinden lassen,
+// ohne dass jemand etwas gemerkt hat.
+if (verloren.length) {
+  console.error(`\n✗ ${verloren.length} Beitrag/Beitraege aus dem Ledger sind hier nie angekommen.`);
+  process.exit(1);
+}

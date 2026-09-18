@@ -389,14 +389,32 @@ async function tageslauf() {
   // Winkel von heute GESPERRT bleiben, sonst zieht der Nachlauf als Erstes
   // wieder den, der eben abgelehnt wurde. Ein Nachlauf ergaenzt, er ersetzt
   // nicht.
+  //
+  // ⚠⚠ BESTELLTE BEITRAEGE (`schluessel: 'frei'`) BLEIBEN STEHEN.
+  //
+  // Am 18.09.2026 selbst hineingelaufen: vormittags eine freie Karte gebaut
+  // (Seed 120391, lag fertig in der Merkliste), danach den Tageslauf
+  // angestossen — und der hat ihre Ledger-Zeile mit weggeraeumt. Die Karte
+  // selbst blieb liegen, aber `posten.mjs` postet nur, was im Ledger steht;
+  // ein spaeterer Versandlauf haette sie nicht mehr gefunden.
+  //
+  // Der Grund fuer das Ersetzen gilt fuer sie naemlich nicht: Es soll
+  // verhindern, dass ein zweiter Lauf desselben Tages seine GEWUERFELTEN
+  // Winkel anhaengt und die Rotation verrutscht. Eine bestellte Karte wurde
+  // nie gewuerfelt — sie kann die Rotation gar nicht verschieben, und sie
+  // entsteht per Definition ausserhalb des Tageslaufs.
   const VARIANTE = Number(wert('variante', 0)) || 0;
   if (echt && !VARIANTE) {
     const vorher = ledger.zeilen.length;
     ledger.zeilen = ledger.zeilen.filter(
-      (z) => !(z.datum === HEUTE && appSchluessel.includes(z.app)),
+      (z) => !(z.datum === HEUTE && appSchluessel.includes(z.app) && z.schluessel !== 'frei'),
     );
     const weg = vorher - ledger.zeilen.length;
     if (weg) console.log(`(${weg} Ledger-Zeile(n) von heute ersetzt — es gab schon einen Lauf)\n`);
+    const bestellt = ledger.zeilen.filter(
+      (z) => z.datum === HEUTE && appSchluessel.includes(z.app) && z.schluessel === 'frei',
+    ).length;
+    if (bestellt) console.log(`(${bestellt} bestellte(r) Beitrag/Beitraege von heute bleiben stehen)\n`);
   }
   if (VARIANTE) console.log(`Nachlauf, Variante ${VARIANTE} — die Winkel von heute bleiben gesperrt.\n`);
   // Jede App rendert in ihr eigenes out/social/<datum> — siehe die Erklaerung
