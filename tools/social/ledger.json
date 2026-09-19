@@ -595,15 +595,6 @@
       "sprache": "en"
     },
     {
-      "app": "wellbooked",
-      "datum": "2026-09-19",
-      "winkel": "bauchbinde",
-      "medium": "reel",
-      "schluessel": "aussage",
-      "inhalt": "seed55301",
-      "sprache": "de"
-    },
-    {
       "app": "fullrep",
       "datum": "2026-09-19",
       "winkel": "uebung-loop",
@@ -637,6 +628,24 @@
       "medium": "bild",
       "schluessel": "kategorie",
       "inhalt": "seed98637",
+      "sprache": "de"
+    },
+    {
+      "app": "wellbooked",
+      "datum": "2026-09-19",
+      "winkel": "bauchbinde",
+      "medium": "reel",
+      "schluessel": "aussage",
+      "inhalt": "seed55301",
+      "sprache": "de"
+    },
+    {
+      "app": "wellbooked",
+      "datum": "2026-09-19",
+      "winkel": "anruf",
+      "medium": "bild",
+      "schluessel": "serie",
+      "inhalt": "seed3709",
       "sprache": "de"
     }
   ]
