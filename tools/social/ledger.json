@@ -647,6 +647,24 @@
       "schluessel": "serie",
       "inhalt": "seed3709",
       "sprache": "de"
+    },
+    {
+      "app": "wellbooked",
+      "datum": "2026-09-19",
+      "winkel": "kalender-clip",
+      "medium": "reel",
+      "schluessel": "screen",
+      "inhalt": "seed26301",
+      "sprache": "de"
+    },
+    {
+      "app": "wellbooked",
+      "datum": "2026-09-19",
+      "winkel": "tirol-wien",
+      "medium": "bild",
+      "schluessel": "region",
+      "inhalt": "seed45001",
+      "sprache": "de"
     }
   ]
 }
