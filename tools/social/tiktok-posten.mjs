@@ -134,7 +134,11 @@ try {
 
   const r = post.istVideo
     ? await direktPosten({ token, datei: tmp, titel: post.text, wahl })
-    : await fotoPosten({ token, bildUrls, titel: post.text, wahl, direkt: true });
+    // ⚠ `text`, nicht `titel`: Bei Fotos ist `title` eine Ueberschrift von
+    // 90 Zeichen, die Bildunterschrift gehoert nach `description`.
+    // `fotoPosten` teilt das selbst auf. Beim Video daneben ist `titel`
+    // richtig — dort gibt es nur das eine Feld, mit 2200 Zeichen.
+    : await fotoPosten({ token, bildUrls, text: post.text, wahl, direkt: true });
 
   console.log(`✓ gepostet — publish_id ${r.publishId} `
     + `(${post.istVideo ? `${r.mb} MB` : `${r.anzahl} Bild${r.anzahl > 1 ? 'er' : ''}`}, `

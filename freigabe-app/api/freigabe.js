@@ -313,7 +313,14 @@ export default async function handler(req, res) {
       }
       // ⚠ Der Dateiname geht als Workflow-Eingabe weiter. Nur das erlauben,
       // was unsere Werkzeuge auch erzeugen.
-      if (!/^[A-Za-z0-9._-]{1,120}\.(mp4|mov)$/.test(String(datei ?? ''))) {
+      //
+      // ⚠ jpg/jpeg gehoeren dazu, seit TikTok auch Fotobeitraege bekommt
+      // (19.09.2026). Der Knopf auf der Seite war da schon frei, diese
+      // Pruefung nicht — ein Karussell antippen ergab „Unerwarteter
+      // Dateiname", und die Meldung sah nach einem kaputten Beitrag aus statt
+      // nach einer vergessenen Zeile. Eine Sperre an zwei Stellen muss an
+      // beiden fallen.
+      if (!/^[A-Za-z0-9._-]{1,120}\.(mp4|mov|jpg|jpeg)$/.test(String(datei ?? ''))) {
         res.status(400).json({ fehler: 'Unerwarteter Dateiname.' });
         return;
       }
