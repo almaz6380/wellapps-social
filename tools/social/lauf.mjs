@@ -6,6 +6,7 @@
 //   node tools/social/lauf.mjs --trocken --tage 30  laengerer Blick
 //   node tools/social/lauf.mjs --pruefung           Vorflug gegen Gegenbeispiele
 //   node tools/social/lauf.mjs --app anigosha       nur eine App
+//   node tools/social/lauf.mjs --winkel paar         bestimmten Winkel bestellen
 //   node tools/social/lauf.mjs --datum 2026-09-01   anderer Tag als heute
 //
 // Der Trockenlauf rendert nichts. Er beantwortet die einzige Frage, die vor
@@ -432,6 +433,12 @@ async function tageslauf() {
   // nie gewuerfelt — sie kann die Rotation gar nicht verschieben, und sie
   // entsteht per Definition ausserhalb des Tageslaufs.
   const VARIANTE = Number(wert('variante', 0)) || 0;
+  // ⚠ Einen bestimmten Winkel bestellen statt wuerfeln. Nur fuer den Fall
+  // „mach mir nochmal den Beitrag mit X" — die Rotation bleibt sonst, wie sie
+  // ist. Mehrere kommagetrennt; bei mehreren Apps gilt die Liste fuer jede,
+  // und ein Winkel, den eine App nicht kennt, bricht ihren Lauf ab.
+  const NUR_WINKEL = (wert('winkel', '') || '')
+    .split(',').map((x) => x.trim()).filter(Boolean);
   if (echt && !VARIANTE) {
     const vorher = ledger.zeilen.length;
     ledger.zeilen = ledger.zeilen.filter(
@@ -464,6 +471,7 @@ async function tageslauf() {
       sprachen: app.sprachen,
       anzahl: Number(wert('anzahl', app.posts_pro_tag)),
       nurVorhanden: NUR_VORHANDEN || echt,
+      nurWinkel: NUR_WINKEL.length ? NUR_WINKEL : null,
     });
     console.log(`━━ ${app.name}`);
     if (!posts.length) { console.log('   nichts verfuegbar\n'); continue; }

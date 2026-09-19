@@ -4,9 +4,26 @@ Liegt hier, weil `social-tiktok-posten.yml` **nur dieses Repo** auscheckt —
 eine einzige `actions/checkout@v4`, kein App-Repo daneben. Ein Verweis nach
 `wellbooked/` liefe im Lauf ins Leere.
 
-| Datei | App | Herkunft |
+| App | Datei | Herkunft |
 |---|---|---|
-| `wellbooked-indie.mp3` | WELLbooked! | Kopie von `wellbooked/docs/reels/musik/indie-verwendet.mp3` (25 s · 117 BPM) |
+| WELLbooked! | `musik/wellbooked-indie.mp3` | Kopie von `wellbooked/docs/reels/musik/indie-verwendet.mp3` (25 s · 117 BPM) |
+| Anigosha | `../reels/assets/sfx/anisong.aac` | eigens erzeugter Anisong (54 s), liegt schon hier |
+| Mahjong Royale | `../reels/assets/sfx/bett.aac` | der allgemeine Teppich (32 s) — s. Warnung unten |
+| FullRep, Swaply | — | noch keine |
+
+Die Zuordnung steht in `MUSIK` in `tools/social/folien-video.mjs`. Ohne
+Eintrag bleibt die Diashow stumm; das ist kein Fehler.
+
+## ⚠ `bett.aac` ist KEINE App-Melodie
+
+Am 19.09.2026 nachgemessen: Die Datei liegt in `anigosha`, in `mahjong-app`
+und hier — **dreimal mit derselben Prüfsumme** (`6d087418…`). Sie ist ein
+allgemeiner Teppich, der herumkopiert wurde, kein Kanalklang.
+
+Ich hatte sie vorher als „Anigoshas und Mahjongs eigene" bezeichnet. Das war
+falsch und ist hier richtiggestellt: Anigoshas eigene ist `anisong.aac`,
+Mahjong hat nur den allgemeinen — und benutzt ihn bereits in seinen Reels,
+der Kanal klingt also ohnehin so.
 
 ## ⚠ Das Original steht woanders
 

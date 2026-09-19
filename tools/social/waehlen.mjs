@@ -159,6 +159,7 @@ function winkelErlaubt(w, heute) {
  */
 export function waehlePosts({
   app, heute, ledger, anzahl = 2, nurVorhanden = false, variante = 0, sprachen = null,
+  nurWinkel = null,
 }) {
   // ⚠ DIE SPRACHE GEHOERT DER APP, NICHT DEM WINKEL — seit 15.09.2026.
   //
@@ -201,6 +202,27 @@ export function waehlePosts({
   let verfuegbar = alle
     .filter((w) => winkelErlaubt(w, heute))
     .filter((w) => (nurVorhanden ? w.status === 'vorhanden' : true));
+
+  // ⚠ EIN BESTELLTER WINKEL SCHLAEGT DIE ROTATION — und nur er.
+  //
+  // Alles hier ist bewusst deterministisch aus (Datum, App) abgeleitet. Das
+  // IST die Rotation, und sie soll nicht bei jedem Wunsch aufweichen. Es gibt
+  // aber den Fall „mach mir nochmal den Beitrag mit X" (19.09.2026, Mahjong).
+  // Ohne diesen Schalter bliebe nur, Varianten durchzuprobieren, bis der
+  // Winkel zufaellig faellt — raten statt bestellen.
+  //
+  // Die Sperrfrist gilt fuer ihn trotzdem: Faellt er darunter, greift weiter
+  // unten der Notausgang und setzt `gelockert`. So steht im Protokoll, dass
+  // eine Wiederholung bewusst war.
+  const bestellt = (nurWinkel ?? []).filter(Boolean);
+  if (bestellt.length) {
+    const treffer = verfuegbar.filter((w) => bestellt.includes(w.id));
+    if (!treffer.length) {
+      throw new Error(`Winkel „${bestellt.join(', ')}" gibt es fuer ${app} nicht `
+        + `(oder er ist heute nicht erlaubt). Moeglich: ${alle.map((w) => w.id).join(', ')}`);
+    }
+    verfuegbar = treffer;
+  }
 
   // ⚠ Winkel, die die Sprache der App gar nicht koennen, fallen raus. Heute
   // trifft das keinen einzigen (alle fuenf Apps haben volle Abdeckung

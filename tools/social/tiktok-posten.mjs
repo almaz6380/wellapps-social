@@ -39,7 +39,7 @@ import { merklistenLesen, merklisteAblegen } from './veroeffentlichen/blob.mjs';
 import { direktPosten, fotoPosten, inPosteingang, frischerToken }
   from './veroeffentlichen/tiktok.mjs';
 import { tiktokBildAdresse } from './veroeffentlichen/bildadresse.mjs';
-import { folienVideo, musikFuer } from './folien-video.mjs';
+import { fotosInDenPosteingang } from './folien-video.mjs';
 import { zugaenge } from './veroeffentlichen/geheimnisse.mjs';
 
 const APP = (process.env.APP || '').trim();
@@ -197,19 +197,21 @@ try {
   let diashow = false;
   const inDenPosteingang = async () => {
     if (post.istVideo) return inPosteingang({ token, datei: tmp });
-    try {
-      return await fotoPosten({ token, bildUrls, text: post.text, direkt: false });
-    } catch (e) {
-      if (!/url_ownership_unverified/.test(e.message)) throw e;
-      console.log('   ⚠ TikTok darf die Bildadressen nicht abholen '
-        + '(URL-Praefix im Portal nicht verifiziert). Die Folien gehen als Diashow-Video.');
-      tmp = join(tmpdir(), `${DATEI.replace(/\.[^.]+$/, '')}.mp4`);
-      const v = await folienVideo({ bildUrls: rohUrls, ziel: tmp, tonDatei: musikFuer(APP) });
-      console.log(`   Diashow gebaut: ${v.folien} Folien, ${v.sekunden} s, 1080×1920`
-        + `${v.ton ? ', mit Musikteppich' : ', stumm'}.`);
-      diashow = true;
-      return inPosteingang({ token, datei: tmp });
-    }
+    // Der Rueckfall steht in folien-video.mjs — einmal, fuer beide Aufrufer.
+    const mp4 = join(tmpdir(), `${DATEI.replace(/\.[^.]+$/, '')}.mp4`);
+    const e = await fotosInDenPosteingang({
+      app: APP,
+      rohUrls,
+      ziel: mp4,
+      versuchFoto: () => fotoPosten({ token, bildUrls, text: post.text, direkt: false }),
+      alsVideo: (datei) => inPosteingang({ token, datei }),
+    });
+    diashow = e.diashow;
+    // ⚠ `tmp` nur setzen, wenn wirklich eine Datei entstanden ist — das
+    // `finally` unten loescht sie, und `unlinkSync(null)` war hier schon
+    // einmal der Fehler.
+    if (e.datei) tmp = e.datei;
+    return e.r;
   };
 
   let r;

@@ -35,8 +35,9 @@
 // Diese Ungleichheit ist keine Nachlaessigkeit, sondern das, was die drei
 // Schnittstellen hergeben.
 
-import { readFileSync, readdirSync, existsSync, appendFileSync } from 'node:fs';
+import { readFileSync, readdirSync, existsSync, appendFileSync, unlinkSync } from 'node:fs';
 import { join, dirname, basename } from 'node:path';
+import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 
 import { ladeApps } from './waehlen.mjs';
@@ -45,6 +46,7 @@ import { entwurfAnlegen } from './veroeffentlichen/facebook.mjs';
 import { inPosteingang, direktPosten, fotoPosten, kontoAuskunft, frischerToken }
   from './veroeffentlichen/tiktok.mjs';
 import { tiktokBildAdresse } from './veroeffentlichen/bildadresse.mjs';
+import { fotosInDenPosteingang } from './folien-video.mjs';
 import { hochladen, merklisteAblegen, merklistenLesen } from './veroeffentlichen/blob.mjs';
 import { containerAnlegen, karussellAnlegen, aufBereitWarten, veroeffentlichen as igVeroeffentlichen }
   from './veroeffentlichen/instagram.mjs';
@@ -594,6 +596,13 @@ for (const p of posten) {
           : Array.from({ length: Math.max(1, ablage.folienZahl ?? 1) },
             (_, i) => `https://platzhalter.invalid/trocken-${i + 1}.jpg`);
 
+        // ⚠ Und wenn TikTok die Bilder nicht abholen darf, gehen die Folien
+        // als Diashow-Video hoch. Derselbe Rueckfall wie hinter dem
+        // Freigabe-Knopf — er steht deshalb EINMAL in folien-video.mjs.
+        // Bis zum 19.09.2026 kannte ihn nur `tiktok-posten.mjs`, und der
+        // Tageslauf scheiterte bei jedem Bild-Beitrag.
+        let diashow = false;
+        let diashowDatei = null;
         const r = istVideo
           ? (direkt
             ? await direktPosten({ token, datei: p.medium, titel: p.text, trocken: !ECHT })
@@ -602,7 +611,22 @@ for (const p of posten) {
           // von 90 Zeichen, die Bildunterschrift gehoert nach `description`.
           // `fotoPosten` teilt das selbst auf — die Grenze ist TikToks, also
           // gehoert sie dorthin und nicht hierher.
-          : await fotoPosten({ token, bildUrls, text: p.text, direkt: false, trocken: !ECHT });
+          : await (async () => {
+            const e = await fotosInDenPosteingang({
+              app: p.app,
+              // Fuers Video die BLOB-Adressen: Wir holen die Bilder selbst,
+              // da braucht es den Umweg ueber die Durchreiche nicht.
+              rohUrls: fotoUrls,
+              ziel: join(tmpdir(), `${basename(p.medium).replace(/\.[^.]+$/, '')}.mp4`),
+              versuchFoto: () => fotoPosten({
+                token, bildUrls, text: p.text, direkt: false, trocken: !ECHT,
+              }),
+              alsVideo: (datei) => inPosteingang({ token, datei }),
+            });
+            diashow = e.diashow;
+            diashowDatei = e.datei;
+            return e.r;
+          })();
 
         // ⚠ Fotos gehen IMMER in den Posteingang, auch wenn AUTOMATIK.tiktok
         // eines Tages an waere. Direct Post verlangt eine Privatsphaere-Wahl,
@@ -610,7 +634,13 @@ for (const p of posten) {
         // im Tageslauf sitzt keiner. Der Knopf auf der Freigabe-Seite fragt
         // sie ab; dort ist der richtige Ort dafuer.
         const wirklichDirekt = istVideo && direkt;
-        const was = istVideo ? `${r.mb} MB` : `${r.anzahl} Bild${r.anzahl > 1 ? 'er' : ''}`;
+        // ⚠ Nach der Diashow ist es ein Video — sonst meldet die Zeile
+        // „6 Bilder", waehrend eine mp4 hochgegangen ist.
+        const was = (istVideo || diashow)
+          ? `${r.mb} MB${diashow ? ' Diashow' : ''}`
+          : `${r.anzahl} Bild${r.anzahl > 1 ? 'er' : ''}`;
+        // Die Datei lag nur fuer den Upload da.
+        if (diashowDatei) { try { unlinkSync(diashowDatei); } catch { /* egal */ } }
         if (r.trocken) {
           console.log(`   ▸ tiktok     wuerde ${was} ${wirklichDirekt ? 'OEFFENTLICH posten' : 'in den Posteingang laden'}`);
         } else {

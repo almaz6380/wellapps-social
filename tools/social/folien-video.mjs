@@ -43,22 +43,32 @@ import { videoSenke, lauf } from '../reels/encode.mjs';
 
 const HIER = dirname(fileURLToPath(import.meta.url));
 
-// Welche App welchen Musikteppich bekommt.
+// Welche App welchen Musikteppich bekommt. Pfade relativ zu tools/social/.
 //
 // ⚠ Die Dateien liegen in DIESEM Repo, nicht im jeweiligen App-Repo:
 // `social-tiktok-posten.yml` checkt nur dieses eine aus. Herkunft und die
 // Regel „Original bleibt in wellbooked" stehen in `musik/LIESMICH.md`.
 //
+// ⚠ `bett.aac` ist KEINE App-Melodie. Am 19.09.2026 nachgemessen: Die Datei
+// liegt in anigosha, in mahjong-app und hier — dreimal mit derselben
+// Pruefsumme. Sie ist ein allgemeiner Teppich, der herumkopiert wurde. Ich
+// hatte sie vorher als „Anigoshas und Mahjongs eigene" bezeichnet; das war
+// falsch. Anigoshas eigene ist `anisong.aac` (ein eigens erzeugter Anisong),
+// Mahjong hat nur den allgemeinen — und benutzt ihn schon in seinen Reels,
+// der Kanal klingt also ohnehin so.
+//
 // Kein Eintrag heisst stumm — das ist der bisherige Zustand, kein Fehler.
 const MUSIK = {
-  wellbooked: 'wellbooked-indie.mp3',
+  wellbooked: 'musik/wellbooked-indie.mp3',
+  anigosha: '../reels/assets/sfx/anisong.aac',
+  mahjong: '../reels/assets/sfx/bett.aac',
 };
 
 /** Pfad zum Musikteppich einer App, oder null. */
 export function musikFuer(app) {
   const datei = MUSIK[app];
   if (!datei) return null;
-  const pfad = join(HIER, 'musik', datei);
+  const pfad = join(HIER, datei);
   // ⚠ Lieber stumm als abgebrochen: Fehlt die Datei, soll der Beitrag
   // trotzdem hochgehen. Der Ton ist eine Zutat, nicht der Beitrag.
   if (!existsSync(pfad)) {
@@ -70,6 +80,15 @@ export function musikFuer(app) {
 
 export const FPS = 30;
 export const SEKUNDEN_JE_FOLIE = 3;
+
+// ⚠ EINE EINZELNE FOLIE ERGAEBE 3 SEKUNDEN — zu kurz.
+//
+// Die meisten Beitraege sind Karussells, aber nicht alle: Ein Bild-Winkel
+// liefert genau eine Folie, und 3 Sekunden sind TikToks Untergrenze. Ein
+// Video, das exakt auf der Grenze liegt, ist kein Beitrag, den jemand sieht —
+// es ist ein Blinzeln. Also wird die Standzeit gestreckt, bis das Ganze
+// mindestens so lang ist.
+export const MINDESTDAUER = 6;
 
 // ⚠ DIE FOLIEN SIND 1080×1350, TIKTOK WILL 1080×1920.
 //
@@ -147,7 +166,9 @@ export async function folienVideo({
     bilder.push(Buffer.from(await a.arrayBuffer()));
   }
 
-  const jeFolie = Math.max(1, Math.round(FPS * sekunden));
+  // s. MINDESTDAUER — bei einer einzelnen Folie wird die Standzeit gestreckt.
+  const gestreckt = Math.max(sekunden, MINDESTDAUER / bilder.length);
+  const jeFolie = Math.max(1, Math.round(FPS * gestreckt));
   const dauer = (bilder.length * jeFolie) / FPS;
 
   // Der zugeschnittene Teppich liegt neben dem Ziel und wird danach entfernt.
@@ -174,6 +195,47 @@ export async function folienVideo({
   if (ton) rmSync(ton, { force: true });
 
   return { ziel, folien: bilder.length, sekunden: dauer, ton: Boolean(ton) };
+}
+
+/**
+ * Fotos in den TikTok-Posteingang — und wenn TikTok sie nicht abholen darf,
+ * als Diashow-Video.
+ *
+ * ⚠ Diese Funktion steht hier und nicht zweimal daneben. Den Rueckfall gab es
+ * zuerst nur in `tiktok-posten.mjs` (dem Knopf auf der Freigabe-Seite); der
+ * Tageslauf in `posten.mjs` kannte ihn nicht und scheiterte bei jedem
+ * Bild-Beitrag an `url_ownership_unverified`. Zwei Stellen mit derselben
+ * Fallunterscheidung waren heute schon einmal der Fehler: `fotoPosten` wurde
+ * repariert und ein Aufrufer vergessen.
+ *
+ * ⚠ Die beiden Aufrufer bekommen ihre Zugangsdaten unterschiedlich, deshalb
+ * reicht diese Funktion KEINEN Token durch, sondern nimmt zwei fertig
+ * gebundene Aufrufe entgegen. Ein `token: null` hier hindurchzureichen war der
+ * erste Entwurf und hätte nur so ausgesehen, als wüsste diese Datei etwas über
+ * TikTok.
+ *
+ * @param {object} o
+ * @param {string} o.app        fuer die Wahl des Musikteppichs
+ * @param {string[]} o.rohUrls  Blob-Adressen, aus denen das Video gebaut wird
+ * @param {string} o.ziel       Pfad fuer die MP4-Datei, falls es eine braucht
+ * @param {function} o.versuchFoto   () => Promise — der Fotobeitrag
+ * @param {function} o.alsVideo      (datei) => Promise — Upload in den Posteingang
+ * @returns {Promise<{r: object, diashow: boolean, datei: string|null}>}
+ */
+export async function fotosInDenPosteingang({
+  app, rohUrls, ziel, versuchFoto, alsVideo, melden = console.log,
+}) {
+  try {
+    return { r: await versuchFoto(), diashow: false, datei: null };
+  } catch (e) {
+    if (!/url_ownership_unverified/.test(e.message)) throw e;
+    melden('   ⚠ TikTok darf die Bildadressen nicht abholen '
+      + '(URL-Praefix im Portal nicht verifiziert). Die Folien gehen als Diashow-Video.');
+    const v = await folienVideo({ bildUrls: rohUrls, ziel, tonDatei: musikFuer(app) });
+    melden(`   Diashow gebaut: ${v.folien} Folien, ${v.sekunden} s, 1080×1920`
+      + `${v.ton ? ', mit Musikteppich' : ', stumm'}.`);
+    return { r: await alsVideo(ziel), diashow: true, datei: ziel };
+  }
 }
 
 // Kleiner Selbstlauf, damit sich das Ergebnis ansehen laesst:

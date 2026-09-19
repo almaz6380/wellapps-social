@@ -60,6 +60,10 @@ on:
         description: 'Ersatz nach einem Ablehnen: 1-20. Leer = der regulaere Beitrag des Tages'
         type: string
         required: false
+      winkel:
+        description: 'Bestimmten Winkel bestellen statt wuerfeln, z. B. paar-standbild. Leer = Rotation'
+        type: string
+        required: false
 
 # ⚠ Schreibrecht nur fuer den Ledger (siehe letzter Schritt). Ohne ihn
 # wiederholt der naechste Lauf dieselben Winkel — die Rotation lebt davon,
@@ -145,6 +149,7 @@ jobs:
           E_KANAELE: ${{ inputs.kanaele }}
           E_ZWEIGE: ${{ inputs.zweige }}
           E_VARIANTE: ${{ inputs.variante }}
+          E_WINKEL: ${{ inputs.winkel }}
           GEPLANT: ${{ github.event_name == 'schedule' }}
         run: |
           set -e
@@ -168,10 +173,14 @@ jobs:
             APPS="alle"; MODUS="echt"; KANAELE=""
             ZWEIGE=""
             VARIANTE=""
+            # ⚠ Auch kein bestellter Winkel: Ein Zeitplan bestellt nichts, er
+            # folgt der Rotation. Stuende hier je einer, liefe er taeglich.
+            WINKEL=""
           else
             APPS="${E_APPS:-anigosha}"; MODUS="${E_MODUS:-trocken}"
             KANAELE="$E_KANAELE"; ZWEIGE="$E_ZWEIGE"
             VARIANTE="$E_VARIANTE"
+            WINKEL="$E_WINKEL"
           fi
           {
             echo "apps=$APPS"
@@ -179,6 +188,7 @@ jobs:
             echo "datum=$E_DATUM"
             echo "kanaele=$KANAELE"
             echo "variante=$VARIANTE"
+            echo "winkel=$WINKEL"
           } >> "$GITHUB_OUTPUT"
           echo "Apps: $APPS · Modus: $MODUS · Kanaele: ${KANAELE:-alle} · ausgeloest von ${{ github.event_name }}"
 
@@ -408,6 +418,7 @@ jobs:
           APPS: ${{ steps.plan.outputs.apps }}
           DATUM: ${{ steps.plan.outputs.datum }}
           VARIANTE: ${{ steps.plan.outputs.variante }}
+          WINKEL: ${{ steps.plan.outputs.winkel }}
         run: |
           DATUM_ARG=""
           [ -n "$DATUM" ] && DATUM_ARG="--datum $DATUM"
@@ -416,14 +427,17 @@ jobs:
           # `waehlePosts` ist sonst rein deterministisch aus (Datum, App).
           VARIANTE_ARG=""
           [ -n "$VARIANTE" ] && VARIANTE_ARG="--variante $VARIANTE"
+          # ⚠ Ein bestellter Winkel schlaegt die Rotation. Nur von Hand.
+          WINKEL_ARG=""
+          [ -n "$WINKEL" ] && WINKEL_ARG="--winkel $WINKEL"
           : > "$RUNNER_TEMP/gescheitert.txt"
           if [ "$APPS" = "alle" ]; then
-            node tools/social/lauf.mjs --echt $DATUM_ARG $VARIANTE_ARG || echo "alle" >> "$RUNNER_TEMP/gescheitert.txt"
+            node tools/social/lauf.mjs --echt $DATUM_ARG $VARIANTE_ARG $WINKEL_ARG || echo "alle" >> "$RUNNER_TEMP/gescheitert.txt"
           else
             IFS=',' read -ra LISTE <<< "$APPS"
             for a in "${LISTE[@]}"; do
               app="$(echo "$a" | tr -d ' ')"
-              node tools/social/lauf.mjs --echt --app "$app" $DATUM_ARG $VARIANTE_ARG \
+              node tools/social/lauf.mjs --echt --app "$app" $DATUM_ARG $VARIANTE_ARG $WINKEL_ARG \
                 || echo "$app" >> "$RUNNER_TEMP/gescheitert.txt"
             done
           fi
