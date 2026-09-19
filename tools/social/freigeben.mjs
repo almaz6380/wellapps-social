@@ -26,7 +26,9 @@
 // die posten.mjs im selben Speicher abgelegt hat.
 
 import { merklistenLesen, merklisteAblegen, aufraeumen, nochGebraucht } from './veroeffentlichen/blob.mjs';
-import { containerAnlegen, aufBereitWarten, veroeffentlichen } from './veroeffentlichen/instagram.mjs';
+import {
+  containerAnlegen, karussellAnlegen, aufBereitWarten, veroeffentlichen, KARUSSELL_MIN,
+} from './veroeffentlichen/instagram.mjs';
 import { zugaenge } from './veroeffentlichen/geheimnisse.mjs';
 
 const MODUS = (process.env.MODUS || 'zeigen').trim();
@@ -90,9 +92,18 @@ for (const liste of listen) {
       continue;
     }
 
+    // ⚠ Ein Karussell erkennt man an `urls`, NICHT daran, dass `url` fehlt.
+    // `url` bleibt gesetzt (die erste Folie) — die Vorschau, das Aufraeumen
+    // und jeder aeltere Eintrag haengen daran. Wer hier auf `!e.url` prueft,
+    // haelt jedes Karussell fuer kaputt.
+    const folien = Array.isArray(e.urls) ? e.urls.filter(Boolean) : [];
+    const istKarussell = folien.length >= KARUSSELL_MIN;
+
     if (MODUS === 'zeigen') {
-      console.log(`   ${nummer} ${e.datei}${e.istVideo ? '  (Reel)' : ''}`);
-      console.log(`        ${e.url}`);
+      const art = e.istVideo ? '  (Reel)' : istKarussell ? `  (Karussell, ${folien.length} Folien)` : '';
+      console.log(`   ${nummer} ${e.datei}${art}`);
+      if (istKarussell) folien.forEach((u, k) => console.log(`        ${k + 1}. ${u}`));
+      else console.log(`        ${e.url}`);
       // Der Text vollstaendig, nicht gekuerzt: Er ist das, was mit
       // veroeffentlicht wird, und genau darum geht es beim Ansehen.
       console.log(e.text.split('\n').map((z2) => `        │ ${z2}`).join('\n'));
@@ -101,11 +112,15 @@ for (const liste of listen) {
     }
 
     try {
-      console.log(`   ${nummer} ${e.datei} …`);
-      const c = await containerAnlegen({
-        kontoId: z.igKontoId, token: z.fbToken,
-        bildUrl: e.url, text: e.text, istReel: e.istVideo,
-      });
+      console.log(`   ${nummer} ${e.datei}${istKarussell ? ` (${folien.length} Folien)` : ''} …`);
+      const c = istKarussell
+        ? await karussellAnlegen({
+          kontoId: z.igKontoId, token: z.fbToken, bildUrls: folien, text: e.text,
+        })
+        : await containerAnlegen({
+          kontoId: z.igKontoId, token: z.fbToken,
+          bildUrl: e.url, text: e.text, istReel: e.istVideo,
+        });
       // Bei einem Reel laedt Instagram das Video erst herunter und kodiert es.
       await aufBereitWarten({ containerId: c.containerId, token: z.fbToken });
       const r = await veroeffentlichen({
@@ -131,7 +146,8 @@ for (const liste of listen) {
       if (nochGebraucht({ liste, datei: e.datei })) {
         console.log('        (Datei bleibt liegen — ein anderer Kanal ist noch offen)');
       } else {
-        await aufraeumen({ url: e.url, token: z.blobToken });
+        // Beim Karussell alle Folien, nicht nur die erste.
+        await aufraeumen({ url: e.url, urls: folien, token: z.blobToken });
       }
     } catch (err) {
       fehler += 1;

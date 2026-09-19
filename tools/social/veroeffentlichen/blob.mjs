@@ -188,9 +188,14 @@ export function nochGebraucht({ liste, datei }) {
   return Boolean(offenBeiInstagram || offenBeiFacebook || offenBeiTiktok);
 }
 
-export async function aufraeumen({ url, token }) {
+export async function aufraeumen({ url, urls, token }) {
+  // ⚠ Ein Karussell liegt als MEHRERE Dateien im Speicher. Wer hier nur
+  // `url` (die erste Folie) loescht, laesst die uebrigen neun fuer immer
+  // liegen — und merkt es nie, weil der Beitrag ja veroeffentlicht ist.
+  const ziele = [...new Set([...(urls ?? []), url].filter(Boolean))];
+  if (!ziele.length) return false;
   try {
-    await del(url, { token });
+    await del(ziele.length === 1 ? ziele[0] : ziele, { token });
     return true;
   } catch {
     // Ein misslungenes Aufraeumen darf einen gelungenen Beitrag nicht zum

@@ -27,6 +27,13 @@
   /* ⚠ Deckel, sonst fuellt ein 9:16-Video den ganzen Bildschirm und man
      scrollt ewig, um fuenf Apps durchzusehen. */
   video, img.medium { max-height: 46vh; object-fit: contain; }
+  /* Karussell: waagrecht wischen statt untereinander. Sechs Folien
+     untereinander waeren auf dem Handy eine halbe Bildschirmseite je Folie —
+     man scrollt dann an den Knoepfen vorbei, statt die Folien zu vergleichen. */
+  .karussell { display: flex; gap: 8px; overflow-x: auto; scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch; padding-bottom: 4px; }
+  .karussell .folie { flex: 0 0 62%; scroll-snap-align: start; margin: 0; }
+  .karussell figcaption { text-align: center; margin-top: 4px; }
   .text {
     white-space: pre-wrap; word-break: break-word; font-size: 14px;
     background: #12101c; border: 1px solid var(--rand); border-radius: 10px;
@@ -218,7 +225,22 @@ function postKarte(post, liste) {
     k.append(el('p', 'marke', 'abgelehnt'));
   }
 
-  if (post.url) {
+  // ⚠ Beim Karussell ALLE Folien zeigen, nicht nur die erste. Man gibt frei,
+  // was man gesehen hat — eine Vorschau, die Folie 1 zeigt und Folie 2 bis 6
+  // verschweigt, macht den Knopf zu einer Unterschrift auf Ungesehenes.
+  const folien = Array.isArray(post.urls) ? post.urls.filter(Boolean) : [];
+  if (folien.length >= 2) {
+    const streifen = el('div', 'karussell');
+    folien.forEach((u, i) => {
+      const f = el('figure', 'folie');
+      const b = el('img', 'medium');
+      b.src = u;
+      b.loading = 'lazy';
+      f.append(b, el('figcaption', 'leise', `${i + 1} / ${folien.length}`));
+      streifen.append(f);
+    });
+    k.append(streifen);
+  } else if (post.url) {
     const m = post.istVideo ? el('video') : el('img', 'medium');
     if (post.istVideo) { m.controls = true; m.playsInline = true; m.preload = 'metadata'; }
     m.src = post.url;

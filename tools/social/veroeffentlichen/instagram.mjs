@@ -39,6 +39,78 @@ export async function containerAnlegen({ kontoId, token, bildUrl, text, istReel,
   return { containerId: daten.id };
 }
 
+/** Wie viele Folien ein Karussell traegt. Instagrams Grenze, nicht unsere. */
+export const KARUSSELL_MAX = 10;
+export const KARUSSELL_MIN = 2;
+
+/**
+ * Ein Karussell — mehrere Bilder in EINEM Beitrag.
+ *
+ * Drei Stufen statt zwei, und das ist der ganze Unterschied zum Einzelbild:
+ *
+ *   1. je Folie ein KIND-Container (`is_carousel_item=true`)
+ *   2. ein ELTERN-Container (`media_type=CAROUSEL`, `children=<id>,<id>,…`)
+ *   3. veroeffentlichen — mit der Eltern-ID, wie gewohnt
+ *
+ * ⚠ DIE BILDUNTERSCHRIFT GEHOERT AN DEN ELTERN-CONTAINER, nicht an die
+ * Kinder. Ein Kind mit `caption` nimmt Instagram zwar an, sichtbar wird der
+ * Text aber nie — man sucht ihn dann im Beitrag und findet nichts.
+ *
+ * ⚠ Nur JPEG. Steht so in der Doku („JPEG is the only image format
+ * supported"), und PNG scheitert nicht beim Anlegen, sondern erst beim
+ * Verarbeiten — mit einer Meldung, die nach einem kaputten Server aussieht.
+ *
+ * ⚠ Die Reihenfolge der Folien ist die Reihenfolge in `bildUrls`. Sie wird
+ * hier NICHT sortiert: Wer sortiert, vertauscht irgendwann Folie 10 und
+ * Folie 2, weil „10" alphabetisch vor „2" steht.
+ *
+ * Fuers Kontingent zaehlt ein Karussell als EIN Beitrag, nicht als zehn.
+ */
+export async function karussellAnlegen({ kontoId, token, bildUrls, text, trocken }) {
+  const folien = (bildUrls ?? []).filter(Boolean);
+  if (folien.length < KARUSSELL_MIN) {
+    throw new Error(`Karussell braucht mindestens ${KARUSSELL_MIN} Folien, hier sind es ${folien.length}. `
+      + 'Fuer eine einzelne nimmt man containerAnlegen().');
+  }
+  if (folien.length > KARUSSELL_MAX) {
+    throw new Error(`Instagram nimmt hoechstens ${KARUSSELL_MAX} Folien, hier sind es ${folien.length}.`);
+  }
+
+  if (trocken) {
+    return { trocken: true, art: 'CAROUSEL', folien: folien.length, zeichen: text.length };
+  }
+
+  // --- 1. Kinder -----------------------------------------------------------
+  // Nacheinander, nicht parallel: Instagram zaehlt jeden Aufruf aufs
+  // Kontingent, und bei einem Fehler will man wissen, WELCHE Folie es war.
+  const kinder = [];
+  for (const [i, url] of folien.entries()) {
+    const felder = new URLSearchParams({
+      access_token: token, image_url: url, is_carousel_item: 'true',
+    });
+    const antwort = await fetch(`${GRAPH}/${kontoId}/media`, { method: 'POST', body: felder });
+    const daten = await antwort.json();
+    if (!antwort.ok) {
+      throw new Error(`Instagram (Folie ${i + 1}/${folien.length}) ${antwort.status}: `
+        + `${daten.error?.message ?? JSON.stringify(daten)}`);
+    }
+    kinder.push(daten.id);
+  }
+
+  // --- 2. Eltern -----------------------------------------------------------
+  const felder = new URLSearchParams({
+    access_token: token, media_type: 'CAROUSEL',
+    children: kinder.join(','), caption: text,
+  });
+  const antwort = await fetch(`${GRAPH}/${kontoId}/media`, { method: 'POST', body: felder });
+  const daten = await antwort.json();
+  if (!antwort.ok) {
+    throw new Error(`Instagram (Karussell-Container) ${antwort.status}: `
+      + `${daten.error?.message ?? JSON.stringify(daten)}`);
+  }
+  return { containerId: daten.id, kinder };
+}
+
 /**
  * Schritt 1b: warten, bis der Container fertig verarbeitet ist.
  *

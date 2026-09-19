@@ -45,7 +45,7 @@ import { entwurfAnlegen } from './veroeffentlichen/facebook.mjs';
 import { inPosteingang, direktPosten, kontoAuskunft, frischerToken }
   from './veroeffentlichen/tiktok.mjs';
 import { hochladen, merklisteAblegen, merklistenLesen } from './veroeffentlichen/blob.mjs';
-import { containerAnlegen, aufBereitWarten, veroeffentlichen as igVeroeffentlichen }
+import { containerAnlegen, karussellAnlegen, aufBereitWarten, veroeffentlichen as igVeroeffentlichen }
   from './veroeffentlichen/instagram.mjs';
 import { riechtNachBeiblatt } from './vorflug.mjs';
 import { beschreibungBauen } from './beschreibung.mjs';
@@ -186,7 +186,29 @@ function tagesposten() {
       // Das Feed-Bild ist das zu postende; das Story-Bild ist eine Beigabe.
       const medium = ['.mp4', '-feed.jpg', '.jpg'].map((e) => join(ordner, stamm + e))
         .find(existsSync);
-      if (!medium) continue;
+
+      // ⚠ Ein KARUSSELL liegt als `<stamm>-1.jpg … -10.jpg` daneben.
+      //
+      // Erkannt wird es an den nummerierten Dateien, nicht an einem Feld im
+      // Ledger: Was auf der Platte liegt, ist die Wahrheit ueber das, was
+      // gerendert wurde — eine Absicht im Ledger kann daneben liegen, wenn
+      // der Renderer zur Haelfte gescheitert ist.
+      //
+      // ⚠ Sortiert wird NUMERISCH. `sort()` allein stellt „-10.jpg" vor
+      // „-2.jpg", und die Folien stuenden in der falschen Reihenfolge im
+      // Beitrag — sichtbar erst nach dem Veroeffentlichen, korrigierbar gar
+      // nicht mehr.
+      const folien = readdirSync(ordner)
+        .map((x) => ({ x, n: x.match(new RegExp(`^${stamm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}-(\\d+)\\.jpg$`))?.[1] }))
+        .filter((e) => e.n)
+        .sort((a, b) => Number(a.n) - Number(b.n))
+        .map((e) => join(ordner, e.x));
+
+      // ⚠ Beim Karussell fuehrt die ERSTE FOLIE, auch wenn daneben noch ein
+      // Einzelbild liegt. Sonst haengen Vorschau, Dateiname in der Merkliste
+      // und Aufraeumen an einer Datei, die gar nicht im Beitrag steht.
+      const hauptdatei = folien.length >= 2 ? folien[0] : medium;
+      if (!hauptdatei) continue;
       const kanaele = NUR_KANAELE.length
         ? app.kanaele.filter((x) => NUR_KANAELE.includes(x))
         : app.kanaele;
@@ -199,7 +221,7 @@ function tagesposten() {
       // ⚠ NICHT mehr nur captionAus(). Seit 18.09.2026 gehen App-Link und
       // hoechstens fuenf Hashtags mit raus — beides Josefs Regel, beides an
       // EINER Stelle fuer alle fuenf Apps (siehe beschreibung.mjs).
-      raus.push({ app: k, name: app.name, kanaele, medium, sprache,
+      raus.push({ app: k, name: app.name, kanaele, medium: hauptdatei, folien, sprache,
         text: beschreibungBauen({ app, beiblatt, sprache }).trim() });
     }
   }
@@ -438,13 +460,30 @@ async function abgelegt(spur, p, z) {
   // nicht mehr ausrechnen, und ein ausgerechneter waere eine Behauptung ueber
   // einen Ort, an dem nichts liegt. Gebraucht wird er ohnehin nur in der
   // Meldung des Trockenlaufs — und dort ist nichts gemerkt.
-  if (spur.url) return { url: spur.url };
-  const r = await hochladen({
-    datei: p.medium, token: z.blobToken,
-    praefix: `social/${DATUM}`, trocken: !ECHT,
-  });
-  if (r.url) spur.url = r.url;
-  return r;
+  if (spur.url) return { url: spur.url, urls: spur.urls };
+
+  // ⚠ Ein Karussell braucht ALLE Folien oeffentlich, nicht nur die erste.
+  // Instagram holt sich jedes Bild selbst von seiner Adresse; fehlt eine,
+  // scheitert nicht der Upload, sondern erst das Anlegen der Folie — mitten
+  // im Beitrag, mit sechs schon angelegten Kindern, die dann ins Leere
+  // laufen. Deshalb hier alles hochladen, bevor irgendein Kanal loslegt.
+  const folien = p.folien?.length >= 2 ? p.folien : [p.medium];
+  const hoch = [];
+  for (const datei of folien) {
+    hoch.push(await hochladen({
+      datei, token: z.blobToken, praefix: `social/${DATUM}`, trocken: !ECHT,
+    }));
+  }
+
+  const erste = hoch[0];
+  if (erste?.url) {
+    spur.url = erste.url;
+    if (folien.length >= 2) spur.urls = hoch.map((r) => r.url).filter(Boolean);
+  }
+  // ⚠ `folienZahl` auch im Trockenlauf, wo es keine `url` gibt. Sonst meldet
+  // der Probelauf „das Bild" und laedt beim echten Lauf zehn hoch — genau die
+  // Sorte Vorschau, die man nachher nicht wiedererkennt.
+  return { ...erste, urls: spur.urls, folienZahl: folien.length };
 }
 
 let fertig = 0, offen = 0;
@@ -486,7 +525,7 @@ for (const p of posten) {
           // genau dieser Datei und genau diesem Text.
           const r = await abgelegt(spur, p, z);
           if (r.trocken) {
-            console.log(`   ▸ facebook   wuerde die Datei ablegen unter ${r.pfad}`);
+            console.log(`   ▸ facebook   wuerde ${r.folienZahl > 1 ? r.folienZahl + ' Folien' : 'die Datei'} ablegen unter ${r.pfad}`);
             spur.kanaele.facebook = { stand: 'trocken' };
           } else {
             console.log('   ✓ facebook   liegt bereit — freigeben auf der Freigabe-Seite');
@@ -548,7 +587,7 @@ for (const p of posten) {
         // kann tot sein, und die Meldung saehe aus wie ein kaputter Zugang.
         const r = await abgelegt(spur, p, z);
         if (r.trocken) {
-          console.log(`   ▸ instagram  wuerde das Bild ablegen unter ${r.pfad}`
+          console.log(`   ▸ instagram  wuerde ${r.folienZahl > 1 ? `ein Karussell aus ${r.folienZahl} Folien` : 'das Bild'} ablegen unter ${r.pfad}`
             + (AUTOMATIK.instagram ? ' und OEFFENTLICH posten' : ''));
           spur.kanaele.instagram = { stand: 'trocken' };
           offen += 1;
@@ -561,10 +600,14 @@ for (const p of posten) {
             // verboten, weil der Container nach 24 Stunden verfaellt und die
             // Freigabe Stunden spaeter kam. Genau dieser Abstand faellt jetzt
             // weg — hier vergehen Sekunden, nicht Stunden.
-            const c = await containerAnlegen({
-              kontoId: z.igKontoId, token: z.fbToken,
-              bildUrl: r.url, text: p.text, istReel: istVideo, trocken: false,
-            });
+            const c = r.urls?.length >= 2
+              ? await karussellAnlegen({
+                kontoId: z.igKontoId, token: z.fbToken, bildUrls: r.urls, text: p.text,
+              })
+              : await containerAnlegen({
+                kontoId: z.igKontoId, token: z.fbToken,
+                bildUrl: r.url, text: p.text, istReel: istVideo, trocken: false,
+              });
             // ⚠ Beim Reel laedt Instagram das Video erst herunter und kodiert
             // es. Wer sofort veroeffentlicht, bekommt „Media ID is not
             // available" — eine Meldung, die nach einem kaputten Container
@@ -585,6 +628,11 @@ for (const p of posten) {
             if (!merkliste.has(p.app)) merkliste.set(p.app, []);
             merkliste.get(p.app).push({
               datei: basename(p.medium), url: r.url, blobPfad: r.pfad,
+              // ⚠ `urls` NUR beim Karussell setzen. freigeben.mjs erkennt
+              // daran, welchen Weg es nimmt; ein `urls: [eine]` an einem
+              // Einzelbild wuerde dort als Karussell mit einer Folie enden
+              // und von Instagram abgelehnt.
+              ...(r.urls?.length >= 2 ? { urls: r.urls } : {}),
               text: p.text, istVideo,
             });
             spur.kanaele.instagram = { stand: 'wartet' };
