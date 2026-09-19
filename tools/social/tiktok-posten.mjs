@@ -39,7 +39,7 @@ import { merklistenLesen, merklisteAblegen } from './veroeffentlichen/blob.mjs';
 import { direktPosten, fotoPosten, inPosteingang, frischerToken }
   from './veroeffentlichen/tiktok.mjs';
 import { tiktokBildAdresse } from './veroeffentlichen/bildadresse.mjs';
-import { folienVideo } from './folien-video.mjs';
+import { folienVideo, musikFuer } from './folien-video.mjs';
 import { zugaenge } from './veroeffentlichen/geheimnisse.mjs';
 
 const APP = (process.env.APP || '').trim();
@@ -204,8 +204,9 @@ try {
       console.log('   ⚠ TikTok darf die Bildadressen nicht abholen '
         + '(URL-Praefix im Portal nicht verifiziert). Die Folien gehen als Diashow-Video.');
       tmp = join(tmpdir(), `${DATEI.replace(/\.[^.]+$/, '')}.mp4`);
-      const v = await folienVideo({ bildUrls: rohUrls, ziel: tmp });
-      console.log(`   Diashow gebaut: ${v.folien} Folien, ${v.sekunden} s, 1080×1920.`);
+      const v = await folienVideo({ bildUrls: rohUrls, ziel: tmp, tonDatei: musikFuer(APP) });
+      console.log(`   Diashow gebaut: ${v.folien} Folien, ${v.sekunden} s, 1080×1920`
+        + `${v.ton ? ', mit Musikteppich' : ', stumm'}.`);
       diashow = true;
       return inPosteingang({ token, datei: tmp });
     }

@@ -24,11 +24,49 @@
 // deshalb bekommt NUR TikTok das Video, Instagram und Facebook behalten das
 // echte Karussell.
 //
-// ⚠ Ohne Ton. Die Regel `tonspur_muss_leer_sein` gilt hier wie beim Reel:
-// Musik legt ein Mensch in der App darueber, passend zu dem, was gerade
-// laeuft.
+// --- Zum Ton ----------------------------------------------------------------
+//
+// Fuer die Reels gilt `tonspur_muss_leer_sein`: Musik legt ein Mensch in der
+// App darueber, passend zu dem, was gerade laeuft. Fuer die Diashow hat Josef
+// am 19.09.2026 anders entschieden, und mit Grund: Ein stummes Video laesst
+// TikTok im Editor einen Sound vorschlagen, und was dann darunterliegt, hat
+// niemand gewaehlt. Ein eigener Teppich beendet die Frage.
+//
+// `tonDatei` ist deshalb optional: ohne sie stumm wie bisher, mit ihr wird
+// der Teppich auf die Videolaenge zugeschnitten (s. `tonBett`).
 
-import { videoSenke } from '../reels/encode.mjs';
+import { existsSync, rmSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+import { videoSenke, lauf } from '../reels/encode.mjs';
+
+const HIER = dirname(fileURLToPath(import.meta.url));
+
+// Welche App welchen Musikteppich bekommt.
+//
+// ⚠ Die Dateien liegen in DIESEM Repo, nicht im jeweiligen App-Repo:
+// `social-tiktok-posten.yml` checkt nur dieses eine aus. Herkunft und die
+// Regel „Original bleibt in wellbooked" stehen in `musik/LIESMICH.md`.
+//
+// Kein Eintrag heisst stumm — das ist der bisherige Zustand, kein Fehler.
+const MUSIK = {
+  wellbooked: 'wellbooked-indie.mp3',
+};
+
+/** Pfad zum Musikteppich einer App, oder null. */
+export function musikFuer(app) {
+  const datei = MUSIK[app];
+  if (!datei) return null;
+  const pfad = join(HIER, 'musik', datei);
+  // ⚠ Lieber stumm als abgebrochen: Fehlt die Datei, soll der Beitrag
+  // trotzdem hochgehen. Der Ton ist eine Zutat, nicht der Beitrag.
+  if (!existsSync(pfad)) {
+    console.warn(`   ⚠ Musikteppich fehlt: ${pfad} — die Diashow bleibt stumm.`);
+    return null;
+  }
+  return pfad;
+}
 
 export const FPS = 30;
 export const SEKUNDEN_JE_FOLIE = 3;
@@ -51,14 +89,51 @@ export const TIKTOK_FILTER = 'split[a][b];'
   + '[bg][fg]overlay=(W-w)/2:(H-h)/2';
 
 /**
+ * Einen Musikteppich auf die Laenge des Videos bringen.
+ *
+ * ⚠ Warum eine eigene Vorstufe und kein Filter in `videoSenke`: Die kennt nur
+ * `-shortest`, und das SCHNEIDET die Musik hart ab. Ein Teppich, der mitten im
+ * Takt aufhoert, klingt nach Aussetzer — der haeufigste Grund, warum ein sonst
+ * fertiges Video billig wirkt. Also vorher zurechtschneiden, mit Ein- und
+ * Ausblende.
+ *
+ * ⚠ VOLLE LAUTSTAERKE, anders als bei den Reels.
+ *
+ * Dort laeuft der Teppich bei ~10 %, damit in der App noch ein Trending-Sound
+ * darueberpasst. Diese Regel hier zu uebernehmen war ein Denkfehler: Der
+ * Teppich IST der Ton des Beitrags, es kommt nichts mehr darueber — er
+ * existiert ja gerade, damit TikTok keinen Sound vorschlaegt. Auf halber
+ * Lautstaerke gemessen: mean −31,6 dB, also fast nicht zu hoeren.
+ *
+ * Die Quelle liegt bei mean −25,3 / max −7,0 dB; unveraendert uebernommen
+ * bleibt also Luft bis zum Anschlag, und es kann nicht knacken.
+ */
+export async function tonBett({
+  quelle, ziel, sekunden, lautstaerke = 1, ausblenden = 1.5,
+}) {
+  const aus = Math.max(0, sekunden - ausblenden).toFixed(3);
+  await lauf([
+    '-y', '-i', quelle,
+    '-t', String(sekunden),
+    '-af', `volume=${lautstaerke},afade=t=in:st=0:d=0.8,`
+      + `afade=t=out:st=${aus}:d=${ausblenden}`,
+    '-c:a', 'aac', '-b:a', '160k', '-ar', '48000',
+    ziel,
+  ]);
+  return ziel;
+}
+
+/**
  * @param {object} o
  * @param {string[]} o.bildUrls   oeffentliche Adressen der Folien, in Reihenfolge
  * @param {string} o.ziel         wohin die MP4-Datei geschrieben wird
  * @param {number} [o.sekunden]   Standzeit je Folie
  * @param {string|null} [o.filter] ffmpeg-Filter; Vorgabe fuellt 4:5 auf 9:16
+ * @param {string|null} [o.tonDatei] Musikteppich; laenger als noetig ist richtig,
+ *                                   er wird auf die Videolaenge zugeschnitten
  */
 export async function folienVideo({
-  bildUrls, ziel, sekunden = SEKUNDEN_JE_FOLIE, filter = TIKTOK_FILTER,
+  bildUrls, ziel, sekunden = SEKUNDEN_JE_FOLIE, filter = TIKTOK_FILTER, tonDatei = null,
 }) {
   const folien = (bildUrls ?? []).filter(Boolean);
   if (!folien.length) throw new Error('folienVideo ohne Folien.');
@@ -72,8 +147,17 @@ export async function folienVideo({
     bilder.push(Buffer.from(await a.arrayBuffer()));
   }
 
-  const senke = videoSenke({ fps: FPS, ziel, filter });
   const jeFolie = Math.max(1, Math.round(FPS * sekunden));
+  const dauer = (bilder.length * jeFolie) / FPS;
+
+  // Der zugeschnittene Teppich liegt neben dem Ziel und wird danach entfernt.
+  let ton = null;
+  if (tonDatei) {
+    ton = `${ziel}.ton.m4a`;
+    await tonBett({ quelle: tonDatei, ziel: ton, sekunden: dauer });
+  }
+
+  const senke = videoSenke({ fps: FPS, ziel, filter, tonDatei: ton });
 
   // ⚠ Auf den Abfluss warten. `write` gibt false zurueck, wenn der Puffer
   // voll ist; wer das ignoriert, haelt bei sechs Folien à 90 Frames schnell
@@ -87,8 +171,9 @@ export async function folienVideo({
   }
   senke.stdin.end();
   await senke.fertig;
+  if (ton) rmSync(ton, { force: true });
 
-  return { ziel, folien: bilder.length, sekunden: (bilder.length * jeFolie) / FPS };
+  return { ziel, folien: bilder.length, sekunden: dauer, ton: Boolean(ton) };
 }
 
 // Kleiner Selbstlauf, damit sich das Ergebnis ansehen laesst:
@@ -99,6 +184,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     console.error('Aufruf: node tools/social/folien-video.mjs <ziel.mp4> <url> [url …]');
     process.exit(1);
   }
-  const r = await folienVideo({ bildUrls: urls, ziel });
-  console.log(`✓ ${r.ziel} — ${r.folien} Folien, ${r.sekunden} s`);
+  // TON=… legt einen Musikteppich darunter.
+  const r = await folienVideo({ bildUrls: urls, ziel, tonDatei: process.env.TON || null });
+  console.log(`✓ ${r.ziel} — ${r.folien} Folien, ${r.sekunden} s${r.ton ? ', mit Ton' : ''}`);
 }
