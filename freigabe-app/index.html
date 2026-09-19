@@ -470,8 +470,12 @@ function postKarte(post, liste) {
 
   // ⚠ Nur wenn TikTok fuer diesen Beitrag ueberhaupt ansteht und noch nicht
   // gepostet ist. Ein zweiter Beitrag laesst sich nicht zurueckholen.
+  // ⚠ Hier stand `post.istVideo &&` — Bildbeiträge bekamen den TikTok-Knopf
+  // gar nicht erst zu sehen. Seit 19.09.2026 nimmt TikTok auch Fotobeiträge
+  // (bis zu 35 Bilder, `media_type: PHOTO`), das Karussell also mit allen
+  // sechs Folien.
   const tt = post.kanaele?.tiktok;
-  if (!post.abgelehnt && post.istVideo && tt && tt.stand !== 'veroeffentlicht' && liste.tiktok) {
+  if (!post.abgelehnt && tt && tt.stand !== 'veroeffentlicht' && liste.tiktok) {
     k.append(tiktokBlock(post, liste));
   }
   return k;

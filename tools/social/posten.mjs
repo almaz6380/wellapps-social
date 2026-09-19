@@ -42,7 +42,7 @@ import { fileURLToPath } from 'node:url';
 import { ladeApps } from './waehlen.mjs';
 import { bericht as geheimBericht, zugaenge } from './veroeffentlichen/geheimnisse.mjs';
 import { entwurfAnlegen } from './veroeffentlichen/facebook.mjs';
-import { inPosteingang, direktPosten, kontoAuskunft, frischerToken }
+import { inPosteingang, direktPosten, fotoPosten, kontoAuskunft, frischerToken }
   from './veroeffentlichen/tiktok.mjs';
 import { hochladen, merklisteAblegen, merklistenLesen } from './veroeffentlichen/blob.mjs';
 import { containerAnlegen, karussellAnlegen, aufBereitWarten, veroeffentlichen as igVeroeffentlichen }
@@ -532,11 +532,17 @@ for (const p of posten) {
         }
 
       } else if (kanal === 'tiktok') {
-        if (!istVideo) {
-          console.log('   – tiktok     uebersprungen (kein Video)');
-          spur.kanaele.tiktok = { stand: 'uebersprungen', grund: 'kein Video' };
-          continue;
-        }
+        // ⚠ Bis zum 19.09.2026 stand hier `if (!istVideo) continue` — Bilder
+        // wurden uebersprungen, und im Repo stand, TikTok-Fotobeitraege seien
+        // „ungeprueft". Das war kein Befund, sondern ein abgebrochener
+        // Versuch: Die Doku rendert im Browser nach, Chromium kommt aus einer
+        // Cloud-Sitzung nicht ins Netz, und `curl` ohne `-L` bekam eine 302.
+        // Die Seite `content-posting-api-reference-photo-post` gibt es sehr
+        // wohl; Fotobeitraege nehmen bis zu 35 Bilder.
+        //
+        // Merksatz: „Nicht nachweisbar" und „nicht nachgesehen" sehen im
+        // Protokoll gleich aus. Nur eines davon ist ein Ergebnis.
+        //
         // ⚠ Auch TikTok braucht die oeffentliche Ablage — seit es den Knopf
         // „Auf TikTok posten" auf der Freigabe-Seite gibt. `tiktok-posten.mjs`
         // laeuft auf einer anderen Maschine und holt sich das Video von genau
@@ -558,22 +564,58 @@ for (const p of posten) {
 
         const token = await tiktokToken(p.app);
         const direkt = AUTOMATIK.tiktok;
-        const r = direkt
-          ? await direktPosten({ token, datei: p.medium, titel: p.text, trocken: !ECHT })
-          : await inPosteingang({ token, datei: p.medium, trocken: !ECHT });
+
+        // ⚠ Fotos gehen einen ANDEREN Weg als Videos, und der Unterschied ist
+        // nicht bloss ein Feld: Fuer Fotos gibt es keinen Dateiupload, TikTok
+        // holt sie selbst von ihrer oeffentlichen Adresse (`PULL_FROM_URL`).
+        // Deshalb wird hier die Adresse durchgereicht, nicht der Pfad — und
+        // beim Karussell ALLE Folien, nicht nur die erste. Genau der Fehler
+        // ist Facebook heute frueh passiert.
+        const fotoUrls = ablage.urls?.length >= 2 ? ablage.urls : [ablage.url].filter(Boolean);
+
+        // ⚠ Im Trockenlauf gibt `abgelegt` keine Adresse zurueck — es hat ja
+        // nichts hochgeladen. `fotoUrls` ist dann ein LEERES Array, und ein
+        // leeres Array ist nicht `null`: `?? platzhalter` greift nicht, und
+        // `fotoPosten` warf „ohne Bildadresse".
+        //
+        // ⚠ Und der Platzhalter muss SO VIELE Eintraege haben, wie es Folien
+        // gibt. Mit einem einzigen meldete der Trockenlauf „1 Bild", waehrend
+        // sechs hochgegangen waeren — genau die Sorte Vorschau, die man
+        // nachher nicht wiedererkennt, und die bei Instagram schon einmal
+        // abgestellt werden musste. `folienZahl` liefert `abgelegt` auch
+        // trocken.
+        const bildUrls = fotoUrls.length ? fotoUrls
+          : Array.from({ length: Math.max(1, ablage.folienZahl ?? 1) },
+            (_, i) => `https://platzhalter.invalid/trocken-${i + 1}.jpg`);
+
+        const r = istVideo
+          ? (direkt
+            ? await direktPosten({ token, datei: p.medium, titel: p.text, trocken: !ECHT })
+            : await inPosteingang({ token, datei: p.medium, trocken: !ECHT }))
+          : await fotoPosten({ token, bildUrls, titel: p.text, direkt: false, trocken: !ECHT });
+
+        // ⚠ Fotos gehen IMMER in den Posteingang, auch wenn AUTOMATIK.tiktok
+        // eines Tages an waere. Direct Post verlangt eine Privatsphaere-Wahl,
+        // und die muss laut TikToks Richtlinie von einem Menschen kommen —
+        // im Tageslauf sitzt keiner. Der Knopf auf der Freigabe-Seite fragt
+        // sie ab; dort ist der richtige Ort dafuer.
+        const wirklichDirekt = istVideo && direkt;
+        const was = istVideo ? `${r.mb} MB` : `${r.anzahl} Bild${r.anzahl > 1 ? 'er' : ''}`;
         if (r.trocken) {
-          console.log(`   ▸ tiktok     wuerde ${r.mb} MB ${direkt ? 'OEFFENTLICH posten' : 'in den Posteingang laden'}`);
+          console.log(`   ▸ tiktok     wuerde ${was} ${wirklichDirekt ? 'OEFFENTLICH posten' : 'in den Posteingang laden'}`);
         } else {
-          console.log(direkt
-            ? `   ✓ tiktok     veroeffentlicht (${r.mb} MB, ${r.zeichen} Zeichen Text)`
-            : `   ✓ tiktok     im Posteingang (${r.mb} MB) — freigeben in der TikTok-App`);
+          console.log(wirklichDirekt
+            ? `   ✓ tiktok     veroeffentlicht (${was}, ${r.zeichen} Zeichen Text)`
+            : `   ✓ tiktok     im Posteingang (${was}) — freigeben in der TikTok-App`);
         }
         fertig += r.trocken ? 0 : 1;
         // ⚠ Der Text muss nur nachgetragen werden, solange TikTok ueber den
         // Posteingang laeuft — der nimmt keinen an. Beim Direktversand geht er
         // mit, dann waere die Liste eine Einladung zum doppelten Posten.
-        inTiktok = !direkt;
-        spur.kanaele.tiktok = { stand: r.trocken ? 'trocken' : (direkt ? 'veroeffentlicht' : 'posteingang') };
+        inTiktok = !wirklichDirekt;
+        spur.kanaele.tiktok = {
+          stand: r.trocken ? 'trocken' : (wirklichDirekt ? 'veroeffentlicht' : 'posteingang'),
+        };
 
       } else if (kanal === 'instagram') {
         // Instagram bekommt hier NUR das Bild an eine oeffentliche Adresse

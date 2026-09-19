@@ -439,6 +439,15 @@ nicht noch einmal tun.
    ID wird gegen die Seite selbst geprüft (`instagram_business_account`)
    statt nur ausgedruckt. **Eine ID in einer Konfigurationsdatei ist eine
    Behauptung; die Seite weiß es besser.**
+   **2b. „Nicht nachweisbar" und „nicht nachgesehen" sehen im Protokoll
+   gleich aus.** Seit dem 05.09. stand hier, TikTok-Fotobeiträge seien
+   ungeprüft — mit der Begründung, die Doku rendere im Browser nach und
+   Chromium komme aus einer Cloud-Sitzung nicht ins Netz. Am 19.09. probiert:
+   `curl -sSL` mit einem Browser-User-Agent holt
+   `content-posting-api-reference-photo-post` anstandslos. Ohne `-L` kommt
+   eine 302 und damit eine leere Datei — das war die ganze „Sperre". Es gibt
+   sie, sie nimmt bis zu 35 Bilder, und sie ist jetzt gebaut.
+
 3. **Sandbox und Produktion sind bei TikTok zwei Datensätze.** Der Reiter sieht aus wie
    eine Ansicht, ist aber eine eigene Konfiguration. Die Produktionsseite war leer und
    musste komplett neu ausgefüllt werden. Das sieht wie Datenverlust aus und ist keiner.

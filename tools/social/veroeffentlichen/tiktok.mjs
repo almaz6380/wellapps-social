@@ -257,3 +257,130 @@ export async function inPosteingang({ token, datei, trocken }) {
 
   return { publishId: id, mb: (groesse / 1024 / 1024).toFixed(1) };
 }
+
+/** Hoechstens so viele Fotos je Beitrag — TikToks Grenze, nicht unsere. */
+export const FOTO_MAX = 35;
+
+/**
+ * Einen FOTO-Beitrag anlegen: ein Einzelbild oder ein Wischstreifen.
+ *
+ * ⚠ Bis zum 19.09.2026 stand im Repo, TikTok-Fotobeitraege seien „ungeprueft".
+ * Der Grund war kein Befund, sondern ein abgebrochener Versuch: Chromium kommt
+ * aus einer Cloud-Sitzung nicht ins Netz, und `curl` ohne `-L` bekam von
+ * developers.tiktok.com nur eine 302. Mit `-L` und einem Browser-User-Agent
+ * kommt die Seite `content-posting-api-reference-photo-post` sehr wohl. Alles
+ * unten steht dort.
+ *
+ * --- Worin sich Fotos vom Video unterscheiden -------------------------------
+ *
+ *   Endpunkt    /post/publish/content/init/   (nicht .../video/init/)
+ *   media_type  nur PHOTO
+ *   Quelle      NUR `PULL_FROM_URL`. Einen Dateiupload gibt es fuer Fotos
+ *               NICHT — deshalb faellt der ganze zweistufige Weg des Videos
+ *               (Upload-Adresse holen, PUT) hier weg.
+ *   Grenze      bis zu 35 Bilder, dazu photo_cover_index
+ *
+ * ⚠ DIE HUERDE STECKT IN EINEM NEBENSATZ DER DOKU: „The URLs must be publicly
+ * accessible and VERIFIED BY YOUR APP." Es genuegt nicht, dass eine Adresse
+ * oeffentlich erreichbar ist — ihr Praefix muss im Entwicklerportal unter
+ * „URL prefix" verifiziert sein, genau wie die Domains fuer den Login. Ist es
+ * das nicht, holt TikTok das Bild gar nicht erst ab.
+ *
+ * @param {object} o
+ * @param {string} o.token
+ * @param {string[]} o.bildUrls  oeffentliche Adressen, in Reihenfolge
+ * @param {string} o.titel
+ * @param {string} [o.beschreibung]
+ * @param {object} [o.wahl]      nur bei `direkt`: Privatsphaere und Haekchen
+ * @param {boolean} [o.direkt]   true = DIRECT_POST, false = Posteingang
+ * @param {boolean} [o.trocken]
+ */
+export async function fotoPosten({
+  token, bildUrls, titel, beschreibung, wahl, direkt = false, trocken,
+}) {
+  const bilder = (bildUrls ?? []).filter(Boolean);
+  if (!bilder.length) throw new Error('fotoPosten ohne Bildadresse.');
+  if (bilder.length > FOTO_MAX) {
+    throw new Error(`${bilder.length} Bilder — TikTok nimmt hoechstens ${FOTO_MAX}.`);
+  }
+  // ⚠ Nur http(s). Ein lokaler Pfad waere hier der naheliegende Fehler, und
+  // TikTok meldete darauf nur, es habe nichts abholen koennen.
+  const schlecht = bilder.find((u) => !/^https:\/\//i.test(u));
+  if (schlecht) {
+    throw new Error(`Bildadresse ist keine https-Adresse: ${String(schlecht).slice(0, 80)}. `
+      + 'TikTok holt die Bilder selbst ab; ein Dateiupload ist fuer Fotos nicht vorgesehen.');
+  }
+
+  const text = String(titel ?? '').slice(0, 2200);
+  const rumpf = {
+    media_type: 'PHOTO',
+    post_mode: direkt ? 'DIRECT_POST' : 'MEDIA_UPLOAD',
+    post_info: {
+      title: text,
+      ...(beschreibung ? { description: String(beschreibung).slice(0, 4000) } : {}),
+    },
+    source_info: {
+      source: 'PULL_FROM_URL',
+      photo_images: bilder,
+      // Die erste Folie ist das Titelbild — dieselbe Reihenfolge wie bei
+      // Instagram und Facebook, wo Folie 1 den Beitrag anfuehrt.
+      photo_cover_index: 0,
+    },
+  };
+
+  if (direkt) {
+    // ⚠ Dieselbe Regel wie beim Video: Die Privatsphaere-Stufe kommt vom
+    // Menschen, nie aus dem Code. Eine Voreinstellung hier ist genau der
+    // Verstoss, an dem TikToks Pruefung scheitert.
+    if (!wahl?.privacy) {
+      throw new Error('Ohne gewaehlte Privatsphaere-Stufe wird nicht gepostet. '
+        + 'Sie muss aus der Oberflaeche kommen — TikTok verbietet eine Voreinstellung.');
+    }
+    Object.assign(rumpf.post_info, {
+      privacy_level: wahl.privacy,
+      // Umgekehrte Logik wie beim Video: die Oberflaeche fragt „erlauben",
+      // die API kennt `disable_comment`.
+      disable_comment: !wahl.kommentare,
+      brand_content_toggle: Boolean(wahl.fremdeMarke),
+      brand_organic_toggle: Boolean(wahl.eigeneMarke),
+      // ⚠ TikTok wuerde hier von sich aus Musik unterlegen. Das widerspricht
+      // der Regel `tonspur_muss_leer_sein`: Musik legt Josef selbst darueber,
+      // passend zu dem, was gerade laeuft. Also ausdruecklich false, nicht
+      // weggelassen — bei einem Feld, das etwas hinzufuegt, ist „nicht
+      // gesetzt" keine Aussage, die man nachlesen kann.
+      auto_add_music: false,
+    });
+  }
+
+  if (trocken) return { trocken: true, anzahl: bilder.length, zeichen: text.length, direkt, rumpf };
+
+  if (direkt) {
+    // Noch einmal fragen, unmittelbar vor dem Posten — der Nutzer kann seine
+    // Kontoeinstellungen seit der Auskunft geaendert haben.
+    const auskunft = await kontoAuskunft({ token });
+    const moeglich = auskunft.privacy_level_options ?? [];
+    if (!moeglich.includes(wahl.privacy)) {
+      throw new Error(`TikTok laesst „${wahl.privacy}" fuer dieses Konto nicht (mehr) zu `
+        + `(moeglich: ${moeglich.join(', ') || 'nichts'}). Nichts gepostet.`);
+    }
+  }
+
+  const antwort = await fetch(`${API}/post/publish/content/init/`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json; charset=UTF-8' },
+    body: JSON.stringify(rumpf),
+  });
+  const daten = await antwort.json();
+  if (!antwort.ok || daten.error?.code !== 'ok') {
+    // ⚠ Den FEHLERCODE mitgeben, nicht nur die Meldung. Am 16.09. hat genau
+    // das zwei Stunden gekostet: `direktPosten` gab „Please review our
+    // integration guidelines" aus, und der Code
+    // `unaudited_client_can_only_post_to_private_accounts` haette in einem
+    // Satz gesagt, dass es am Kontostatus liegt.
+    throw new Error(`TikTok (Foto ${direkt ? 'direkt' : 'Posteingang'}) ${antwort.status}: `
+      + `${daten.error?.message ?? JSON.stringify(daten).slice(0, 300)}`
+      + `${daten.error?.code && daten.error.code !== 'ok' ? ` [${daten.error.code}]` : ''}`);
+  }
+
+  return { publishId: daten.data?.publish_id, anzahl: bilder.length, zeichen: text.length, direkt };
+}

@@ -36,7 +36,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { merklistenLesen, merklisteAblegen } from './veroeffentlichen/blob.mjs';
-import { direktPosten, frischerToken } from './veroeffentlichen/tiktok.mjs';
+import { direktPosten, fotoPosten, frischerToken } from './veroeffentlichen/tiktok.mjs';
 import { zugaenge } from './veroeffentlichen/geheimnisse.mjs';
 
 const APP = (process.env.APP || '').trim();
@@ -96,10 +96,26 @@ console.log(`   Privatsphaere: ${PRIVACY}`);
 console.log(`   erlaubt: ${ERLAUBT.join(', ') || 'nichts'}`);
 console.log(`   Werbekennzeichnung: ${WERBUNG.join(', ') || 'keine'}`);
 
-const antwort = await fetch(post.url);
-if (!antwort.ok) throw new Error(`Video nicht erreichbar: HTTP ${antwort.status}`);
-const tmp = join(tmpdir(), DATEI);
-writeFileSync(tmp, Buffer.from(await antwort.arrayBuffer()));
+// ⚠ Fotos gehen einen anderen Weg als Videos, und zwar von Grund auf: Fuer
+// Fotos gibt es bei TikTok KEINEN Dateiupload. `photo_images` nimmt Adressen,
+// TikTok holt die Bilder selbst ab (`PULL_FROM_URL`). Also wird hier nichts
+// heruntergeladen — die Blob-Adressen gehen direkt mit.
+//
+// ⚠ Beim Karussell ALLE Folien, nicht nur die erste. `urls` ist gesetzt, `url`
+// bleibt daneben die erste Folie; wer auf `!post.url` prueft, haelt jedes
+// Karussell fuer kaputt.
+const folien = Array.isArray(post.urls) ? post.urls.filter(Boolean) : [];
+const bildUrls = folien.length >= 2 ? folien : [post.url].filter(Boolean);
+
+let tmp = null;
+if (post.istVideo) {
+  const antwort = await fetch(post.url);
+  if (!antwort.ok) throw new Error(`Video nicht erreichbar: HTTP ${antwort.status}`);
+  tmp = join(tmpdir(), DATEI);
+  writeFileSync(tmp, Buffer.from(await antwort.arrayBuffer()));
+} else {
+  console.log(`   ${bildUrls.length} Bild${bildUrls.length > 1 ? 'er' : ''} — TikTok holt sie selbst ab`);
+}
 
 try {
   const z = zugaenge(APP);
@@ -107,19 +123,22 @@ try {
     clientKey: z.tiktokKey, clientSecret: z.tiktokSecret, refreshToken: z.tiktokRefresh,
   });
 
-  const r = await direktPosten({
-    token, datei: tmp, titel: post.text,
-    wahl: {
-      privacy: PRIVACY,
-      kommentare: ERLAUBT.includes('kommentare'),
-      duett: ERLAUBT.includes('duett'),
-      stitch: ERLAUBT.includes('stitch'),
-      eigeneMarke: WERBUNG.includes('eigene'),
-      fremdeMarke: WERBUNG.includes('fremde'),
-    },
-  });
+  const wahl = {
+    privacy: PRIVACY,
+    kommentare: ERLAUBT.includes('kommentare'),
+    duett: ERLAUBT.includes('duett'),
+    stitch: ERLAUBT.includes('stitch'),
+    eigeneMarke: WERBUNG.includes('eigene'),
+    fremdeMarke: WERBUNG.includes('fremde'),
+  };
 
-  console.log(`✓ gepostet — publish_id ${r.publishId} (${r.mb} MB, ${r.zeichen} Zeichen)`);
+  const r = post.istVideo
+    ? await direktPosten({ token, datei: tmp, titel: post.text, wahl })
+    : await fotoPosten({ token, bildUrls, titel: post.text, wahl, direkt: true });
+
+  console.log(`✓ gepostet — publish_id ${r.publishId} `
+    + `(${post.istVideo ? `${r.mb} MB` : `${r.anzahl} Bild${r.anzahl > 1 ? 'er' : ''}`}, `
+    + `${r.zeichen} Zeichen)`);
 
   // ⚠ Sofort vermerken. Ohne den Vermerk sieht der Beitrag auf der
   // Freigabe-Seite weiter offen aus, und der naechste Tipper macht einen
@@ -142,5 +161,6 @@ try {
   });
   console.log('   Merkliste aktualisiert.');
 } finally {
-  try { unlinkSync(tmp); } catch { /* der Ordner raeumt sich selbst */ }
+  // Ohne Video gibt es keine Temp-Datei — Fotos holt TikTok selbst ab.
+  if (tmp) { try { unlinkSync(tmp); } catch { /* der Ordner raeumt sich selbst */ } }
 }
