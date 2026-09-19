@@ -589,7 +589,14 @@ for (const p of posten) {
           spur.kanaele.instagram = { stand: 'trocken' };
           offen += 1;
         } else {
-          console.log(`     ${r.url}`);
+          // ⚠ Beim Karussell ALLE Adressen ausgeben, nicht nur die erste.
+          // Am 19.09.2026 lief der erste echte Karussell-Lauf durch und das
+          // Protokoll zeigte genau eine Zeile — es liess sich hinterher nicht
+          // sagen, ob sechs Folien oder eine hochgegangen waren. Der
+          // Trockenlauf nannte die Zahl laengst, der echte Lauf nicht: die
+          // Vorschau war ehrlicher als die Wirklichkeit.
+          if (r.urls?.length >= 2) r.urls.forEach((u, i) => console.log(`     ${i + 1}. ${u}`));
+          else console.log(`     ${r.url}`);
           spur.url = r.url;
 
           if (AUTOMATIK.instagram) {
@@ -621,7 +628,7 @@ for (const p of posten) {
             // Anlegen des Containers, aber ein spaeter Zugriff ist nicht
             // ausgeschlossen. `aufraeumen` bleibt Sache des Freigabe-Laufs.
           } else {
-            console.log(`   ✓ instagram  Bild liegt bereit — Container entsteht beim Freigeben`);
+            console.log(`   ✓ instagram  ${r.urls?.length >= 2 ? `${r.urls.length} Folien liegen` : "Bild liegt"} bereit — Container entsteht beim Freigeben`);
             if (!merkliste.has(p.app)) merkliste.set(p.app, []);
             merkliste.get(p.app).push({
               datei: basename(p.medium), url: r.url, blobPfad: r.pfad,

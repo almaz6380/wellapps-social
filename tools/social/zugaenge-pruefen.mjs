@@ -111,6 +111,8 @@ async function laeuftAb(token) {
 
 let alleGut = true;
 const zeilen = [];
+// Getrennt von `alleGut`: fehlend ist nicht dasselbe wie falsch (s. u.).
+const falsches = [];
 
 for (const [schluessel, app] of Object.entries(APPS)) {
   if (schluessel.startsWith('_') || !app.kanaele?.length) continue;
@@ -156,6 +158,7 @@ for (const [schluessel, app] of Object.entries(APPS)) {
             const ig = await wessenInstagram(z.fbSeitenId, z.fbToken);
             if (!ig) {
               alleGut = false;
+              falsches.push(`${app.name}: an der Seite haengt kein Instagram-Konto`);
               zeilen.push('   ✗ An dieser Seite haengt GAR KEIN Instagram-Konto.');
               zeilen.push(`     apps.json fuehrt ${z.igKontoId ?? '—'}. Instagram-Beitraege`);
               zeilen.push('     scheitern damit mit „Object with ID … does not exist".');
@@ -164,6 +167,8 @@ for (const [schluessel, app] of Object.entries(APPS)) {
               zeilen.push(`   ✓ Instagram „@${ig.name}" haengt an dieser Seite`);
             } else {
               alleGut = false;
+              falsches.push(`${app.name}: igKontoId in apps.json ist ${z.igKontoId ?? '—'}, `
+                + `richtig waere ${ig.id} (@${ig.name})`);
               zeilen.push(`   ✗ Instagram passt NICHT: apps.json fuehrt ${z.igKontoId ?? '—'},`);
               zeilen.push(`     die Seite haengt an ${ig.id} (@${ig.name}).`);
               zeilen.push(`     Richtig ist ${ig.id} — in apps.json unter meta.igKontoId eintragen.`);
@@ -177,6 +182,7 @@ for (const [schluessel, app] of Object.entries(APPS)) {
         }
       } else {
         alleGut = false;
+        falsches.push(`${app.name}: das Secret traegt den Token von „${wer.name}" (${wer.id})`);
         zeilen.push(`   ✗ gehoert zu „${wer.name}" (${wer.id}) — VERTAUSCHT.`);
         zeilen.push('     Das Secret dieser App traegt den Token einer anderen Seite.');
       }
@@ -215,6 +221,18 @@ console.log(alleGut
   : '\nEs fehlt noch etwas (siehe oben). Woher die Werte kommen, steht in'
     + '\ntools/social/veroeffentlichen/README.md — Teil A bis D.');
 
-// Kein Fehler-Exit: Ein unvollstaendiger Stand ist waehrend der Einrichtung
-// der Normalfall und kein Grund fuer einen roten Lauf. Wer maschinell darauf
-// reagieren will, liest die letzte Zeile.
+// Kein Fehler-Exit fuer FEHLENDES: Ein unvollstaendiger Stand ist waehrend der
+// Einrichtung der Normalfall und kein Grund fuer einen roten Lauf. Wer
+// maschinell darauf reagieren will, liest die letzte Zeile.
+//
+// ⚠ Fuer FALSCHES dagegen schon — Unterschied vom 19.09.2026. Ein Token, der
+// zur falschen Seite gehoert, oder eine Instagram-ID, die nicht an der Seite
+// haengt, ist kein Zwischenstand, sondern ein Fehler, der bleibt. Genau so
+// einer lag an dem Tag vor: In apps.json stand bei Swaply
+// 178414367043*0*2336, die Seite hing an 178414367043*3*2336 — eine Ziffer.
+// Instagram brach seit Stunden ab, und der Prueflauf meldete gruen.
+if (falsches.length) {
+  console.error(`\n✗ ${falsches.length} Wert(e) sind nicht unvollstaendig, sondern falsch:`);
+  for (const z of falsches) console.error(`   • ${z}`);
+  process.exit(1);
+}
