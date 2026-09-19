@@ -303,6 +303,14 @@ function postKarte(post, liste) {
   k.append(el('div', 'text', post.text || '(kein Text)'));
 
   const marken = el('div', 'reihe');
+  // ⚠ Der GRUND eines Fehlers gehört auf die Seite, nicht nur ins
+  // Laufprotokoll. Am 19.09.2026 stand hier bloß „TikTok: Fehler" — vor und
+  // nach einem neuen Versuch derselbe Text. Es sah aus, als passiere nichts,
+  // während TikTok sehr wohl geantwortet hatte
+  // („unaudited_client_can_only_post_to_private_accounts"). Wer vom Handy
+  // arbeitet, kommt ans Protokoll nicht heran; dann ist eine Marke ohne Grund
+  // so gut wie keine Marke.
+  const gruende = [];
   for (const [kanal, ergebnis] of Object.entries(post.kanaele ?? {})) {
     // Der Instagram-Eintrag kennt als Einziger einen „veröffentlicht"-Vermerk;
     // er steht in der Merkliste, nicht in der Übersicht.
@@ -310,8 +318,16 @@ function postKarte(post, liste) {
       ? (liste.eintraege ?? []).find((e) => e.datei === post.datei)
       : null;
     marken.append(markeFuer(kanal, ergebnis.stand, eintrag));
+    if (ergebnis.stand === 'fehler' && ergebnis.meldung) {
+      gruende.push(`${KANAL_NAME[kanal]}: ${ergebnis.meldung}`);
+    }
   }
   k.append(marken);
+  for (const g of gruende) {
+    const p = el('p', 'leise', g);
+    p.style.marginTop = '6px';
+    k.append(p);
+  }
 
   const knoepfe = el('div', 'reihe');
   knoepfe.style.marginTop = '10px';

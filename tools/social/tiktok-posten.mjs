@@ -36,7 +36,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { merklistenLesen, merklisteAblegen } from './veroeffentlichen/blob.mjs';
-import { direktPosten, fotoPosten, frischerToken } from './veroeffentlichen/tiktok.mjs';
+import { direktPosten, fotoPosten, inPosteingang, frischerToken }
+  from './veroeffentlichen/tiktok.mjs';
 import { tiktokBildAdresse } from './veroeffentlichen/bildadresse.mjs';
 import { zugaenge } from './veroeffentlichen/geheimnisse.mjs';
 
@@ -142,17 +143,54 @@ try {
     fremdeMarke: WERBUNG.includes('fremde'),
   };
 
-  const r = post.istVideo
-    ? await direktPosten({ token, datei: tmp, titel: post.text, wahl })
+  // ⚠ SOLANGE TIKTOK DIE APP NICHT GEPRUEFT HAT, GEHT NUR PRIVAT.
+  //
+  // Am 19.09.2026 der erste echte Versuch, „Oeffentlich" gewaehlt:
+  //
+  //     403: Please review our integration guidelines
+  //          [unaudited_client_can_only_post_to_private_accounts]
+  //
+  // Das liegt weder am Beitrag noch an den Bildadressen, sondern am
+  // Pruefstatus der App (eingereicht am 07.09.). Bis zur Freigabe nimmt TikTok
+  // von uns nur `SELF_ONLY` an — und ein privater Beitrag ist nicht das, was
+  // jemand wollte, der „Oeffentlich" getippt hat.
+  //
+  // Der Posteingang kennt diese Schranke NICHT: Dort landet ein Entwurf, den
+  // ein Mensch in der App fertigstellt und dabei selbst oeffentlich stellt.
+  // Also weichen wir dorthin aus, statt still etwas Privates zu posten oder
+  // mit einer Fehlermeldung stehen zu bleiben.
+  //
+  // ⚠ Das ist KEIN stiller Ersatz: Der Stand heisst danach „im Posteingang",
+  // nicht „veroeffentlicht", und der Grund steht daneben. Wer die Seite
+  // ansieht, weiss, dass noch ein Handgriff fehlt.
+  const direktVersuch = () => (post.istVideo
+    ? direktPosten({ token, datei: tmp, titel: post.text, wahl })
     // ⚠ `text`, nicht `titel`: Bei Fotos ist `title` eine Ueberschrift von
     // 90 Zeichen, die Bildunterschrift gehoert nach `description`.
     // `fotoPosten` teilt das selbst auf. Beim Video daneben ist `titel`
     // richtig — dort gibt es nur das eine Feld, mit 2200 Zeichen.
-    : await fotoPosten({ token, bildUrls, text: post.text, wahl, direkt: true });
+    : fotoPosten({ token, bildUrls, text: post.text, wahl, direkt: true }));
 
-  console.log(`✓ gepostet — publish_id ${r.publishId} `
+  let r;
+  let entwurf = false;
+  try {
+    r = await direktVersuch();
+  } catch (e) {
+    if (!/unaudited_client_can_only_post_to_private_accounts/.test(e.message)) throw e;
+    console.log('   ⚠ TikTok laesst diese App noch nicht oeffentlich posten '
+      + '(App-Pruefung steht aus). Der Beitrag geht stattdessen in den Posteingang.');
+    r = post.istVideo
+      ? await inPosteingang({ token, datei: tmp })
+      : await fotoPosten({ token, bildUrls, text: post.text, direkt: false });
+    entwurf = true;
+  }
+
+  console.log(`${entwurf ? '✓ im Posteingang' : '✓ gepostet'} — publish_id ${r.publishId} `
     + `(${post.istVideo ? `${r.mb} MB` : `${r.anzahl} Bild${r.anzahl > 1 ? 'er' : ''}`}, `
     + `${r.zeichen} Zeichen)`);
+  if (entwurf) {
+    console.log('   In der TikTok-App den Entwurf oeffnen, Text einfuegen und posten.');
+  }
 
   // ⚠ Sofort vermerken. Ohne den Vermerk sieht der Beitrag auf der
   // Freigabe-Seite weiter offen aus, und der naechste Tipper macht einen
@@ -163,9 +201,13 @@ try {
   // worden, `post` ist ein Verweis hinein — die Aenderung ist also schon drin.
   post.kanaele = post.kanaele ?? {};
   post.kanaele.tiktok = {
-    stand: 'veroeffentlicht',
+    stand: entwurf ? 'posteingang' : 'veroeffentlicht',
     publishId: r.publishId,
-    privacy: PRIVACY,
+    // Beim Entwurf waehlt der Mensch die Sichtbarkeit in der App — hier eine
+    // hinzuschreiben waere eine Behauptung.
+    ...(entwurf
+      ? { meldung: 'App-Pruefung steht aus — in der TikTok-App fertigstellen.' }
+      : { privacy: PRIVACY }),
     wann: new Date().toISOString(),
   };
   await merklisteAblegen({
@@ -174,6 +216,32 @@ try {
     tiktok: liste.tiktok, token: zugaenge(APP).blobToken,
   });
   console.log('   Merkliste aktualisiert.');
+} catch (e) {
+  // ⚠ AUCH DEN FEHLSCHLAG VERMERKEN. Bis zum 19.09.2026 warf dieses Skript
+  // nur, und die Merkliste blieb, wie sie war. Auf der Freigabe-Seite stand
+  // danach derselbe Text wie davor — es sah aus, als sei gar nichts passiert,
+  // obwohl TikTok geantwortet hatte. Der Grund lag allein im Laufprotokoll,
+  // und daran kommt vom Handy niemand heran.
+  //
+  // Geschrieben wird, bevor weitergeworfen wird: Der Lauf soll rot bleiben.
+  try {
+    post.kanaele = post.kanaele ?? {};
+    post.kanaele.tiktok = {
+      stand: 'fehler',
+      meldung: String(e.message).slice(0, 300),
+      wann: new Date().toISOString(),
+    };
+    await merklisteAblegen({
+      datum: DATUM, appSchluessel: APP, name: liste.name,
+      eintraege: liste.eintraege, uebersicht: liste.uebersicht,
+      tiktok: liste.tiktok, token: zugaenge(APP).blobToken,
+    });
+    console.error('   Fehler in der Merkliste vermerkt.');
+  } catch (e2) {
+    // Der urspruengliche Fehler ist der wichtigere — diesen nur danebenlegen.
+    console.error(`   ⚠ Vermerk misslungen: ${e2.message}`);
+  }
+  throw e;
 } finally {
   // Ohne Video gibt es keine Temp-Datei — Fotos holt TikTok selbst ab.
   if (tmp) { try { unlinkSync(tmp); } catch { /* der Ordner raeumt sich selbst */ } }
