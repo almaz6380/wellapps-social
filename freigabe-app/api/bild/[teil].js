@@ -34,14 +34,35 @@
 // ⚠ KEINE Zugangsdaten. Wie `freigabe.js` kennt diese Datei weder den
 // Blob-Token noch die Netzwerke.
 
+// --- Warum Datum und Dateiname in EIN Segment gequetscht sind ---------------
+//
+// ⚠ Vercels Zero-Config-API kennt hier KEIN Catch-all. Die erste Fassung hiess
+// `[...pfad].js` und sollte `/api/bild/social/2026-09-19/datei.jpg` annehmen.
+// Gemessen am 19.09.2026 an der deployten Seite:
+//
+//     /api/bild/x      → 400   (diese Funktion, „Unerwarteter Pfad")
+//     /api/bild/a/b    → 404   (Vercels eigene Seite, gar keine Funktion)
+//
+// Ein Segment kommt also an, zwei nicht — `[...pfad]` wird wie `[pfad]`
+// behandelt. Deshalb heisst die Datei `[teil].js`, und die Adresse traegt
+// beides in einem Stueck:
+//
+//     /api/bild/2026-09-19~wellbooked-anruf-de-s3709-1-J33t….jpg
+//
+// Die Tilde kann in unseren Dateinamen nicht vorkommen (Buchstaben, Ziffern,
+// Punkt, Strich, Unterstrich), taugt also als Trennzeichen. Und die Adresse
+// endet weiter auf `.jpg` — TikTok bekommt etwas, das wie ein Bild aussieht.
+
 // Der Blob-Speicher der Social-Automatik. Fest, s. o.
 const BLOB_HOST = 'nz4nl23onpx9rppi.public.blob.vercel-storage.com';
+// Der Ordner darin. Ebenfalls fest, damit aus der Anfrage nie ein anderer wird.
+const ORDNER = 'social';
 
 // ⚠ Nur unsere eigenen Tagesordner, nur Bilder. Der Zufallsanhang, den der
 // Blob-Speicher an jeden Dateinamen haengt, ist Teil des Namens — deshalb
 // sind Buchstaben und Ziffern darin erlaubt, aber kein Schraegstrich und
 // kein Punkt-Punkt.
-const PFAD = /^social\/\d{4}-\d{2}-\d{2}\/[A-Za-z0-9._-]{1,200}\.(jpg|jpeg)$/;
+const TEIL = /^(\d{4}-\d{2}-\d{2})~([A-Za-z0-9._-]{1,200}\.(?:jpg|jpeg))$/;
 
 export default async function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'HEAD') {
@@ -49,16 +70,21 @@ export default async function handler(req, res) {
     return;
   }
 
-  // Bei einer Catch-all-Route liefert Vercel die Segmente als Feld.
-  const teile = req.query?.pfad;
-  const pfad = (Array.isArray(teile) ? teile.join('/') : String(teile ?? '')).trim();
+  // Vercel gibt ein dynamisches Segment als Zeichenkette, kann es aber auch
+  // als Feld liefern — beides annehmen, damit die Route nicht an einer
+  // Laufzeit-Eigenheit haengt.
+  const roh = req.query?.teil;
+  const teil = (Array.isArray(roh) ? roh.join('/') : String(roh ?? '')).trim();
 
-  if (!PFAD.test(pfad)) {
+  const treffer = TEIL.exec(teil);
+  if (!treffer) {
     // Absichtlich ohne Einzelheiten: Was nicht passt, muss nicht erfahren,
     // woran es lag.
     res.status(400).json({ fehler: 'Unerwarteter Pfad.' });
     return;
   }
+  // Zusammengesetzt, nicht durchgereicht — s. o.
+  const pfad = `${ORDNER}/${treffer[1]}/${treffer[2]}`;
 
   let oben;
   try {

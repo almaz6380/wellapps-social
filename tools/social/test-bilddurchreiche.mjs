@@ -11,7 +11,7 @@
 // Beweis dafuer ist ein Beitrag im Konto, nichts anderes.
 
 import { tiktokBildAdresse, BLOB_HOST, DURCHREICHE } from './veroeffentlichen/bildadresse.mjs';
-import route from '../../freigabe-app/api/bild/[...pfad].js';
+import route from '../../freigabe-app/api/bild/[teil].js';
 
 let gut = 0;
 const schlecht = [];
@@ -19,14 +19,23 @@ const pruefe = (name, ok, gemessen) => {
   if (ok) gut += 1; else schlecht.push(`${name}\n      gemessen: ${gemessen}`);
 };
 
-const PFAD = 'social/2026-09-19/wellbooked-anruf-de-s3709-1-J33tZIBgj1YMHRXg0i8jRRSBHsS284.jpg';
+const DATEI = 'wellbooked-anruf-de-s3709-1-J33tZIBgj1YMHRXg0i8jRRSBHsS284.jpg';
+const TAG = '2026-09-19';
+const PFAD = `social/${TAG}/${DATEI}`;
 const BLOB = `https://${BLOB_HOST}/${PFAD}`;
+// ⚠ EIN Segment, Tilde als Trenner — Vercel reicht hier kein Catch-all durch.
+const TEIL = `${TAG}~${DATEI}`;
 
 // --- 1. Umrechnung ----------------------------------------------------------
 {
   const u = tiktokBildAdresse(BLOB);
-  pruefe('liegt unter der verifizierten Domain', u === `${DURCHREICHE}/${PFAD}`, u);
-  pruefe('Dateiname bleibt unveraendert', u.endsWith(PFAD.split('/').pop()), u);
+  pruefe('liegt unter der verifizierten Domain', u === `${DURCHREICHE}/${TEIL}`, u);
+  pruefe('Dateiname bleibt unveraendert', u.endsWith(DATEI), u);
+  // ⚠ Der Fall, der die erste Fassung unbrauchbar machte: Zwei Segmente
+  // erreichen die Funktion gar nicht, Vercel antwortet mit seiner eigenen 404.
+  pruefe('nur EIN Segment hinter /api/bild',
+    u.slice(DURCHREICHE.length + 1).split('/').length === 1, u);
+  pruefe('endet auf .jpg', u.endsWith('.jpg'), u);
 
   // ⚠ Kein stilles Durchreichen: Ein fremder Host heisst, die Ablage hat sich
   // geaendert. Gaebe die Funktion die Adresse unveraendert zurueck, kaeme der
@@ -71,7 +80,7 @@ const rufe = async ({ pfad, methode = 'GET', oben }) => {
   };
   const res = antwortAttrappe();
   try {
-    await route({ method: methode, query: { pfad: pfad.split('/') } }, res);
+    await route({ method: methode, query: { teil: pfad } }, res);
   } finally {
     globalThis.fetch = echtesFetch;
   }
@@ -80,7 +89,7 @@ const rufe = async ({ pfad, methode = 'GET', oben }) => {
 
 {
   zuletztGeholt = null;
-  const r = await rufe({ pfad: PFAD });
+  const r = await rufe({ pfad: TEIL });
   pruefe('Bild kommt mit 200 zurueck', r.code === 200, String(r.code));
   pruefe('Bytes unveraendert', Buffer.isBuffer(r.rumpf) && r.rumpf.equals(BYTES),
     String(r.rumpf?.length));
@@ -99,11 +108,13 @@ const rufe = async ({ pfad, methode = 'GET', oben }) => {
 {
   const boese = [
     ['absolute Adresse', 'https://fremder.invalid/a.jpg'],
-    ['Pfad nach oben', 'social/2026-09-19/../../geheim.jpg'],
-    ['anderer Ordner', 'merklisten/2026-09-19/a.jpg'],
-    ['kein Datum', 'social/irgendwas/a.jpg'],
-    ['kein Bild', 'social/2026-09-19/a.json'],
-    ['Video', 'social/2026-09-19/a.mp4'],
+    ['Pfad nach oben', '2026-09-19~../../geheim.jpg'],
+    ['Schraegstrich im Namen', '2026-09-19~../a.jpg'],
+    ['alter Pfad mit Ordner', 'social/2026-09-19/a.jpg'],
+    ['kein Datum', 'irgendwas~a.jpg'],
+    ['kein Trenner', '2026-09-19-a.jpg'],
+    ['kein Bild', '2026-09-19~a.json'],
+    ['Video', '2026-09-19~a.mp4'],
     ['leer', ''],
   ];
   for (const [name, pfad] of boese) {
@@ -116,20 +127,20 @@ const rufe = async ({ pfad, methode = 'GET', oben }) => {
 
 // --- 4. Fehler von oben werden nicht beschoenigt ----------------------------
 {
-  const weg = await rufe({ pfad: PFAD, oben: 'weg' });
+  const weg = await rufe({ pfad: TEIL, oben: 'weg' });
   pruefe('fehlendes Bild bleibt 404', weg.code === 404, String(weg.code));
 
-  const kaputt = await rufe({ pfad: PFAD, oben: 'kaputt' });
+  const kaputt = await rufe({ pfad: TEIL, oben: 'kaputt' });
   pruefe('Blob nicht erreichbar → 502', kaputt.code === 502, String(kaputt.code));
 }
 
 // --- 5. Methoden ------------------------------------------------------------
 {
-  const kopf = await rufe({ pfad: PFAD, methode: 'HEAD' });
+  const kopf = await rufe({ pfad: TEIL, methode: 'HEAD' });
   pruefe('HEAD geht, ohne Rumpf', kopf.code === 200 && kopf.beendet && kopf.rumpf === null,
     `${kopf.code}, Rumpf ${kopf.rumpf === null ? 'leer' : 'da'}`);
 
-  const post = await rufe({ pfad: PFAD, methode: 'POST' });
+  const post = await rufe({ pfad: TEIL, methode: 'POST' });
   pruefe('POST wird abgelehnt', post.code === 405, String(post.code));
 }
 

@@ -36,5 +36,18 @@ export function tiktokBildAdresse(url) {
       + 'freigabe-app/api/bild/ nachgezogen werden.');
   }
 
-  return `${DURCHREICHE}${zerlegt.pathname}`;
+  // ⚠ Datum und Dateiname kommen in EIN Segment, getrennt durch eine Tilde.
+  // Vercels Zero-Config-API reicht hier nur ein Segment durch — am 19.09.2026
+  // an der deployten Seite gemessen: `/api/bild/x` erreicht die Funktion,
+  // `/api/bild/a/b` bekommt Vercels eigene 404. Die Begruendung steht
+  // ausfuehrlich in `freigabe-app/api/bild/[teil].js`.
+  const teile = zerlegt.pathname.replace(/^\/+/, '').split('/');
+  const [ordner, tag, datei] = teile;
+  if (teile.length !== 3 || ordner !== 'social' || !/^\d{4}-\d{2}-\d{2}$/.test(tag ?? '')) {
+    throw new Error(`Unerwarteter Bildpfad „${zerlegt.pathname}" — erwartet `
+      + 'social/<JJJJ-MM-TT>/<datei>. Aendert sich die Ablage, muss die '
+      + 'Durchreiche in freigabe-app/api/bild/ mit.');
+  }
+
+  return `${DURCHREICHE}/${tag}~${datei}`;
 }
