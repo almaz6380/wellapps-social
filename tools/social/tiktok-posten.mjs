@@ -37,6 +37,7 @@ import { join } from 'node:path';
 
 import { merklistenLesen, merklisteAblegen } from './veroeffentlichen/blob.mjs';
 import { direktPosten, fotoPosten, frischerToken } from './veroeffentlichen/tiktok.mjs';
+import { tiktokBildAdresse } from './veroeffentlichen/bildadresse.mjs';
 import { zugaenge } from './veroeffentlichen/geheimnisse.mjs';
 
 const APP = (process.env.APP || '').trim();
@@ -99,13 +100,22 @@ console.log(`   Werbekennzeichnung: ${WERBUNG.join(', ') || 'keine'}`);
 // ⚠ Fotos gehen einen anderen Weg als Videos, und zwar von Grund auf: Fuer
 // Fotos gibt es bei TikTok KEINEN Dateiupload. `photo_images` nimmt Adressen,
 // TikTok holt die Bilder selbst ab (`PULL_FROM_URL`). Also wird hier nichts
-// heruntergeladen — die Blob-Adressen gehen direkt mit.
+// heruntergeladen — es gehen Adressen mit.
+//
+// ⚠ Aber NICHT die Blob-Adressen: TikTok holt nur von einem Praefix ab, das
+// im Entwicklerportal verifiziert ist. Der Blob-Host ist das nicht,
+// `wellapps-freigabe.vercel.app` schon — `tiktokBildAdresse` rechnet um.
 //
 // ⚠ Beim Karussell ALLE Folien, nicht nur die erste. `urls` ist gesetzt, `url`
 // bleibt daneben die erste Folie; wer auf `!post.url` prueft, haelt jedes
 // Karussell fuer kaputt.
+//
+// ⚠ Nur fuer Fotos umrechnen. Bei einem Video steht in `post.url` die
+// mp4-Datei; die durch die Bild-Durchreiche zu schicken ergaebe eine Adresse,
+// die niemand abruft und die jene Route ohnehin ablehnt.
 const folien = Array.isArray(post.urls) ? post.urls.filter(Boolean) : [];
-const bildUrls = folien.length >= 2 ? folien : [post.url].filter(Boolean);
+const bildUrls = post.istVideo ? []
+  : (folien.length >= 2 ? folien : [post.url].filter(Boolean)).map(tiktokBildAdresse);
 
 let tmp = null;
 if (post.istVideo) {

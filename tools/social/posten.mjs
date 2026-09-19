@@ -44,6 +44,7 @@ import { bericht as geheimBericht, zugaenge } from './veroeffentlichen/geheimnis
 import { entwurfAnlegen } from './veroeffentlichen/facebook.mjs';
 import { inPosteingang, direktPosten, fotoPosten, kontoAuskunft, frischerToken }
   from './veroeffentlichen/tiktok.mjs';
+import { tiktokBildAdresse } from './veroeffentlichen/bildadresse.mjs';
 import { hochladen, merklisteAblegen, merklistenLesen } from './veroeffentlichen/blob.mjs';
 import { containerAnlegen, karussellAnlegen, aufBereitWarten, veroeffentlichen as igVeroeffentlichen }
   from './veroeffentlichen/instagram.mjs';
@@ -584,7 +585,12 @@ for (const p of posten) {
         // nachher nicht wiedererkennt, und die bei Instagram schon einmal
         // abgestellt werden musste. `folienZahl` liefert `abgelegt` auch
         // trocken.
-        const bildUrls = fotoUrls.length ? fotoUrls
+        //
+        // ⚠ Und fuer TikTok umgerechnet: Es holt die Bilder nur von einer
+        // Adresse, deren Praefix im Entwicklerportal verifiziert ist. Der
+        // Blob-Host ist das nicht, `wellapps-freigabe.vercel.app` schon.
+        // Instagram und Facebook bekommen weiter die Blob-Adressen direkt.
+        const bildUrls = fotoUrls.length ? fotoUrls.map(tiktokBildAdresse)
           : Array.from({ length: Math.max(1, ablage.folienZahl ?? 1) },
             (_, i) => `https://platzhalter.invalid/trocken-${i + 1}.jpg`);
 
