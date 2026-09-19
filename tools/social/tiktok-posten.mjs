@@ -39,6 +39,7 @@ import { merklistenLesen, merklisteAblegen } from './veroeffentlichen/blob.mjs';
 import { direktPosten, fotoPosten, inPosteingang, frischerToken }
   from './veroeffentlichen/tiktok.mjs';
 import { tiktokBildAdresse } from './veroeffentlichen/bildadresse.mjs';
+import { folienVideo } from './folien-video.mjs';
 import { zugaenge } from './veroeffentlichen/geheimnisse.mjs';
 
 const APP = (process.env.APP || '').trim();
@@ -171,23 +172,68 @@ try {
     // richtig — dort gibt es nur das eine Feld, mit 2200 Zeichen.
     : fotoPosten({ token, bildUrls, text: post.text, wahl, direkt: true }));
 
+  // ⚠ UND WENN TIKTOK DIE BILDER NICHT ABHOLEN DARF: ALS DIASHOW-VIDEO.
+  //
+  // Fotos kennen nur `PULL_FROM_URL` — TikTok holt sie selbst, und das
+  // Praefix ihrer Adresse muss im Entwicklerportal verifiziert sein. Ist es
+  // das nicht, kommt `url_ownership_unverified`, und daran aendert kein
+  // Umbau der Adresse etwas; es ist eine Einstellung ausserhalb des Repos.
+  //
+  // Videos gehen dagegen als Datei hoch. Genau deshalb landet das taegliche
+  // Reel seit Wochen im Posteingang, waehrend das Karussell scheiterte — der
+  // Posteingang war nie das Problem, die Bilder kamen nur nicht dort an.
+  // Also werden die Folien zu einem Video und gehen denselben Weg wie das
+  // Reel.
+  //
+  // ⚠ Gebaut wird aus den BLOB-Adressen, nicht aus der Durchreiche: Wir holen
+  // die Bilder selbst, da braucht es keinen Umweg ueber die verifizierte
+  // Domain.
+  //
+  // ⚠ Dieselbe Regel wie oben bei `bildUrls`: `urls` ODER `url`, nie beides.
+  // Angehaengt statt gewaehlt stuende Folie 1 am Ende ein zweites Mal — in
+  // einem Video faellt das erst beim Ansehen auf, also nach dem Hochladen.
+  const rohUrls = folien.length >= 2 ? folien : [post.url].filter(Boolean);
+
+  let diashow = false;
+  const inDenPosteingang = async () => {
+    if (post.istVideo) return inPosteingang({ token, datei: tmp });
+    try {
+      return await fotoPosten({ token, bildUrls, text: post.text, direkt: false });
+    } catch (e) {
+      if (!/url_ownership_unverified/.test(e.message)) throw e;
+      console.log('   ⚠ TikTok darf die Bildadressen nicht abholen '
+        + '(URL-Praefix im Portal nicht verifiziert). Die Folien gehen als Diashow-Video.');
+      tmp = join(tmpdir(), `${DATEI.replace(/\.[^.]+$/, '')}.mp4`);
+      const v = await folienVideo({ bildUrls: rohUrls, ziel: tmp });
+      console.log(`   Diashow gebaut: ${v.folien} Folien, ${v.sekunden} s, 1080×1920.`);
+      diashow = true;
+      return inPosteingang({ token, datei: tmp });
+    }
+  };
+
   let r;
   let entwurf = false;
   try {
     r = await direktVersuch();
   } catch (e) {
-    if (!/unaudited_client_can_only_post_to_private_accounts/.test(e.message)) throw e;
-    console.log('   ⚠ TikTok laesst diese App noch nicht oeffentlich posten '
-      + '(App-Pruefung steht aus). Der Beitrag geht stattdessen in den Posteingang.');
-    r = post.istVideo
-      ? await inPosteingang({ token, datei: tmp })
-      : await fotoPosten({ token, bildUrls, text: post.text, direkt: false });
+    const pruefung = /unaudited_client_can_only_post_to_private_accounts/.test(e.message);
+    const adresse = /url_ownership_unverified/.test(e.message);
+    if (!pruefung && !adresse) throw e;
+    console.log(pruefung
+      ? '   ⚠ TikTok laesst diese App noch nicht oeffentlich posten '
+        + '(App-Pruefung steht aus). Der Beitrag geht stattdessen in den Posteingang.'
+      : '   ⚠ TikTok darf die Bildadressen nicht abholen. Ab in den Posteingang.');
+    r = await inDenPosteingang();
     entwurf = true;
   }
 
+  // Nach der Diashow ist es ein Video — die Ausgabe darf nicht mehr von
+  // `post.istVideo` ausgehen, sonst meldet sie Bilder, die keiner hochgeladen hat.
+  const wasHochging = diashow || post.istVideo
+    ? `${r.mb} MB`
+    : `${r.anzahl} Bild${r.anzahl > 1 ? 'er' : ''}`;
   console.log(`${entwurf ? '✓ im Posteingang' : '✓ gepostet'} — publish_id ${r.publishId} `
-    + `(${post.istVideo ? `${r.mb} MB` : `${r.anzahl} Bild${r.anzahl > 1 ? 'er' : ''}`}, `
-    + `${r.zeichen} Zeichen)`);
+    + `(${wasHochging}${diashow ? ' Diashow' : ''}${r.zeichen ? `, ${r.zeichen} Zeichen` : ''})`);
   if (entwurf) {
     console.log('   In der TikTok-App den Entwurf oeffnen, Text einfuegen und posten.');
   }
@@ -206,7 +252,13 @@ try {
     // Beim Entwurf waehlt der Mensch die Sichtbarkeit in der App — hier eine
     // hinzuschreiben waere eine Behauptung.
     ...(entwurf
-      ? { meldung: 'App-Pruefung steht aus — in der TikTok-App fertigstellen.' }
+      ? {
+        meldung: diashow
+          ? 'Als Diashow-Video im Posteingang (TikTok darf die Bildadressen nicht '
+            + 'abholen) — in der TikTok-App fertigstellen.'
+          : 'App-Pruefung steht aus — in der TikTok-App fertigstellen.',
+        ...(diashow ? { diashow: true } : {}),
+      }
       : { privacy: PRIVACY }),
     wann: new Date().toISOString(),
   };

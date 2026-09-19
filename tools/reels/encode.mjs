@@ -21,16 +21,18 @@ export function lauf(args, { stdio } = {}) {
 
 // Startet ffmpeg mit offenem stdin für die JPEG-Frames.
 // Gibt { stdin, fertig } zurück — fertig löst auf, wenn die Datei geschrieben ist.
-export function videoSenke({ fps, ziel, tonDatei = null }) {
+export function videoSenke({ fps, ziel, tonDatei = null, filter = null }) {
   const args = ['-y', '-f', 'image2pipe', '-framerate', String(fps), '-i', '-'];
   if (tonDatei) args.push('-i', tonDatei);
 
   args.push(
     '-c:v', 'libx264', '-profile:v', 'high', '-preset', 'medium', '-crf', '20',
     '-pix_fmt', 'yuv420p', '-r', String(fps),
-    // gerade Kantenlängen erzwingen; 1080×1920 passt zwar, aber ein späterer
-    // Formatwechsel soll nicht am Encoder scheitern
-    '-vf', 'scale=trunc(iw/2)*2:trunc(ih/2)*2',
+    // Ohne eigenen Filter: gerade Kantenlängen erzwingen; 1080×1920 passt zwar,
+    // aber ein späterer Formatwechsel soll nicht am Encoder scheitern.
+    // `filter` übergibt, wer Bilder eines anderen Seitenverhältnisses einspeist
+    // — etwa die 4:5-Folien eines Karussells, die für TikTok auf 9:16 müssen.
+    '-vf', filter ?? 'scale=trunc(iw/2)*2:trunc(ih/2)*2',
     '-movflags', '+faststart',
   );
 
