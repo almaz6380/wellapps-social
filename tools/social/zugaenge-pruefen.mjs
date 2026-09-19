@@ -56,6 +56,29 @@ async function wemGehoert(token) {
 }
 
 /**
+ * Welches Instagram-Konto haengt wirklich an dieser Seite?
+ *
+ * ⚠ Das ist die Frage, die hier bis zum 19.09.2026 NIEMAND gestellt hat. Die
+ * Instagram-ID stand in apps.json, wurde ausgedruckt — und nie gegen die
+ * Wirklichkeit gehalten. Der Prueflauf meldete gruen, waehrend Instagram bei
+ * Swaply seit Stunden mit „Object with ID '17841436704302336' does not exist,
+ * cannot be loaded due to missing permissions" abbrach.
+ *
+ * Eine ID in einer Konfigurationsdatei ist eine Behauptung. Die Seite weiss
+ * es besser, und sie sagt es auf Nachfrage.
+ *
+ * @returns {Promise<{id: string, name: string}|null>} null = keins verknuepft
+ */
+async function wessenInstagram(seitenId, token) {
+  const url = `${GRAPH}/${seitenId}?fields=instagram_business_account{id,username}`;
+  const antwort = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+  const d = await antwort.json();
+  if (d.error) throw new Error(d.error.message);
+  const k = d.instagram_business_account;
+  return k?.id ? { id: k.id, name: k.username ?? '?' } : null;
+}
+
+/**
  * Wann laeuft dieser Token ab?
  *
  * ⚠ Das ist die Frage, an der es am 04.09.2026 gehangen hat. Ein Token, der
@@ -124,6 +147,33 @@ for (const [schluessel, app] of Object.entries(APPS)) {
           }
         } catch (e) {
           zeilen.push(`   ? Haltbarkeit nicht pruefbar: ${e.message}`);
+        }
+
+        // Und jetzt die Instagram-Frage — nur sinnvoll, wenn der Token zur
+        // Seite gehoert, denn gefragt wird MIT diesem Token nach DIESER Seite.
+        if (app.kanaele.includes('instagram')) {
+          try {
+            const ig = await wessenInstagram(z.fbSeitenId, z.fbToken);
+            if (!ig) {
+              alleGut = false;
+              zeilen.push('   ✗ An dieser Seite haengt GAR KEIN Instagram-Konto.');
+              zeilen.push(`     apps.json fuehrt ${z.igKontoId ?? '—'}. Instagram-Beitraege`);
+              zeilen.push('     scheitern damit mit „Object with ID … does not exist".');
+              zeilen.push('     Verbinden: Meta Business Suite → Einstellungen → Konten.');
+            } else if (ig.id === z.igKontoId) {
+              zeilen.push(`   ✓ Instagram „@${ig.name}" haengt an dieser Seite`);
+            } else {
+              alleGut = false;
+              zeilen.push(`   ✗ Instagram passt NICHT: apps.json fuehrt ${z.igKontoId ?? '—'},`);
+              zeilen.push(`     die Seite haengt an ${ig.id} (@${ig.name}).`);
+              zeilen.push(`     Richtig ist ${ig.id} — in apps.json unter meta.igKontoId eintragen.`);
+            }
+          } catch (e) {
+            alleGut = false;
+            zeilen.push(`   ✗ Instagram nicht pruefbar: ${e.message}`);
+            zeilen.push('     Meist fehlt dem Token instagram_basic oder');
+            zeilen.push('     instagram_content_publish. Siehe README, Teil A.');
+          }
         }
       } else {
         alleGut = false;

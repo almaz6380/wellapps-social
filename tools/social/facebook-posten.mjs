@@ -33,7 +33,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { merklistenLesen, merklisteAblegen, aufraeumen, nochGebraucht } from './veroeffentlichen/blob.mjs';
-import { entwurfAnlegen } from './veroeffentlichen/facebook.mjs';
+import { entwurfAnlegen, mehrbildAnlegen } from './veroeffentlichen/facebook.mjs';
 import { zugaenge } from './veroeffentlichen/geheimnisse.mjs';
 
 const APP = (process.env.APP || '').trim();
@@ -82,16 +82,41 @@ const z = zugaenge(APP);
 console.log(`Facebook · ${liste.name} · ${DATEI}`);
 console.log(`   ${post.text.length} Zeichen Text`);
 
-const antwort = await fetch(post.url);
-if (!antwort.ok) throw new Error(`Datei nicht erreichbar: HTTP ${antwort.status}`);
-const tmp = join(tmpdir(), DATEI);
-writeFileSync(tmp, Buffer.from(await antwort.arrayBuffer()));
+// ⚠ Ein Karussell erkennt man an `urls`, NICHT daran, dass `url` fehlt. `url`
+// bleibt gesetzt (die erste Folie) — dieselbe Regel wie in freigeben.mjs.
+//
+// ⚠ Bis zum 19.09.2026 stand hier nur `fetch(post.url)`: Facebook bekam
+// stillschweigend Folie 1 mit der Bildunterschrift, die fuer sechs Folien
+// geschrieben war. Das war kein Grenzfall, sondern der Normalfall fuer jedes
+// Karussell — und es sah im Protokoll nach Erfolg aus.
+const folien = Array.isArray(post.urls) ? post.urls.filter(Boolean) : [];
+const quellen = folien.length >= 2 ? folien : [post.url];
+if (folien.length >= 2) console.log(`   ${folien.length} Folien`);
+
+const tmpDateien = [];
+for (const [i, quelle] of quellen.entries()) {
+  const antwort = await fetch(quelle);
+  if (!antwort.ok) {
+    throw new Error(`Folie ${i + 1} nicht erreichbar: HTTP ${antwort.status} — ${quelle}`);
+  }
+  // Der Name muss je Folie verschieden sein, sonst ueberschreiben sie sich im
+  // selben Temp-Ordner und Facebook bekaeme sechsmal dasselbe Bild.
+  const name = quellen.length > 1 ? `${i + 1}-${DATEI}` : DATEI;
+  const pfad = join(tmpdir(), name);
+  writeFileSync(pfad, Buffer.from(await antwort.arrayBuffer()));
+  tmpDateien.push(pfad);
+}
 
 try {
-  const r = await entwurfAnlegen({
-    seitenId: z.fbSeitenId, token: z.fbToken,
-    datei: tmp, text: post.text, veroeffentlicht: true,
-  });
+  const r = tmpDateien.length >= 2
+    ? await mehrbildAnlegen({
+      seitenId: z.fbSeitenId, token: z.fbToken,
+      dateien: tmpDateien, text: post.text, veroeffentlicht: true,
+    })
+    : await entwurfAnlegen({
+      seitenId: z.fbSeitenId, token: z.fbToken,
+      datei: tmpDateien[0], text: post.text, veroeffentlicht: true,
+    });
   console.log(`✓ veroeffentlicht — ${r.art}, Beitrag ${r.id}`);
 
   // ⚠ Sofort vermerken. Ohne den Vermerk sieht der Beitrag auf der
@@ -116,9 +141,13 @@ try {
   if (nochGebraucht({ liste, datei: DATEI })) {
     console.log('   Datei bleibt liegen — ein anderer Kanal ist noch offen.');
   } else {
-    await aufraeumen({ url: post.url, token: z.blobToken });
+    // ⚠ `urls` mitgeben. Ohne sie loescht das Aufraeumen nur Folie 1 und laesst
+    // 2 bis 6 fuer immer im Blob liegen — unbemerkt, weil der Beitrag ja steht.
+    await aufraeumen({ url: post.url, urls: folien, token: z.blobToken });
     console.log('   Datei weggeraeumt.');
   }
 } finally {
-  try { unlinkSync(tmp); } catch { /* der Ordner raeumt sich selbst */ }
+  for (const p of tmpDateien) {
+    try { unlinkSync(p); } catch { /* der Ordner raeumt sich selbst */ }
+  }
 }

@@ -49,6 +49,7 @@ import { containerAnlegen, karussellAnlegen, aufBereitWarten, veroeffentlichen a
   from './veroeffentlichen/instagram.mjs';
 import { riechtNachBeiblatt } from './vorflug.mjs';
 import { beschreibungBauen } from './beschreibung.mjs';
+import { folienFinden } from './folien.mjs';
 
 const HIER = dirname(fileURLToPath(import.meta.url));
 const wert = (n, s) => { const i = process.argv.indexOf(`--${n}`); return i === -1 ? s : process.argv[i + 1]; };
@@ -198,11 +199,7 @@ function tagesposten() {
       // „-2.jpg", und die Folien stuenden in der falschen Reihenfolge im
       // Beitrag — sichtbar erst nach dem Veroeffentlichen, korrigierbar gar
       // nicht mehr.
-      const folien = readdirSync(ordner)
-        .map((x) => ({ x, n: x.match(new RegExp(`^${stamm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}-(\\d+)\\.jpg$`))?.[1] }))
-        .filter((e) => e.n)
-        .sort((a, b) => Number(a.n) - Number(b.n))
-        .map((e) => join(ordner, e.x));
+      const folien = folienFinden(readdirSync(ordner), stamm).map((x) => join(ordner, x));
 
       // ⚠ Beim Karussell fuehrt die ERSTE FOLIE, auch wenn daneben noch ein
       // Einzelbild liegt. Sonst haengen Vorschau, Dateiname in der Merkliste

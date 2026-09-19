@@ -194,6 +194,57 @@ async function ruf(aktion, extra = {}) {
 }
 
 const KANAL_NAME = { facebook: 'Facebook', tiktok: 'TikTok', instagram: 'Instagram' };
+
+// ------------------------------------------------- Versuche merken
+//
+// ⚠ Warum es das gibt (19.09.2026). Der Knopf setzte nach dem Auslösen
+// „Läuft — dauert etwa eine Minute" und tat danach NICHTS mehr: kein
+// Nachladen, keine Rückmeldung. Josef hat an einem Vormittag viermal getippt
+// und geschrieben „Es passiert nichts!!!" — während vier Facebook-Beiträge
+// wirklich draußen waren und zwei Instagram-Läufe wirklich gescheitert sind.
+// Beides sah auf der Seite gleich aus.
+//
+// Nachladen allein genügt aber nicht: Ein gescheiterter Lauf sieht danach
+// exakt aus wie ein nie gestarteter — derselbe Knopf, derselbe Text. Deshalb
+// ein Vermerk je Kanal und Datei. Steht der Beitrag nach dem Nachladen immer
+// noch offen, war der Versuch erfolglos, und die Karte sagt es.
+//
+// sessionStorage, nicht localStorage: Der Vermerk gilt für diesen Besuch. Wer
+// die Seite morgen öffnet, soll nicht die Warnung von gestern lesen.
+const VERSUCH_MS = 60000;
+
+function versuchSchluessel(kanal, datum, datei) {
+  return `freigabe.versuch.${kanal}.${datum}.${datei}`;
+}
+function versuchMerken(kanal, datum, datei) {
+  try { sessionStorage.setItem(versuchSchluessel(kanal, datum, datei), Date.now()); } catch { /* privates Fenster */ }
+}
+function versuchLesen(kanal, datum, datei) {
+  try {
+    const w = Number(sessionStorage.getItem(versuchSchluessel(kanal, datum, datei)));
+    return Number.isFinite(w) && w > 0 ? w : null;
+  } catch { return null; }
+}
+function versuchVergessen(kanal, datum, datei) {
+  try { sessionStorage.removeItem(versuchSchluessel(kanal, datum, datei)); } catch { /* egal */ }
+}
+
+/**
+ * Die Zeile „der letzte Versuch hat nichts geändert" — oder nichts.
+ *
+ * Nur wenn der Versuch lange genug her ist: Wer zwei Sekunden nach dem Tippen
+ * die Seite neu lädt, hat keinen Fehler gesehen, sondern einen laufenden Lauf.
+ */
+function versuchWarnung(kanal, datum, datei) {
+  const wann = versuchLesen(kanal, datum, datei);
+  if (!wann || Date.now() - wann < VERSUCH_MS) return null;
+  const uhr = new Date(wann).toLocaleTimeString('de-AT', { hour: '2-digit', minute: '2-digit' });
+  const p = el('p', 'leise', `⚠ Der Versuch um ${uhr} hat nichts geändert — `
+    + `${KANAL_NAME[kanal]} steht weiterhin offen. Im Lauf auf GitHub nachsehen.`);
+  p.style.marginTop = '8px';
+  return p;
+}
+
 const STAND_TEXT = {
   entwurf: 'Entwurf liegt bereit',
   posteingang: 'im Posteingang',
@@ -264,6 +315,9 @@ function postKarte(post, liste) {
 
   const knoepfe = el('div', 'reihe');
   knoepfe.style.marginTop = '10px';
+  // Sammelt die Warnungen „der letzte Versuch hat nichts geändert". Sie stehen
+  // UNTER den Knöpfen, nicht darin: Der Knopf soll weiter sagen, was er tut.
+  const nachtrag = el('div');
   const kopieren = el('button', 'rand', 'Text kopieren');
   kopieren.onclick = async () => {
     try {
@@ -300,13 +354,25 @@ function postKarte(post, liste) {
       fb.disabled = true; fb.textContent = 'Wird veröffentlicht …';
       try {
         await ruf('facebook', { datum: liste.datum, app: liste.app, datei: post.datei });
-        fb.textContent = 'Läuft — dauert etwa eine Minute';
+        // ⚠ Vermerken BEVOR der Erfolg feststeht — genau der Fall, den die
+        // Warnung abfangen soll, ist ja der, in dem der Lauf spaeter scheitert.
+        versuchMerken('facebook', liste.datum, post.datei);
+        fb.textContent = 'Läuft — Ergebnis in etwa einer Minute';
+        // Danach die Merkliste neu holen: Die Karte zeigt dann entweder
+        // „veröffentlicht" oder — über versuchWarnung — dass nichts geschah.
+        setTimeout(laden, VERSUCH_MS);
       } catch (e) {
         fb.disabled = false;
         fb.textContent = `Fehler: ${e.message}`;
       }
     };
     knoepfe.append(fb);
+    const warnung = versuchWarnung('facebook', liste.datum, post.datei);
+    if (warnung) nachtrag.append(warnung);
+  } else if (post.kanaele?.facebook?.stand === 'veroeffentlicht') {
+    // Geglückt — der Vermerk hat seinen Zweck erfüllt und darf weg, sonst
+    // warnt die Seite beim nächsten Laden über einen Versuch, der gelang.
+    versuchVergessen('facebook', liste.datum, post.datei);
   }
 
   // Instagram — ebenfalls je Beitrag.
@@ -337,13 +403,19 @@ function postKarte(post, liste) {
         await ruf('veroeffentlichen', {
           datum: liste.datum, app: liste.app, datei: post.datei,
         });
-        ig.textContent = 'Läuft — dauert etwa eine Minute';
+        versuchMerken('instagram', liste.datum, post.datei);
+        ig.textContent = 'Läuft — Ergebnis in etwa einer Minute';
+        setTimeout(laden, VERSUCH_MS);
       } catch (e) {
         ig.disabled = false;
         ig.textContent = `Fehler: ${e.message}`;
       }
     };
     knoepfe.append(ig);
+    const warnung = versuchWarnung('instagram', liste.datum, post.datei);
+    if (warnung) nachtrag.append(warnung);
+  } else if (!post.abgelehnt) {
+    versuchVergessen('instagram', liste.datum, post.datei);
   }
 
   // Ablehnen — solange noch nichts von diesem Beitrag draussen ist.
@@ -394,6 +466,7 @@ function postKarte(post, liste) {
   }
 
   k.append(knoepfe);
+  if (nachtrag.childNodes.length) k.append(nachtrag);
 
   // ⚠ Nur wenn TikTok fuer diesen Beitrag ueberhaupt ansteht und noch nicht
   // gepostet ist. Ein zweiter Beitrag laesst sich nicht zurueckholen.

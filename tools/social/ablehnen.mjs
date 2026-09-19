@@ -112,7 +112,12 @@ if (post.url) {
   if (nochGebraucht({ liste, datei: DATEI })) {
     console.log('   Datei bleibt liegen — ein anderer Kanal ist noch offen.');
   } else {
-    await aufraeumen({ url: post.url, token: z.blobToken });
-    console.log('   Datei weggeraeumt.');
+    // ⚠ `urls` mitgeben, sonst bleibt beim Karussell alles ausser Folie 1 fuer
+    // immer liegen. Ablehnen ist der wahrscheinliche Weg fuer ein missratenes
+    // Karussell — genau hier faellt das Leck also am ehesten an.
+    const folien = Array.isArray(post.urls) ? post.urls.filter(Boolean) : [];
+    await aufraeumen({ url: post.url, urls: folien, token: z.blobToken });
+    console.log(folien.length >= 2
+      ? `   ${folien.length} Folien weggeraeumt.` : '   Datei weggeraeumt.');
   }
 }

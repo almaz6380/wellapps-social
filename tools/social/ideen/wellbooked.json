@@ -108,6 +108,19 @@
       ]
     },
     {
+      "id": "anruf",
+      "medium": "bild",
+      "format": "anruf",
+      "status": "vorhanden",
+      "haken": "Sechs Folien: der Telefontermin, der nie zustande kommt — und der Bruch",
+      "schluessel": "serie",
+      "zielgruppe": "b2c",
+      "sprachen": [
+        "de"
+      ],
+      "_hinweis": "Erstes echtes Karussell. Die id geht als --format an den Generator — motoren.mjs reicht post.winkel durch, NICHT post.format — und muss deshalb buchstabengleich zum Schluessel in FORMATE in wellbooked/docs/social/post-bild.mjs sein."
+    },
+    {
       "id": "karussell-blatt",
       "medium": "bild",
       "format": "anzeige",
@@ -117,7 +130,8 @@
       "zielgruppe": "b2b",
       "sprachen": [
         "de"
-      ]
+      ],
+      "_ersetzt_durch": "anruf — die Skizze aus der Zeit, als Karussells noch nicht gingen. Sie hat nie ein Gegenstueck in FORMATE bekommen und wuerde heute mit 'unbekanntes Format' abbrechen; deshalb steht sie weiter auf status neu."
     },
     {
       "id": "regulierte-bereiche",
