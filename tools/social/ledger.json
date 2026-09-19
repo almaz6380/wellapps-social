@@ -566,6 +566,78 @@
       "schluessel": "kategorie",
       "inhalt": "seed85100",
       "sprache": "de"
+    },
+    {
+      "app": "anigosha",
+      "datum": "2026-09-19",
+      "winkel": "fandom",
+      "medium": "reel",
+      "schluessel": "kategorie",
+      "inhalt": "seed8167",
+      "sprache": "de"
+    },
+    {
+      "app": "anigosha",
+      "datum": "2026-09-19",
+      "winkel": "schwierigkeitsleiter",
+      "medium": "bild",
+      "schluessel": "kategorie",
+      "inhalt": "seed14611",
+      "sprache": "de"
+    },
+    {
+      "app": "mahjong",
+      "datum": "2026-09-19",
+      "winkel": "clear",
+      "medium": "reel",
+      "schluessel": "level",
+      "inhalt": "seed95757",
+      "sprache": "en"
+    },
+    {
+      "app": "wellbooked",
+      "datum": "2026-09-19",
+      "winkel": "bauchbinde",
+      "medium": "reel",
+      "schluessel": "aussage",
+      "inhalt": "seed55301",
+      "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-19",
+      "winkel": "uebung-loop",
+      "medium": "reel",
+      "schluessel": "uebung",
+      "inhalt": "seed6491",
+      "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-19",
+      "winkel": "studien-fakt",
+      "medium": "bild",
+      "schluessel": "studie",
+      "inhalt": "seed47818",
+      "sprache": "de"
+    },
+    {
+      "app": "swaply",
+      "datum": "2026-09-19",
+      "winkel": "tausch-loop",
+      "medium": "reel",
+      "schluessel": "kategorie",
+      "inhalt": "seed39883",
+      "sprache": "de"
+    },
+    {
+      "app": "swaply",
+      "datum": "2026-09-19",
+      "winkel": "tausch",
+      "medium": "bild",
+      "schluessel": "kategorie",
+      "inhalt": "seed98637",
+      "sprache": "de"
     }
   ]
 }
