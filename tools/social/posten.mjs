@@ -592,7 +592,11 @@ for (const p of posten) {
           ? (direkt
             ? await direktPosten({ token, datei: p.medium, titel: p.text, trocken: !ECHT })
             : await inPosteingang({ token, datei: p.medium, trocken: !ECHT }))
-          : await fotoPosten({ token, bildUrls, titel: p.text, direkt: false, trocken: !ECHT });
+          // ⚠ `text`, nicht `titel`: Bei Fotos ist `title` eine Ueberschrift
+          // von 90 Zeichen, die Bildunterschrift gehoert nach `description`.
+          // `fotoPosten` teilt das selbst auf — die Grenze ist TikToks, also
+          // gehoert sie dorthin und nicht hierher.
+          : await fotoPosten({ token, bildUrls, text: p.text, direkt: false, trocken: !ECHT });
 
         // ⚠ Fotos gehen IMMER in den Posteingang, auch wenn AUTOMATIK.tiktok
         // eines Tages an waere. Direct Post verlangt eine Privatsphaere-Wahl,

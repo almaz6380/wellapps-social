@@ -11,7 +11,9 @@
 // ist — eine Einstellung ausserhalb dieses Repos. Der Beweis dafuer ist ein
 // Entwurf im Posteingang, nichts anderes.
 
-import { fotoPosten, FOTO_MAX } from './veroeffentlichen/tiktok.mjs';
+import {
+  fotoPosten, ueberschrift, FOTO_MAX, TITEL_MAX_FOTO, TEXT_MAX_FOTO,
+} from './veroeffentlichen/tiktok.mjs';
 
 let gut = 0;
 const schlecht = [];
@@ -24,7 +26,7 @@ const sechs = Array.from({ length: 6 }, (_, i) => url(i + 1));
 // --- 1. Der Rumpf im Posteingang-Modus --------------------------------------
 {
   const r = await fotoPosten({
-    token: 'x', bildUrls: sechs, titel: 'Der Anruf', trocken: true,
+    token: 'x', bildUrls: sechs, text: 'Der Anruf', trocken: true,
   });
   const b = r.rumpf;
   pruefe('media_type ist PHOTO', b.media_type === 'PHOTO', b.media_type);
@@ -49,13 +51,13 @@ const sechs = Array.from({ length: 6 }, (_, i) => url(i + 1));
 {
   let fehler = null;
   try {
-    await fotoPosten({ token: 'x', bildUrls: sechs, titel: 'T', direkt: true, trocken: true });
+    await fotoPosten({ token: 'x', bildUrls: sechs, text: 'T', direkt: true, trocken: true });
   } catch (e) { fehler = e.message; }
   pruefe('Direct Post ohne Privatsphaere-Wahl wird abgelehnt',
     Boolean(fehler) && /Privatsphaere/.test(fehler ?? ''), fehler ?? 'kein Fehler');
 
   const r = await fotoPosten({
-    token: 'x', bildUrls: sechs, titel: 'T', direkt: true, trocken: true,
+    token: 'x', bildUrls: sechs, text: 'T', direkt: true, trocken: true,
     wahl: { privacy: 'SELF_ONLY', kommentare: true },
   });
   const p = r.rumpf.post_info;
@@ -75,7 +77,7 @@ const sechs = Array.from({ length: 6 }, (_, i) => url(i + 1));
   const versuch = async (n) => {
     try {
       await fotoPosten({
-        token: 'x', titel: 'T', trocken: true,
+        token: 'x', text: 'T', trocken: true,
         bildUrls: Array.from({ length: n }, (_, i) => url(i + 1)),
       });
       return 'angenommen';
@@ -97,7 +99,7 @@ const sechs = Array.from({ length: 6 }, (_, i) => url(i + 1));
   let fehler = null;
   try {
     await fotoPosten({
-      token: 'x', titel: 'T', trocken: true,
+      token: 'x', text: 'T', trocken: true,
       bildUrls: ['/home/user/wellbooked/out/social/2026-09-19/wellbooked-anruf-de-s1-1.jpg'],
     });
   } catch (e) { fehler = e.message; }
@@ -106,18 +108,80 @@ const sechs = Array.from({ length: 6 }, (_, i) => url(i + 1));
 
   let f2 = null;
   try {
-    await fotoPosten({ token: 'x', titel: 'T', trocken: true, bildUrls: ['http://unsicher.invalid/a.jpg'] });
+    await fotoPosten({ token: 'x', text: 'T', trocken: true, bildUrls: ['http://unsicher.invalid/a.jpg'] });
   } catch (e) { f2 = e.message; }
   pruefe('http (ohne s) wird abgelehnt', Boolean(f2), f2 ?? 'kein Fehler');
 }
 
-// --- 5. Der Text wird gedeckelt, nicht von TikTok abgeschnitten -------------
+// --- 5. Zwei Felder, zwei Grenzen -------------------------------------------
+//
+// ⚠ Hier stand bis zum 19.09.2026 „Titel auf 2200 Zeichen gekuerzt" — der
+// Test hat den Fehler nicht gefunden, er hat ihn FESTGEHALTEN. 2200 ist die
+// Grenze des VIDEOS; bei Fotos ist `title` eine Ueberschrift von 90 Zeichen,
+// und TikTok antwortete auf die volle Bildunterschrift mit
+// `invalid_params`. Ein Test, der die Annahme des Codes wiederholt, statt
+// die Gegenseite zu befragen, ist keine Pruefung.
 {
-  const r = await fotoPosten({
-    token: 'x', bildUrls: [url(1)], titel: 'x'.repeat(3000), trocken: true,
+  // Genau die Bildunterschrift, an der es gescheitert ist.
+  const echt = 'Anrufen. Warten. „Moment, ich schau nach …" Und am Ende hast du keinen '
+    + 'Termin, sondern einen Rückruf-Auftrag.\n\nWELLbooked! zeigt dir freie Termine '
+    + 'direkt — ohne Anruf, ohne Rückruf.\n\nwellbooked.at\n\n#Wellness #Massage';
+  const r = await fotoPosten({ token: 'x', bildUrls: sechs, text: echt, trocken: true });
+  const p = r.rumpf.post_info;
+
+  pruefe(`Ueberschrift haelt ${TITEL_MAX_FOTO} Zeichen ein`,
+    p.title.length > 0 && p.title.length <= TITEL_MAX_FOTO, `${p.title.length}: ${p.title}`);
+  // Der eigentliche Punkt: Es geht nichts verloren, es steht nur woanders.
+  pruefe('ganze Bildunterschrift steht in description', p.description === echt,
+    `${p.description?.length} von ${echt.length} Zeichen`);
+  pruefe('Hashtags sind mitgekommen', /#Wellness/.test(p.description ?? ''),
+    (p.description ?? '').slice(-40));
+  pruefe('nicht mitten im Wort abgeschnitten', !/\S…$/.test(p.title) || / /.test(p.title),
+    p.title);
+
+  // Eine eigene Ueberschrift sticht die abgeleitete.
+  const e = await fotoPosten({
+    token: 'x', bildUrls: sechs, text: echt, titel: 'Der Anruf, den niemand führen will.',
+    trocken: true,
   });
-  pruefe('Titel auf 2200 Zeichen gekuerzt', r.rumpf.post_info.title.length === 2200,
-    String(r.rumpf.post_info.title.length));
+  pruefe('eigene Ueberschrift wird genommen',
+    e.rumpf.post_info.title === 'Der Anruf, den niemand führen will.', e.rumpf.post_info.title);
+
+  // Und die 4000 gelten trotzdem.
+  const lang = await fotoPosten({
+    token: 'x', bildUrls: [url(1)], text: 'x'.repeat(5000), trocken: true,
+  });
+  pruefe(`description auf ${TEXT_MAX_FOTO} gedeckelt`,
+    lang.rumpf.post_info.description.length === TEXT_MAX_FOTO,
+    String(lang.rumpf.post_info.description.length));
+}
+
+// --- 6. Die Ueberschrift fuer sich ------------------------------------------
+{
+  pruefe('kurzer Text bleibt unveraendert', ueberschrift('Kurz und gut.') === 'Kurz und gut.',
+    ueberschrift('Kurz und gut.'));
+  // ⚠ Der erste ABSATZ, nicht der erste Satz: „Anrufen." waere ein Satz.
+  pruefe('erster Absatz, nicht erster Satz',
+    ueberschrift('Anrufen. Warten. Nichts.\n\nZweiter Absatz.') === 'Anrufen. Warten. Nichts.',
+    ueberschrift('Anrufen. Warten. Nichts.\n\nZweiter Absatz.'));
+  // ⚠ Der Fall, der den Wortschnitt verworfen hat: Er endete auf „…sondern…".
+  // Ganze Saetze hoeren dort auf, wo der Gedanke aufhoert — und das
+  // schliessende Anfuehrungszeichen muss mitkommen, sonst steht ein „ ohne
+  // Gegenstueck da.
+  const hook = ueberschrift('Anrufen. Warten. „Moment, ich schau nach …" Und am Ende '
+    + 'hast du keinen Termin, sondern einen Rückruf-Auftrag.');
+  pruefe('kuerzt in ganzen Saetzen, ohne Auslassungszeichen',
+    hook === 'Anrufen. Warten. „Moment, ich schau nach …"', hook);
+  pruefe('Anfuehrungszeichen bleiben paarig',
+    (hook.match(/„/g) ?? []).length === (hook.match(/"/g) ?? []).length, hook);
+
+  const w = ueberschrift(`${'wort '.repeat(40)}`);
+  pruefe('langer Absatz wird gekuerzt', w.length <= TITEL_MAX_FOTO && w.endsWith('…'), w);
+  // Ein einziges Riesenwort hat keine Wortgrenze — dann wird hart geschnitten.
+  const eins = ueberschrift('x'.repeat(300));
+  pruefe('Wort ohne Luecke wird hart geschnitten', eins.length === TITEL_MAX_FOTO,
+    String(eins.length));
+  pruefe('leerer Text ergibt leere Ueberschrift', ueberschrift('') === '', `„${ueberschrift('')}"`);
 }
 
 // --- Ergebnis ---------------------------------------------------------------

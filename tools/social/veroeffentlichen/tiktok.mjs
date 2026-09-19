@@ -261,6 +261,67 @@ export async function inPosteingang({ token, datei, trocken }) {
 /** Hoechstens so viele Fotos je Beitrag — TikToks Grenze, nicht unsere. */
 export const FOTO_MAX = 35;
 
+// ⚠ DER TITEL IST BEI FOTOS EIN ANDERES FELD ALS BEIM VIDEO — das hat am
+// 19.09.2026 den ersten echten Fotobeitrag gekostet.
+//
+// Beim Video nimmt `title` die ganze Bildunterschrift (2200 Zeichen); ein
+// `description` gibt es dort nicht. Dieser Code war vom Video abgeschrieben,
+// also gingen auch bei den Fotos rund 380 Zeichen in `title`. TikTok
+// antwortete:
+//
+//     400: The request post info is empty or incorrect [invalid_params]
+//
+// Die Meldung nennt das Feld NICHT. Deshalb stehen die beiden Zahlen hier mit
+// ihrem Grund: `title` ist bei Fotos eine Ueberschrift (90 Zeichen), die
+// Bildunterschrift gehoert nach `description` (4000).
+export const TITEL_MAX_FOTO = 90;
+export const TEXT_MAX_FOTO = 4000;
+
+/**
+ * Aus der Bildunterschrift eine Ueberschrift machen.
+ *
+ * Grundlage ist der erste ABSATZ — der Rest des Textes ist Erklaerung und
+ * Hashtags, keine Ueberschrift.
+ *
+ * Gekuerzt wird in GANZEN SAETZEN, so viele wie hineinpassen. Der erste
+ * Versuch schnitt an der Wortgrenze und ergab „… keinen Termin, sondern…" —
+ * eine Ueberschrift, die mitten im Gedanken abbricht, sieht nach Panne aus,
+ * auch wenn kein Wort zerteilt ist. Mit Saetzen wird daraus „Anrufen.
+ * Warten. „Moment, ich schau nach …"", also der Haken der Geschichte.
+ *
+ * Nur wenn schon der erste Satz zu lang ist, bleibt der Wortschnitt mit
+ * Auslassungszeichen — dann ist jede Wahl unschoen, und die am wenigsten
+ * falsche ist die, die keine Silbe zerreisst.
+ *
+ * Es geht dabei KEIN Text verloren: Die vollstaendige Fassung steht in
+ * `description`.
+ */
+export function ueberschrift(text, max = TITEL_MAX_FOTO) {
+  const absatz = String(text ?? '').split(/\n\s*\n/)[0].replace(/\s+/g, ' ').trim();
+  if (absatz.length <= max) return absatz;
+
+  // Satzende = Schlusszeichen, danach evtl. ein schliessendes Anfuehrungs-
+  // zeichen (unsere Texte zitieren: `… nach …"`), dann Leerraum.
+  // ⚠ Das Anfuehrungszeichen gehoert in den RUECKBLICK, nicht in den Trenner:
+  // Als Teil des Trenners faellt es weg, und die Ueberschrift endete mit einem
+  // oeffnenden „ ohne Gegenstueck.
+  const saetze = absatz.split(/(?<=[.!?…]["»“”']?)\s+/);
+  let gesammelt = '';
+  for (const satz of saetze) {
+    const naechst = gesammelt ? `${gesammelt} ${satz}` : satz;
+    if (naechst.length > max) break;
+    gesammelt = naechst;
+  }
+  if (gesammelt) return gesammelt;
+
+  const kurz = absatz.slice(0, max - 1);
+  const luecke = kurz.lastIndexOf(' ');
+  // Eine Wortgrenze ganz vorn waere schlechter als ein harter Schnitt —
+  // daher nur ab der Haelfte.
+  const rumpf = luecke > max / 2 ? kurz.slice(0, luecke) : kurz;
+  return `${rumpf.replace(/[\s.,;:–—-]+$/, '')}…`;
+}
+
 /**
  * Einen FOTO-Beitrag anlegen: ein Einzelbild oder ein Wischstreifen.
  *
@@ -289,14 +350,14 @@ export const FOTO_MAX = 35;
  * @param {object} o
  * @param {string} o.token
  * @param {string[]} o.bildUrls  oeffentliche Adressen, in Reihenfolge
- * @param {string} o.titel
- * @param {string} [o.beschreibung]
+ * @param {string} o.text        die ganze Bildunterschrift (→ `description`)
+ * @param {string} [o.titel]     eigene Ueberschrift; sonst aus `text` gebildet
  * @param {object} [o.wahl]      nur bei `direkt`: Privatsphaere und Haekchen
  * @param {boolean} [o.direkt]   true = DIRECT_POST, false = Posteingang
  * @param {boolean} [o.trocken]
  */
 export async function fotoPosten({
-  token, bildUrls, titel, beschreibung, wahl, direkt = false, trocken,
+  token, bildUrls, text, titel, wahl, direkt = false, trocken,
 }) {
   const bilder = (bildUrls ?? []).filter(Boolean);
   if (!bilder.length) throw new Error('fotoPosten ohne Bildadresse.');
@@ -311,13 +372,16 @@ export async function fotoPosten({
       + 'TikTok holt die Bilder selbst ab; ein Dateiupload ist fuer Fotos nicht vorgesehen.');
   }
 
-  const text = String(titel ?? '').slice(0, 2200);
+  // s. o. — zwei Felder, zwei Grenzen. Nicht eines wie beim Video.
+  const voll = String(text ?? '').slice(0, TEXT_MAX_FOTO);
+  const kopf = (titel ? String(titel).replace(/\s+/g, ' ').trim() : ueberschrift(voll))
+    .slice(0, TITEL_MAX_FOTO);
   const rumpf = {
     media_type: 'PHOTO',
     post_mode: direkt ? 'DIRECT_POST' : 'MEDIA_UPLOAD',
     post_info: {
-      title: text,
-      ...(beschreibung ? { description: String(beschreibung).slice(0, 4000) } : {}),
+      title: kopf,
+      description: voll,
     },
     source_info: {
       source: 'PULL_FROM_URL',
@@ -352,7 +416,11 @@ export async function fotoPosten({
     });
   }
 
-  if (trocken) return { trocken: true, anzahl: bilder.length, zeichen: text.length, direkt, rumpf };
+  if (trocken) {
+    return {
+      trocken: true, anzahl: bilder.length, zeichen: voll.length, titel: kopf, direkt, rumpf,
+    };
+  }
 
   if (direkt) {
     // Noch einmal fragen, unmittelbar vor dem Posten — der Nutzer kann seine
@@ -382,5 +450,11 @@ export async function fotoPosten({
       + `${daten.error?.code && daten.error.code !== 'ok' ? ` [${daten.error.code}]` : ''}`);
   }
 
-  return { publishId: daten.data?.publish_id, anzahl: bilder.length, zeichen: text.length, direkt };
+  return {
+    publishId: daten.data?.publish_id,
+    anzahl: bilder.length,
+    zeichen: voll.length,
+    titel: kopf,
+    direkt,
+  };
 }
