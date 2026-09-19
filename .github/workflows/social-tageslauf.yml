@@ -151,12 +151,22 @@ jobs:
           # ⚠ Ein GEPLANTER Lauf hat nie eine Variante — die gibt es nur, wenn
           # ein Mensch einen Beitrag abgelehnt hat und Ersatz will.
           if [ "$GEPLANT" = "true" ]; then
-            # ⚠ Der Zeitplan-Notbehelf: Swaplys Motor liegt noch nicht auf
-            # dessen Standardzweig (siehe unten). Ohne diese Zeile faellt
-            # Swaply jeden Morgen aus. Sie gehoert weg, sobald der Zweig
-            # zusammengefuehrt ist — die Warnung unten erinnert taeglich daran.
+            # ⚠ HIER STAND ZWEI WOCHEN EIN NOTBEHELF, und er hat mehr verdeckt
+            # als er half: ZWEIGE="swaply=claude/swaply-icon-farben", weil
+            # Swaplys Motor nur auf jenem Zweig lag.
+            #
+            # Am 19.09.2026 kam heraus, dass DREI von fuenf Repos ihren
+            # Bildgenerator nur auf einem Feature-Zweig fuehrten. Swaply hatte
+            # den Notbehelf, WELLbooked und Mahjong hatten nichts — die zwei
+            # lieferten jeden Morgen nur 1 von 2 Beitraegen, mit „Cannot find
+            # module" als einziger Spur unter zehn Zeilen.
+            #
+            # Alle drei Motoren liegen jetzt auf ihrem Standardzweig. Die
+            # Zeile ist deshalb weg, und lauf.mjs faerbt den Lauf rot, falls
+            # noch einmal einer fehlt. Ein Notbehelf haette genau das wieder
+            # verdeckt — deshalb nie wieder einen, ohne ein Datum daran.
             APPS="alle"; MODUS="echt"; KANAELE=""
-            ZWEIGE="swaply=claude/swaply-icon-farben"
+            ZWEIGE=""
             VARIANTE=""
           else
             APPS="${E_APPS:-anigosha}"; MODUS="${E_MODUS:-trocken}"

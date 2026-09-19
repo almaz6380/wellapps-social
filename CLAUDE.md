@@ -393,7 +393,52 @@ nicht noch einmal tun.
    Ein grüner Haken heißt: alles Angeforderte ist passiert.
 2. **Der Motor eines Repos muss auf dessen Standardzweig liegen.** Lokal war alles da,
    im Lauf fehlte es („Cannot find module"). Ein `ls` im Arbeitsverzeichnis beweist
-   nichts über den Zustand des Repos. Notbehelf: Eingabe `zweige`.
+   nichts über den Zustand des Repos.
+
+   ⚠ **Diese Falle hat am 05.09. einen Notbehelf bekommen statt einer Behebung
+   — und der Notbehelf hat sie dann zwei Wochen lang versteckt.** Am 19.09.
+   kam heraus: **drei von fünf Repos** führten ihren Bildgenerator nur auf
+   einem `claude/…`-Zweig. Swaply hatte den Notbehelf (`zweige: swaply=…` fest
+   im Zeitplan), WELLbooked und Mahjong hatten nichts. Beide lieferten jeden
+   Morgen **1 von 2 Beiträgen**, mit einer Zeile unter zehn als einziger Spur:
+
+   ```
+   ▣ regulierte-bereiche · de · Seed 3471
+     ✗ Error: Cannot find module '…/wellbooked/docs/social/post-bild.mjs'
+   ```
+
+   Der Lauf wurde trotzdem grün — nach der damaligen Regel zu Recht: Eine
+   gescheiterte App darf die anderen nicht mitreißen, und „8 von 10 Posts
+   fertig" ist ja ein Ergebnis. Nur liest das niemand.
+
+   **Behoben, nicht umgangen:** Alle drei Motoren liegen auf ihrem
+   Standardzweig, die `zweige`-Zeile ist aus dem Zeitplan raus, und
+   `lauf.mjs` färbt den Lauf **rot**, wenn ein Generator fehlt (gemessen:
+   Rückgabe 1 mit verbogenem Pfad, 0 im Normalfall). Ein von der Leitplanke
+   verworfener Beitrag bleibt grün — das ist Qualitätskontrolle, kein Defekt.
+
+   **Merksatz: Ein Motor auf einem Feature-Zweig ist kein Motor.** Und: Ein
+   Notbehelf ohne Datum daran wird zur Einrichtung.
+
+   ⚠ Beim Prüfen eines Zweigs vor dem Merge **drei Punkte nehmen**:
+   `git diff main...zweig` sagt, was der Zweig getan hat. `main..zweig` (zwei
+   Punkte) mischt hinein, wie weit main davongelaufen ist — bei Swaply sah
+   der Zweig damit nach 201 Dateien und −20.107 Zeilen aus und war in
+   Wahrheit 15 Dateien groß. Derselbe Zweig hätte beim vollen Merge das
+   App-Redesign vom 01.09. um drei Wochen zurückgedreht; übernommen sind
+   deshalb nur seine Werkzeuge.
+
+   **2a. Fehlend ist nicht dasselbe wie falsch.** `zugaenge-pruefen.mjs`
+   endete bei unvollständigen Zugängen mit 0 — richtig, während der
+   Einrichtung ist das der Normalfall. Es tat es aber auch bei einem
+   FALSCHEN Wert. Swaplys `igKontoId` war um eine Ziffer verschrieben
+   (`…7043·0·2336` statt `…7043·3·2336`), Instagram brach seit Stunden mit
+   „Object with ID … does not exist" ab — einer Meldung, die nach einem
+   Rechteproblem aussieht und keines war —, und der Prüflauf meldete grün.
+   Seit 19.09. sind beide Fälle getrennt: fehlend grün, falsch rot. Und die
+   ID wird gegen die Seite selbst geprüft (`instagram_business_account`)
+   statt nur ausgedruckt. **Eine ID in einer Konfigurationsdatei ist eine
+   Behauptung; die Seite weiß es besser.**
 3. **Sandbox und Produktion sind bei TikTok zwei Datensätze.** Der Reiter sieht aus wie
    eine Ansicht, ist aber eine eigene Konfiguration. Die Produktionsseite war leer und
    musste komplett neu ausgefüllt werden. Das sieht wie Datenverlust aus und ist keiner.

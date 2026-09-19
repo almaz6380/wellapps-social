@@ -578,6 +578,42 @@ async function tageslauf() {
       console.log(`⚠ ${schlecht.length} verworfen oder fehlgeschlagen — siehe oben.`);
     }
 
+    // ⚠ Ein FEHLENDER MOTOR ist kein gewoehnlicher Fehlschlag.
+    //
+    // Am 19.09.2026 lieferten WELLbooked und Mahjong seit Tagen nur 1 von 2
+    // Beitraegen. Im Protokoll stand je eine Zeile:
+    //
+    //   ✗ Error: Cannot find module '…/wellbooked/docs/social/post-bild.mjs'
+    //
+    // Der Lauf wurde trotzdem gruen — nach der bisherigen Regel zu Recht: Eine
+    // gescheiterte App darf die anderen nicht mitreissen, und „8 von 10 Posts
+    // fertig" ist ja ein Ergebnis. Nur liest das niemand, und so hat der
+    // Zeitplan wochenlang stillschweigend zwei Beitraege am Tag verloren.
+    //
+    // Ursache war jedes Mal dieselbe: Der Generator lag nur auf einem
+    // Feature-Zweig, und der Tageslauf checkt den Standardzweig aus. Lokal war
+    // alles da — genau deshalb faellt es nur hier auf.
+    //
+    // ⚠ Ein von der Leitplanke VERWORFENER Beitrag faerbt weiterhin NICHT rot.
+    // Das ist gewollte Qualitaetskontrolle und kein Defekt. Rot wird nur, was
+    // gar nicht erst laufen konnte.
+    const ohneMotor = bericht.filter(
+      (b) => b.fehler && /Cannot find module|ERR_MODULE_NOT_FOUND|ENOENT/i.test(b.fehler),
+    );
+    if (ohneMotor.length) {
+      console.error(`\n✗ ${ohneMotor.length} Beitrag/Beitraege konnten gar nicht erst laufen — `
+        + 'der Generator fehlt:');
+      for (const b of ohneMotor) {
+        console.error(`   • ${b.app} · ${b.post.winkel}: ${b.fehler.slice(0, 160)}`);
+      }
+      console.error('  Liegt der Motor auf dem STANDARDZWEIG des Repos? Der Tageslauf');
+      console.error('  checkt nur den aus. Ein Motor auf einem Feature-Zweig ist keiner.');
+      // ⚠ exitCode statt exit(): Die Galerie und der Ledger unten sollen noch
+      // geschrieben werden. Was durchkam, soll durchkommen — dieselbe Regel
+      // wie in posten.mjs, nur faerbt der Lauf sich am Ende trotzdem rot.
+      process.exitCode = 1;
+    }
+
     const galerie = join(HIER, '..', '..', 'out', 'social', `galerie-${HEUTE}.html`);
     mkdirSync(dirname(galerie), { recursive: true });
     writeFileSync(galerie, baueGalerie({
