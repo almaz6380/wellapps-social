@@ -47,7 +47,7 @@
       "medium": "reel",
       "format": "wissen-reel",
       "status": "vorhanden",
-      "haken": "Trainingsmythos gegen die belegte Aussage. Der Studienbeleg ist der Unterschied zu jedem anderen Fitnesskanal",
+      "haken": "⚠ LIEFERT HEUTE DASSELBE WIE quick-fakt — ein zufaelliges Wissensthema. `wissen-reel` ist der einzige Reel-Zweig neben uebung-loop, und drei Winkel teilen ihn sich (gefunden 20.09.2026). Die Idee bleibt notiert: Trainingsmythos gegen die belegte Aussage; der Studienbeleg waere der Unterschied zu jedem anderen Fitnesskanal. Dafuer braucht es ein Mythos-Feld in den Wissensdateien, das es noch nicht gibt",
       "schluessel": "wissensthema",
       "sprachen": [
         "de",
@@ -71,7 +71,7 @@
       "medium": "reel",
       "format": "wissen-reel",
       "status": "neu",
-      "haken": "Eine Woche aus einem der 21 Peak-Programme, mit Studienzitat. Zeigt Substanz statt Versprechen",
+      "haken": "⚠ LIEFERT HEUTE DASSELBE WIE quick-fakt — ein zufaelliges Wissensthema, nicht das Programm. Die Idee bleibt notiert: eine Woche aus einem der 21 Peak-Programme (src/data/peakPrograms.js liegt da), mit Studienzitat. Dafuer braucht post-reel.mjs einen eigenen Zweig",
       "schluessel": "programm",
       "sprachen": [
         "de",
@@ -81,7 +81,7 @@
     {
       "id": "wissens-karte",
       "medium": "bild",
-      "format": "wissen-karte",
+      "format": "wissens-karte",
       "status": "vorhanden",
       "haken": "Zitatkarte mit sichtbarer Quellenangabe. Teilbar, weil belegt",
       "schluessel": "wissensthema",
@@ -155,7 +155,7 @@
     {
       "id": "naehrstoff",
       "medium": "bild",
-      "format": "wissen-karte",
+      "format": "naehrstoff",
       "status": "vorhanden",
       "haken": "Ein Mikronaehrstoff aus nutritionKnowledge.js — was er tut, worin er steckt. Ohne Dosierung, ohne Heilversprechen",
       "schluessel": "wissensthema",
@@ -172,9 +172,9 @@
     {
       "id": "erfolg",
       "medium": "bild",
-      "format": "erfolg-karte",
+      "format": "wissens-karte",
       "status": "neu",
-      "haken": "Eines der 23 Achievements als Motivationswinkel — 100 Trainings, 30 Tage Serie. Zielt auf Wiedereinsteiger",
+      "haken": "⚠ LIEFERT HEUTE EINE WISSENSKARTE, kein Achievement. Der Winkel trug bis 20.09.2026 das Format `erfolg-karte`, das es in post-bild.mjs nie gab — er fiel still in den Wissens-Zweig und niemandem fiel es auf. Die Idee bleibt notiert: eines der 23 Achievements aus achievements.js als Motivationswinkel, 100 Trainings, 30 Tage Serie, fuer Wiedereinsteiger. Wer sie will, baut den Zweig im Generator; bis dahin sagt dieser Text die Wahrheit",
       "schluessel": "achievement",
       "sprachen": [
         "de",
