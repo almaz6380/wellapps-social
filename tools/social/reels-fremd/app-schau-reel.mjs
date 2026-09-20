@@ -88,6 +88,15 @@ const B = 1080, H = 1920, FPS = 30;
 // Das Verzeichnis gibt jetzt der Aufrufer mit `--repo` — motoren.mjs kennt
 // es als `app.pfad` und ladeApps() biegt es auf dem Runner ueber
 // SOCIAL_WURZEL um. Damit gibt es die Wahrheit nur noch an EINER Stelle.
+// Dieselben Hashtags wie im Beiblatt der jeweiligen Bildkarte — sie stehen
+// dort in den Generatoren der Apps und hier, weil `--schau-json` nur den
+// Inhalt liefert, nicht die Caption drumherum.
+const HASHTAGS = {
+  fullrep: '#fullrep #fitness #training #ernaehrung',
+  anigosha: '#anigosha #animequiz #anime #quiz #duell',
+  swaply: '#swaply #gewohnheiten #tauschstattverzicht',
+};
+
 const SKRIPTE = {
   fullrep: 'scripts/post-bild.mjs',
   anigosha: 'tools/post-bild.mjs',
@@ -339,6 +348,44 @@ await frames(storyboard, senke.stdin, {
 senke.stdin.end();
 await senke.fertig;
 
+// ⚠ OHNE BEIBLATT WIRD DAS REEL NIE GEFUNDEN.
+//
+// posten.mjs sammelt die Beitraege NICHT ueber die Mediendateien ein,
+// sondern ueber die `.txt` daneben (Zeile ~181): Es liest jede .txt im
+// Tagesordner und sucht dann `<stamm>.mp4`, `<stamm>-feed.jpg`, `<stamm>.jpg`
+// dazu. Ein Video ohne Beiblatt existiert fuer den Versand schlicht nicht.
+//
+// Genau das lief in Lauf 37 vom 20.09.2026: Drei Reels wurden gerendert (die
+// Stufe „Beitraege erzeugen" brauchte 68 Sekunden statt 6) und standen im
+// Ledger — im Versand tauchte trotzdem nur das Bild auf, „1 Beitrag aus
+// diesem Lauf". Kein Fehler, keine Warnung, der Lauf gruen.
+//
+// ⚠ Die Rubrik „ZUR KONTROLLE" ist keine Prosa, sondern eine GRENZE:
+// captionAus() schneidet den Beitragstext an der naechsten unterstrichenen
+// Ueberschrift ab. Fehlt sie, laeuft die Caption bis ans Dateiende.
+const beiblatt = join(zielOrdner, `${basis}.txt`);
+writeFileSync(beiblatt,
+`${basis}
+
+CAPTION ZUM KOPIEREN
+--------------------
+${daten.kurz.join(' ')}
+
+${daten.text}
+
+${HASHTAGS[MARKE] ?? ''}
+
+ZUR KONTROLLE (nicht posten)
+----------------------------
+Zeigt die App selbst — kein Inhalt daraus, keine Frage, keine Loesung.
+Reel zur gleichnamigen Karte: ${basis.replace('-app-schau', '-app-schau')} · Seed ${SEED}
+Bildschirme: ${daten.schirme.map((f) => f.split('/').pop()).join(', ')}
+Ton: ${ton ? 'Musikbett bett.aac bei -20 dB' : 'STUMM'}
+Medienherkunft: Screenshots der eigenen App${daten.hintergrund
+  ? ' + Einzelbild aus dem eigenen Werbespot (KI-erzeugt, als AI gekennzeichnet)' : ''}
+`);
+
 console.log(`\n✓ ${ziel}`);
+console.log(`✓ ${beiblatt}`);
 console.log(`  ${B}×${H} · ${(GESAMT / FPS).toFixed(1)} s · ${FPS} fps · `
   + `${ton ? 'mit Musikbett' : 'STUMM'} · ${MARKE} · ${LANG} · Seed ${SEED}`);

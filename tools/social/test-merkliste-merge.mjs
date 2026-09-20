@@ -151,10 +151,45 @@ const nachVollLauf = {
     r.uebersicht.length === 3, `${r.uebersicht.length}`);
 }
 
+
+// --- 6. Was posten.mjs ueberhaupt FINDET ------------------------------------
+//
+// ⚠ Nicht die Mediendatei entscheidet, sondern das BEIBLATT daneben.
+// posten.mjs liest jede `.txt` im Tagesordner und sucht dann `<stamm>.mp4`,
+// `<stamm>-feed.jpg` oder `<stamm>.jpg` dazu. Ein Video ohne .txt existiert
+// fuer den Versand nicht.
+//
+// Gemessen in Lauf 37 vom 20.09.2026: Drei Reels wurden gerendert (die Stufe
+// „Beitraege erzeugen" brauchte 68 Sekunden statt 6) und standen im Ledger —
+// versendet wurde trotzdem nur das Bild, „1 Beitrag aus diesem Lauf". Kein
+// Fehler, keine Warnung, der Lauf gruen.
+//
+// Diese Probe steht hier, weil sie dieselbe Frage stellt wie der Rest der
+// Datei: Was ueberlebt den Weg vom Renderer bis in den Kanal?
+{
+  const ordner = ['fullrep-app-schau-de-s81669.txt', 'fullrep-app-schau-de-s81669.jpg',
+    'fullrep-app-schau-reel-de-s81669.mp4'];
+  const gefunden = ordner.filter((x) => x.endsWith('.txt'))
+    .map((f) => f.replace(/\.txt$/, ''))
+    .map((stamm) => ['.mp4', '-feed.jpg', '.jpg'].map((e) => stamm + e).find((n) => ordner.includes(n)))
+    .filter(Boolean);
+  pruefe('Ein Reel OHNE Beiblatt wird nicht gefunden (der Fehler von Lauf 37)',
+    gefunden.length === 1 && gefunden[0].endsWith('.jpg'), gefunden.join(', '));
+
+  const mitBeiblatt = [...ordner, 'fullrep-app-schau-reel-de-s81669.txt'];
+  const jetzt = mitBeiblatt.filter((x) => x.endsWith('.txt'))
+    .map((f) => f.replace(/\.txt$/, ''))
+    .map((stamm) => ['.mp4', '-feed.jpg', '.jpg'].map((e) => stamm + e).find((n) => mitBeiblatt.includes(n)))
+    .filter(Boolean);
+  pruefe('Mit Beiblatt werden BEIDE gefunden — Bild und Reel',
+    jetzt.length === 2 && jetzt.some((x) => x.endsWith('.mp4')) && jetzt.some((x) => x.endsWith('.jpg')),
+    jetzt.join(', '));
+}
+
 console.log(`\n${gut} von ${gut + schlecht.length} Proben gruen.`);
 if (schlecht.length) {
   console.error('\n✗ Nicht bestanden:');
   for (const z of schlecht) console.error(`   ${z}`);
   process.exit(1);
 }
-console.log('✓ Ein Nachlauf auf einem Kanal loescht keinen anderen mehr.');
+console.log('✓ Kein Kanal loescht einen anderen, und ein Reel ohne Beiblatt faellt auf.');
