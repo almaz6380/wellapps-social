@@ -791,6 +791,24 @@
       "schluessel": "peptid",
       "inhalt": "seed84715",
       "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-20",
+      "winkel": "peptid",
+      "medium": "bild",
+      "schluessel": "peptid",
+      "inhalt": "seed63819",
+      "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-20",
+      "winkel": "studien-fakt",
+      "medium": "bild",
+      "schluessel": "studie",
+      "inhalt": "seed79317",
+      "sprache": "de"
     }
   ]
 }
