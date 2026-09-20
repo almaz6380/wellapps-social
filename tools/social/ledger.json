@@ -737,6 +737,24 @@
       "schluessel": "regel",
       "inhalt": "seed32510",
       "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-20",
+      "winkel": "peptid",
+      "medium": "bild",
+      "schluessel": "peptid",
+      "inhalt": "seed30218",
+      "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-20",
+      "winkel": "studien-fakt",
+      "medium": "bild",
+      "schluessel": "studie",
+      "inhalt": "seed97432",
+      "sprache": "de"
     }
   ]
 }
