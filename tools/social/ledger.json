@@ -665,6 +665,15 @@
       "schluessel": "uebung",
       "inhalt": "seed49409",
       "sprache": "de"
+    },
+    {
+      "app": "mahjong",
+      "datum": "2026-09-20",
+      "winkel": "paar-standbild",
+      "medium": "bild",
+      "schluessel": "level",
+      "inhalt": "seed64916",
+      "sprache": "en"
     }
   ]
 }
