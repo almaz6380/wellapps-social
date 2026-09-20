@@ -980,6 +980,60 @@
       "schluessel": "bildschirm",
       "inhalt": "seed2529",
       "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-20",
+      "winkel": "app-schau-reel",
+      "medium": "reel",
+      "schluessel": "bildschirm",
+      "inhalt": "seed88146",
+      "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-20",
+      "winkel": "app-schau",
+      "medium": "bild",
+      "schluessel": "bildschirm",
+      "inhalt": "seed88146",
+      "sprache": "de"
+    },
+    {
+      "app": "anigosha",
+      "datum": "2026-09-20",
+      "winkel": "app-schau-reel",
+      "medium": "reel",
+      "schluessel": "bildschirm",
+      "inhalt": "seed7198",
+      "sprache": "de"
+    },
+    {
+      "app": "anigosha",
+      "datum": "2026-09-20",
+      "winkel": "app-schau",
+      "medium": "bild",
+      "schluessel": "bildschirm",
+      "inhalt": "seed7198",
+      "sprache": "de"
+    },
+    {
+      "app": "swaply",
+      "datum": "2026-09-20",
+      "winkel": "app-schau-reel",
+      "medium": "reel",
+      "schluessel": "bildschirm",
+      "inhalt": "seed81288",
+      "sprache": "de"
+    },
+    {
+      "app": "swaply",
+      "datum": "2026-09-20",
+      "winkel": "app-schau",
+      "medium": "bild",
+      "schluessel": "bildschirm",
+      "inhalt": "seed81288",
+      "sprache": "de"
     }
   ]
 }
