@@ -19,7 +19,7 @@
       "medium": "bild",
       "format": "studien-fakt",
       "status": "vorhanden",
-      "haken": "Ein Studienfund als Karte: wechselnder Aufhaenger, grosse Ueberschrift, Erklaertext, darunter der Wert. 26 kuratierte Eintraege, jeder woertlich aus src/data/ — es wird keine Zahl erfunden",
+      "haken": "Ein Studienfund als Karte. 26 kuratierte Eintraege, jeder woertlich aus src/data/ — es wird keine Zahl erfunden. Im Stil `zahl` traegt der Studienwert das Bild: „27 % geringeres Gesamtsterblichkeitsrisiko\u201c, „50 % weniger Trainingsvolumen\u201c. 9 der 26 haben eine solche Zahl; die uebrigen (Spannen wie 1,6\u20132,2 g/kg) fallen sauber auf `premium` zurueck, statt eine zu erfinden",
       "schluessel": "studie",
       "sprachen": [
         "de",
@@ -27,7 +27,8 @@
       ],
       "stile": [
         "mix",
-        "poster"
+        "poster",
+        "zahl"
       ]
     },
     {
