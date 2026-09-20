@@ -692,6 +692,15 @@
       "schluessel": "fragen-ids",
       "inhalt": "seed55659",
       "sprache": "de"
+    },
+    {
+      "app": "wellbooked",
+      "datum": "2026-09-20",
+      "winkel": "kalender-clip",
+      "medium": "reel",
+      "schluessel": "screen",
+      "inhalt": "seed4057",
+      "sprache": "de"
     }
   ]
 }
