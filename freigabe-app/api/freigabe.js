@@ -132,6 +132,66 @@ export default async function handler(req, res) {
       return;
     }
 
+    // ⚠ DAS ARCHIV — was WIRKLICH rausging (Josef, 20.09.2026).
+    //
+    // Die Tagesansicht beantwortet „was ist heute noch zu tun". Sie beantwortet
+    // nicht „was habe ich diese Woche gepostet" — dafuer muesste man jeden Tag
+    // einzeln aufrufen und sich merken, was man gesehen hat.
+    //
+    // ⚠ Gelesen werden dieselben Merklisten wie sonst, nur ueber mehrere Tage.
+    // Es gibt KEINE zweite Datenhaltung: Ein Archiv, das seine eigene Liste
+    // fuehrt, laeuft irgendwann gegen die Merkliste, und dann glaubt man der
+    // falschen. Hier ist die Merkliste weiterhin die einzige Wahrheit.
+    //
+    // ⚠ Nur `veroeffentlicht` zaehlt, und nur bei Facebook und Instagram. Was
+    // in TikToks Posteingang liegt, ist NICHT gepostet — das entscheidet ein
+    // Mensch in der TikTok-App, und niemand meldet es zurueck. Es hier
+    // mitzuzaehlen hiesse, eine Zahl zu behaupten, die nirgends gemessen ist.
+    if (aktion === 'archiv') {
+      const basis = process.env.BLOB_BASIS;
+      if (!basis) {
+        res.status(500).json({ fehler: 'BLOB_BASIS ist in Vercel nicht gesetzt.' });
+        return;
+      }
+      // 30 Tage sind 150 Abrufe (5 Apps). Das laeuft in wenigen Sekunden, und
+      // weiter zurueck fragt in der Praxis niemand. Wer doch will, ruft die
+      // Tagesansicht mit dem Datumsfeld auf.
+      const tage = Math.min(Math.max(Number(req.body?.tage) || 30, 1), 90);
+      const daten = [];
+      for (let i = 0; i < tage; i++) {
+        const d = new Date(`${tag}T12:00:00Z`);
+        d.setUTCDate(d.getUTCDate() - i);
+        daten.push(d.toISOString().slice(0, 10));
+      }
+
+      const listen = (await Promise.all(
+        daten.flatMap((d) => APPS.map(async (a) => {
+          const l = await merklisteHolen(basis.replace(/\/$/, ''), d, a);
+          return l ? { ...l, datum: l.datum ?? d } : null;
+        })),
+      )).filter(Boolean);
+
+      const raus = [];
+      for (const l of listen) {
+        for (const p of l.uebersicht ?? []) {
+          const kanaele = Object.entries(p.kanaele ?? {})
+            .filter(([k, e]) => ['facebook', 'instagram'].includes(k)
+              && e?.stand === 'veroeffentlicht')
+            .map(([k, e]) => ({ kanal: k, ...e }));
+          if (!kanaele.length) continue;
+          raus.push({
+            datum: l.datum, app: l.app, name: l.name,
+            datei: p.datei, text: p.text, istVideo: p.istVideo === true,
+            kanaele,
+          });
+        }
+      }
+      // Neueste zuerst — beim Nachsehen interessiert fast immer das Letzte.
+      raus.sort((a, b) => (a.datum < b.datum ? 1 : a.datum > b.datum ? -1 : 0));
+      res.status(200).json({ von: daten[daten.length - 1], bis: tag, beitraege: raus });
+      return;
+    }
+
     const token = process.env.GITHUB_TOKEN;
 
     if (aktion === 'veroeffentlichen') {

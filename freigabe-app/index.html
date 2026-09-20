@@ -107,6 +107,11 @@
   <div class="kopfleiste">
     <input id="datum" type="date">
     <button class="rand" id="neu">Laden</button>
+    <!-- ⚠ Das Archiv beantwortet eine ANDERE Frage als die Tagesansicht:
+         nicht „was ist heute zu tun", sondern „was ist rausgegangen". Deshalb
+         ein eigener Knopf und keine Klappe in der Tagesliste — dort wuerde
+         das Rausgegangene wieder zwischen dem Offenen stehen. -->
+    <button class="rand" id="archiv-an">Gepostet</button>
   </div>
 
   <!--
@@ -670,6 +675,88 @@ async function laden() {
   }
 }
 
+// --- Das Archiv -------------------------------------------------------------
+//
+// ⚠ Es zeigt AUSSCHLIESSLICH, was wirklich veroeffentlicht wurde — Facebook
+// und Instagram, ueber diese Seite freigegeben. Ein TikTok-Entwurf im
+// Posteingang ist NICHT gepostet; das entscheidet ein Mensch in der
+// TikTok-App, und niemand meldet es zurueck. Ihn hier mitzuzaehlen hiesse,
+// eine Zahl zu behaupten, die nirgends gemessen ist.
+//
+// Die Daten sind dieselben Merklisten wie in der Tagesansicht, nur ueber
+// mehrere Tage gelesen. Es gibt KEINE zweite Datenhaltung: Ein Archiv mit
+// eigener Liste laeuft irgendwann gegen die Merkliste, und dann glaubt man
+// der falschen.
+async function archivLaden(tage = 30) {
+  const ziel = $('#liste');
+  ziel.replaceChildren(el('p', 'leise', `Die letzten ${tage} Tage werden gelesen …`));
+  try {
+    const { beitraege, von, bis } = await ruf('archiv', { datum: $('#datum').value, tage });
+    ziel.replaceChildren();
+
+    const kopf = el('div', 'app-kopf');
+    kopf.append(el('h2', null, 'Gepostet'));
+    ziel.append(kopf);
+    ziel.append(el('p', 'leise',
+      `${beitraege.length} Beitrag/Beitraege zwischen ${von} und ${bis} — Facebook und Instagram.`));
+
+    if (!beitraege.length) {
+      ziel.append(el('p', 'leise',
+        'In diesem Zeitraum wurde ueber diese Seite nichts veroeffentlicht. '
+        + 'TikTok-Entwuerfe zaehlen hier nicht mit: Ob sie rausgingen, weiss '
+        + 'nur die TikTok-App.'));
+    }
+
+    // Nach Tag gruppieren, neueste zuerst — beim Nachsehen interessiert fast
+    // immer das Letzte.
+    let letzterTag = null;
+    for (const b of beitraege) {
+      if (b.datum !== letzterTag) {
+        letzterTag = b.datum;
+        const t = el('h3', 'leise', b.datum);
+        t.style.margin = '22px 0 4px';
+        ziel.append(t);
+      }
+      const karte = el('div', 'karte');
+      const zeile = el('div', 'reihe');
+      zeile.style.justifyContent = 'space-between';
+      zeile.append(el('strong', null, b.name || b.app));
+      zeile.append(el('span', 'leise', b.istVideo ? 'Reel' : 'Bild'));
+      karte.append(zeile);
+      if (b.text) {
+        const t = el('p', null, b.text.split('\n')[0].slice(0, 160));
+        t.style.margin = '6px 0';
+        karte.append(t);
+      }
+      const marken = el('div', 'reihe');
+      marken.style.marginTop = '6px';
+      for (const k of b.kanaele) {
+        const m = el('span', 'marke gut', KANAL_NAME[k.kanal] ?? k.kanal);
+        // Der Link zum echten Beitrag, wo einer vermerkt ist — sonst muss man
+        // ihn im Netzwerk suchen.
+        if (k.url) {
+          const a = el('a', null, KANAL_NAME[k.kanal] ?? k.kanal);
+          a.href = k.url; a.target = '_blank'; a.rel = 'noopener';
+          a.className = 'marke gut';
+          marken.append(a);
+          continue;
+        }
+        marken.append(m);
+      }
+      karte.append(marken);
+      karte.append(el('p', 'leise', b.datei));
+      ziel.append(karte);
+    }
+
+    const zurueck = el('button', 'rand', 'Zurück zur Freigabe');
+    zurueck.style.marginTop = '28px';
+    zurueck.onclick = laden;
+    ziel.append(zurueck);
+  } catch (e) {
+    ziel.replaceChildren(el('p', 'leise', `Ging nicht: ${e.message}`));
+  }
+}
+
 async function anmelden(eingabe) {
   passwort = eingabe;
   await ruf('liste', { datum: $('#datum').value });   // Probe: stimmt das Passwort?
@@ -737,6 +824,7 @@ $('#k-bauen').onclick = async () => {
 
 $('#datum').value = new Date().toISOString().slice(0, 10);
 $('#neu').onclick = laden;
+$('#archiv-an').onclick = () => archivLaden(30);
 
 $('#rein').onclick = async () => {
   $('#torfehler').textContent = '';
