@@ -64,6 +64,10 @@ on:
         description: 'Bestimmten Winkel bestellen statt wuerfeln, z. B. paar-standbild. Leer = Rotation'
         type: string
         required: false
+      anzahl:
+        description: 'Beitraege je App. Leer = das uebliche Tagespaket (meist 2)'
+        type: string
+        required: false
 
 # ⚠ Schreibrecht nur fuer den Ledger (siehe letzter Schritt). Ohne ihn
 # wiederholt der naechste Lauf dieselben Winkel — die Rotation lebt davon,
@@ -150,6 +154,7 @@ jobs:
           E_ZWEIGE: ${{ inputs.zweige }}
           E_VARIANTE: ${{ inputs.variante }}
           E_WINKEL: ${{ inputs.winkel }}
+          E_ANZAHL: ${{ inputs.anzahl }}
           GEPLANT: ${{ github.event_name == 'schedule' }}
         run: |
           set -e
@@ -176,11 +181,14 @@ jobs:
             # ⚠ Auch kein bestellter Winkel: Ein Zeitplan bestellt nichts, er
             # folgt der Rotation. Stuende hier je einer, liefe er taeglich.
             WINKEL=""
+            # ⚠ Der Zeitplan nimmt immer das volle Tagespaket.
+            ANZAHL=""
           else
             APPS="${E_APPS:-anigosha}"; MODUS="${E_MODUS:-trocken}"
             KANAELE="$E_KANAELE"; ZWEIGE="$E_ZWEIGE"
             VARIANTE="$E_VARIANTE"
             WINKEL="$E_WINKEL"
+            ANZAHL="$E_ANZAHL"
           fi
           {
             echo "apps=$APPS"
@@ -189,6 +197,7 @@ jobs:
             echo "kanaele=$KANAELE"
             echo "variante=$VARIANTE"
             echo "winkel=$WINKEL"
+            echo "anzahl=$ANZAHL"
           } >> "$GITHUB_OUTPUT"
           echo "Apps: $APPS · Modus: $MODUS · Kanaele: ${KANAELE:-alle} · ausgeloest von ${{ github.event_name }}"
 
@@ -419,6 +428,7 @@ jobs:
           DATUM: ${{ steps.plan.outputs.datum }}
           VARIANTE: ${{ steps.plan.outputs.variante }}
           WINKEL: ${{ steps.plan.outputs.winkel }}
+          ANZAHL: ${{ steps.plan.outputs.anzahl }}
         run: |
           DATUM_ARG=""
           [ -n "$DATUM" ] && DATUM_ARG="--datum $DATUM"
@@ -430,14 +440,18 @@ jobs:
           # ⚠ Ein bestellter Winkel schlaegt die Rotation. Nur von Hand.
           WINKEL_ARG=""
           [ -n "$WINKEL" ] && WINKEL_ARG="--winkel $WINKEL"
+          # ⚠ Weniger Beitraege heisst weniger Uploads auf einmal. TikTok hat
+          # am 19.09. zweimal mit `spam_risk_too_many_pending_share` abgelehnt.
+          ANZAHL_ARG=""
+          [ -n "$ANZAHL" ] && ANZAHL_ARG="--anzahl $ANZAHL"
           : > "$RUNNER_TEMP/gescheitert.txt"
           if [ "$APPS" = "alle" ]; then
-            node tools/social/lauf.mjs --echt $DATUM_ARG $VARIANTE_ARG $WINKEL_ARG || echo "alle" >> "$RUNNER_TEMP/gescheitert.txt"
+            node tools/social/lauf.mjs --echt $DATUM_ARG $VARIANTE_ARG $WINKEL_ARG $ANZAHL_ARG || echo "alle" >> "$RUNNER_TEMP/gescheitert.txt"
           else
             IFS=',' read -ra LISTE <<< "$APPS"
             for a in "${LISTE[@]}"; do
               app="$(echo "$a" | tr -d ' ')"
-              node tools/social/lauf.mjs --echt --app "$app" $DATUM_ARG $VARIANTE_ARG $WINKEL_ARG \
+              node tools/social/lauf.mjs --echt --app "$app" $DATUM_ARG $VARIANTE_ARG $WINKEL_ARG $ANZAHL_ARG \
                 || echo "$app" >> "$RUNNER_TEMP/gescheitert.txt"
             done
           fi
