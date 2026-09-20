@@ -299,7 +299,65 @@ const posten = tagesposten();
 const fehlt = fehlendeBeitraege(posten);
 
 // Nur die echten Verluste faerben den Lauf rot — siehe `fremdeMaschine`.
-const verloren = fehlt.filter((f) => !f.fremdeMaschine);
+let verloren = fehlt.filter((f) => !f.fremdeMaschine);
+
+// ⚠ DRITTE AUSNAHME: schon ausgeliefert ist nicht verloren (20.09.2026).
+//
+// Ein zweiter Lauf am selben Tag rendert NUR seine eigenen Beitraege. Die
+// vom Morgen stehen weiter im Ledger, ihre Dateien liegen aber nicht mehr
+// auf der Platte — jeder Workflow-Lauf bekommt einen frischen Container, und
+// `out/` ist nicht eingecheckt. `fremdeMaschine` faengt das nicht ab: Der
+// App-Ordner EXISTIERT ja, dieser Lauf hat gerade hineingerendert.
+//
+// Am 20.09. faerbte das drei Laeufe hintereinander rot, und es wurde mit
+// jedem Lauf schlimmer (2 → 4 Beitraege). Genau die Sorte Dauerrot, die in
+// Anigoshas CLAUDE.md schon einmal steht: „Ein taeglich rot laufender
+// Zeitplan verdeckt echte Fehler."
+//
+// Die Merkliste im Blob weiss, was ausgeliefert wurde — sie ueberlebt den
+// Container. Steht der Seed in ihrer `uebersicht`, ist der Beitrag draussen
+// und nichts ist verloren.
+//
+// ⚠ Die Pruefung darf NICHT alles durchwinken: Ein Beitrag, der nie eine
+// Merklisten-Zeile bekommen hat, bleibt ein echter Verlust. Genau dafuer ist
+// dieser Alarm da.
+if (verloren.length) {
+  const geliefert = new Set();
+  for (const app of new Set(verloren.map((f) => f.app))) {
+    try {
+      const listen = await merklistenLesen({
+        datum: DATUM, token: zugaenge(app).blobToken,
+      });
+      for (const l of listen) {
+        for (const e of l.uebersicht ?? []) {
+          // Der Seed steckt im Dateinamen: …-s30218.jpg
+          //
+          // ⚠ Die Zahl endet NICHT immer an einem Punkt. Karussell-Folien
+          // tragen eine laufende Nummer dahinter (…-s3709-1.jpg), und mit
+          // `-s(\d+)\.` waeren genau WELLbookeds Mehrbild-Beitraege nie als
+          // ausgeliefert erkannt worden — sie waeren weiter rot geblieben.
+          // Aufgefallen beim Durchmessen echter Dateinamen, nicht am Code.
+          const t = /-s(\d+)(?:[-.]|$)/.exec(e.datei ?? '');
+          if (t) geliefert.add(`${l.app}:${t[1]}`);
+        }
+      }
+    } catch (e) {
+      // ⚠ Nicht verschlucken. Ist die Merkliste unlesbar, kann diese Probe
+      // nichts aussagen — dann bleibt es beim Alarm, statt ihn stillschweigend
+      // wegzuwerfen.
+      console.error(`   ⚠ Merkliste von ${app} nicht lesbar (${e.message}) —`
+        + ' der Abgleich faellt aus, unten stehende Beitraege koennen also'
+        + ' auch schon ausgeliefert sein.');
+    }
+  }
+  const schon = verloren.filter((f) => geliefert.has(`${f.app}:${f.seed}`));
+  if (schon.length) {
+    console.log(`(${schon.length} Beitrag/Beitraege aus dem Ledger liegen nicht mehr`
+      + ' auf der Platte, stehen aber in der Merkliste — schon ausgeliefert,'
+      + ' vermutlich von einem frueheren Lauf des Tages. Kein Fehler.)\n');
+  }
+  verloren = verloren.filter((f) => !geliefert.has(`${f.app}:${f.seed}`));
+}
 
 if (fehlt.length) {
   if (fehlt.length !== verloren.length) {
