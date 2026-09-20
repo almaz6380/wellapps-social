@@ -9,7 +9,17 @@ eine einzige `actions/checkout@v4`, kein App-Repo daneben. Ein Verweis nach
 | WELLbooked! | `musik/wellbooked-indie.mp3` | Kopie von `wellbooked/docs/reels/musik/indie-verwendet.mp3` (25 s · 117 BPM) |
 | Anigosha | `../reels/assets/sfx/anisong.aac` | eigens erzeugter Anisong (54 s), liegt schon hier |
 | Mahjong Royale | `../reels/assets/sfx/bett.aac` | der allgemeine Teppich (32 s) — s. Warnung unten |
-| FullRep, Swaply | — | noch keine |
+| FullRep | `musik/fullrep-bett.mp3` | erzeugt 20.09.2026, kie.ai/Suno V5, instrumental (2:12) |
+| Swaply | `musik/swaply-bett.mp3` | erzeugt 20.09.2026, kie.ai/Suno V5, instrumental (3:25) |
+
+Die zwei neuen sind mit `tools/social/musik-erzeugen.mjs` entstanden; je eine
+Anfrage (~0,06 $) liefert zwei Fassungen, Josef hat gewählt. Auch sie sind
+**nicht reproduzierbar** — deshalb liegen die Dateien hier und nicht nur der
+Prompt.
+
+⚠ **Swaply klingt bewusst nicht antreibend.** Die App begleitet Menschen beim
+Ablegen einer Gewohnheit; ein anfeuernder Teppich wäre dort der falsche Ton.
+Der Stil ist auf „tragend" beschrieben, nicht auf „motivierend".
 
 Die Zuordnung steht in `MUSIK` in `tools/social/folien-video.mjs`. Ohne
 Eintrag bleibt die Diashow stumm; das ist kein Fehler.

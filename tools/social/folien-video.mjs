@@ -62,6 +62,8 @@ const MUSIK = {
   wellbooked: 'musik/wellbooked-indie.mp3',
   anigosha: '../reels/assets/sfx/anisong.aac',
   mahjong: '../reels/assets/sfx/bett.aac',
+  fullrep: 'musik/fullrep-bett.mp3',
+  swaply: 'musik/swaply-bett.mp3',
 };
 
 /** Pfad zum Musikteppich einer App, oder null. */
@@ -116,7 +118,7 @@ export const TIKTOK_FILTER = 'split[a][b];'
  * fertiges Video billig wirkt. Also vorher zurechtschneiden, mit Ein- und
  * Ausblende.
  *
- * ⚠ VOLLE LAUTSTAERKE, anders als bei den Reels.
+ * ⚠ NICHT LEISE DREHEN, anders als bei den Reels.
  *
  * Dort laeuft der Teppich bei ~10 %, damit in der App noch ein Trending-Sound
  * darueberpasst. Diese Regel hier zu uebernehmen war ein Denkfehler: Der
@@ -124,18 +126,29 @@ export const TIKTOK_FILTER = 'split[a][b];'
  * existiert ja gerade, damit TikTok keinen Sound vorschlaegt. Auf halber
  * Lautstaerke gemessen: mean −31,6 dB, also fast nicht zu hoeren.
  *
- * Die Quelle liegt bei mean −25,3 / max −7,0 dB; unveraendert uebernommen
- * bleibt also Luft bis zum Anschlag, und es kann nicht knacken.
+ * ⚠ UND NICHT EINFACH UEBERNEHMEN. Am 20.09.2026 gemessen, als die Teppiche
+ * fuer FullRep und Swaply dazukamen:
+ *
+ *     wellbooked-indie   mean −25,3   max −7,0
+ *     fullrep-bett       mean −16,2   max −1,4
+ *     swaply-bett        mean −17,1   max −1,3
+ *
+ * Dieselbe Einstellung haette also je Kanal verschieden laut geklungen, und
+ * zwei davon saessen fast am Anschlag. Deshalb wird auf einen gemeinsamen
+ * Zielwert normalisiert (EBU R128, −16 LUFS, Spitze −1,5 dBTP) statt mit
+ * einem Faktor multipliziert. Ein Faktor passt immer nur zu der einen Datei,
+ * an der er gemessen wurde.
  */
 export async function tonBett({
   quelle, ziel, sekunden, lautstaerke = 1, ausblenden = 1.5,
 }) {
   const aus = Math.max(0, sekunden - ausblenden).toFixed(3);
+  const leiser = lautstaerke === 1 ? '' : `volume=${lautstaerke},`;
   await lauf([
     '-y', '-i', quelle,
     '-t', String(sekunden),
-    '-af', `volume=${lautstaerke},afade=t=in:st=0:d=0.8,`
-      + `afade=t=out:st=${aus}:d=${ausblenden}`,
+    '-af', `loudnorm=I=-16:TP=-1.5:LRA=11,${leiser}`
+      + `afade=t=in:st=0:d=0.8,afade=t=out:st=${aus}:d=${ausblenden}`,
     '-c:a', 'aac', '-b:a', '160k', '-ar', '48000',
     ziel,
   ]);
