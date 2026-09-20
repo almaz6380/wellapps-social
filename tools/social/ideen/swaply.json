@@ -93,6 +93,20 @@
         "en",
         "es"
       ]
+    },
+    {
+      "id": "app-schau-reel",
+      "medium": "reel",
+      "format": "app-schau",
+      "status": "vorhanden",
+      "haken": "Dieselbe App-Schau als Reel, 1080x1920, 12 s, mit Musikbett. Josef am 20.09.2026: jeden Post einmal als Bild und einmal als Reel. Der Generator liegt in wellapps-social und holt Texte, Bildschirme und Farben mit --schau-json vom BILDgenerator der App — Bild und Reel koennen deshalb nicht auseinanderlaufen. Gleicher Seed = gleicher Aufzug.",
+      "schluessel": "bildschirm",
+      "sprachen": [
+        "de",
+        "en",
+        "es"
+      ],
+      "wieWinkel": "app-schau"
     }
   ]
 }

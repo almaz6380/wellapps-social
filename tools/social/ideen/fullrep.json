@@ -217,6 +217,19 @@
         "de",
         "en"
       ]
+    },
+    {
+      "id": "app-schau-reel",
+      "medium": "reel",
+      "format": "app-schau",
+      "status": "vorhanden",
+      "haken": "Dieselbe App-Schau als Reel, 1080x1920, 12 s, mit Musikbett. Josef am 20.09.2026: jeden Post einmal als Bild und einmal als Reel. Der Generator liegt in wellapps-social und holt Texte, Bildschirme und Farben mit --schau-json vom BILDgenerator der App — Bild und Reel koennen deshalb nicht auseinanderlaufen. Gleicher Seed = gleicher Aufzug.",
+      "schluessel": "bildschirm",
+      "sprachen": [
+        "de",
+        "en"
+      ],
+      "wieWinkel": "app-schau"
     }
   ],
   "_wasserzeichen": "Nur FullRep, nur Bild-Winkel. Je Eintrag eine Datei aus mypeak/store-assets/social/fotos/wasserzeichen/ und der BESCHNITT, der dort geprueft wurde — waehlen.mjs wuerfelt einen aus, motoren.mjs reicht ihn als --wz/--wz-fit durch. ⚠ `fit` ist keine Geschmacksfrage: Die Bilder sind 1408x768 quer, die Karte 1080x1350 hoch; `cover` schneidet 56 % der Breite weg. Eine stehende Figur uebersteht das, eine liegende (Bankdruecken) oder quer sitzende (Rudern) nicht — die brauchen `contain`. Der Befund je Bild steht in HERKUNFT.md neben den Dateien, gemessen am gerenderten JPEG. ⚠ --wz schaltet die KI-Kennzeichnung automatisch mit; die Bilder zeigen KI-erzeugte Menschen.",

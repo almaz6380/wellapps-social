@@ -71,6 +71,33 @@ export function aufruf({ appSchluessel, app, post, wuerfel, out }) {
   const p = app.pfad;
   const n = (...a) => ({ cmd: 'node', args: a, cwd: p });
 
+  // ⚠ VOR allen App-Weichen: Die App-Schau als REEL ist fuer alle drei Marken
+  // DERSELBE Generator (Josef, 20.09.2026: „jeden Post einmal als Bild und
+  // einmal als Reel"). Er liegt in diesem Repo, weil swaply fuer den
+  // Tageslauf nur lesbar ist und weil das Layout in allen drei Repos gleich
+  // ist — die Begruendung steht ausfuehrlich in seinem Dateikopf.
+  //
+  // Er schreibt keinen Text ab: Die Aufzugdaten holt er sich mit
+  // `--schau-json` vom BILDgenerator der jeweiligen App. Bild und Reel
+  // zeigen deshalb zwingend denselben Aufzug, wenn sie denselben Seed haben.
+  if (post.format === 'app-schau' && post.medium === 'reel') {
+    return {
+      schritte: [{
+        cmd: 'node',
+        args: ['tools/social/reels-fremd/app-schau-reel.mjs',
+          '--marke', appSchluessel, '--lang', post.sprache,
+          '--seed', String(post.seed), '--name', post.dateiname,
+          // ⚠ ABSOLUT. Dieses Skript laeuft in wellapps-social, `out` kommt
+          // aber je App relativ herein — relativ uebergeben landete das Reel
+          // hier statt im App-Ordner und waere fuer posten.mjs unauffindbar.
+          // Dieselbe Falle wie bei reels-fremd/make-reel.mjs nebenan.
+          '--out', isAbsolute(out) ? out : join(app.pfad, out)],
+        cwd: ANIGOSHA,
+      }],
+      endung: '.mp4',
+    };
+  }
+
   if (appSchluessel === 'anigosha') {
     if (post.medium === 'reel') {
       const kat = anigoshaKategorien(p);

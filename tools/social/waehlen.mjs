@@ -273,7 +273,7 @@ export function waehlePosts({
     if (!gewaehlt.includes(w)) gewaehlt.push(w);
   }
 
-  return gewaehlt.slice(0, anzahl).map((w, i) => ({
+  const liste = gewaehlt.slice(0, anzahl).map((w, i) => ({
     app,
     datum: heute,
     winkel: w.id,
@@ -333,6 +333,35 @@ export function waehlePosts({
     winkelSperre: sperre,
     gelockert,
   }));
+
+  // ⚠ GEKOPPELTE WINKEL: derselbe Post, zwei Formate (20.09.2026).
+  //
+  // Josef will die App-Schau „einmal als Bild und einmal als Reel" — und
+  // zwar DENSELBEN Post. Seed und Sprache haengen aber am Winkelnamen
+  // (`w.id`) und am Index im Paket, also wuerfelte `app-schau-reel` seinen
+  // eigenen Aufzug: gemessen kam das Bild auf Seed 17950/de und das Reel auf
+  // 83029/en — zwei verschiedene Schlagzeilen, zwei verschiedene Sprachen,
+  // nebeneinander im selben Feed.
+  //
+  // Traegt ein Winkel `wieWinkel`, uebernimmt er Seed und Sprache von jenem —
+  // aber nur, wenn der auch wirklich im selben Paket steckt. Sonst bleibt
+  // sein eigener Wurf stehen; ein Reel ohne sein Bild ist immer noch ein
+  // gueltiger Post.
+  //
+  // ⚠ Hier und nicht im Seed selbst: `saat()` ist ein Hash ueber (Tag, App,
+  // Winkel, Index). Den Index fuer gekoppelte Winkel wegzulassen haette jeden
+  // historischen Seed verschoben — dieselbe Falle, vor der die Kommentare bei
+  // `stil` und `wasserzeichen` warnen.
+  for (const p of liste) {
+    const w = kandidaten.find((k) => k.id === p.winkel);
+    if (!w?.wieWinkel) continue;
+    const vorbild = liste.find((x) => x.winkel === w.wieWinkel);
+    if (!vorbild) continue;
+    p.seed = vorbild.seed;
+    p.sprache = vorbild.sprache;
+  }
+
+  return liste;
 }
 
 /** Trockenlauf ueber mehrere Tage — beweist die Nicht-Wiederholung. */
