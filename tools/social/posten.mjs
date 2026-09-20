@@ -860,11 +860,44 @@ for (const [appSchluessel, u] of ECHT ? uebersicht : []) {
     console.log(`   ⚠ Alte Merkliste nicht lesbar (${e.message}) — es wird neu angelegt.`);
   }
 
+  // ⚠ UND ZWAR JE KANAL, NICHT JE DATEI (20.09.2026).
+  //
+  // Bis heute ersetzte ein Lauf jede Datei, die er angefasst hat, KOMPLETT.
+  // Das ist richtig, solange ein Lauf ALLE Kanaele macht. Mit `--kanal tiktok`
+  // gilt es nicht: Der Lauf bearbeitet dieselbe Datei, aber nur fuer TikTok —
+  // der alte Instagram-Eintrag fiel dann aus `alteEintraege` heraus, und ein
+  // neuer entstand nicht, weil Instagram gar nicht lief. Der Beitrag war
+  // damit aus der Freigabe-Seite verschwunden.
+  //
+  // Zweimal gemessen, am selben Tag, beide Male durch ein Nachschicken an
+  // TikTok ausgeloest:
+  //   Lauf 27 (alle Kanaele) → 13 offen · Lauf 28 (nur tiktok) → 12
+  //   Lauf 32 (alle Kanaele) → 13 offen · Lauf 33 (nur tiktok) → 12
+  // Betroffen waren die Ipamorelin-Karte und die App-Schau-Karte.
+  //
+  // ⚠ Und es war STILL. Der Lauf meldet „Merkliste: 14 Beitraege", nicht
+  // „ein Instagram-Eintrag geloescht" — aufgefallen ist es nur, weil Josef
+  // den Beitrag in der Freigabe-App gesucht hat.
+  //
+  // Der Ausweg: Was dieser Lauf wirklich bearbeitet hat, sind seine KANAELE.
+  // Fuer die gewinnt er; alles andere bleibt so stehen, wie es war.
   const neueDateien = new Set(u.posten.map((p) => p.datei));
-  const alteUebersicht = (alteListe?.uebersicht ?? [])
-    .filter((p) => !neueDateien.has(p.datei));
+  const neueSpur = new Map(u.posten.map((p) => [p.datei, p]));
+
+  // Die Uebersicht: je Datei die Kanaele zusammenfuehren, damit auf der Seite
+  // nicht nur der Kanal dieses Laufs steht und die uebrigen leer aussehen.
+  const alteUebersicht = [];
+  for (const alt of alteListe?.uebersicht ?? []) {
+    const neu = neueSpur.get(alt.datei);
+    if (!neu) { alteUebersicht.push(alt); continue; }
+    neu.kanaele = { ...(alt.kanaele ?? {}), ...(neu.kanaele ?? {}) };
+  }
+
+  // Die Instagram-Aufgaben: einen alten Eintrag nur dann wegwerfen, wenn
+  // Instagram in DIESEM Lauf wirklich drankam. Sonst bleibt er offen.
+  const instagramLief = NUR_KANAELE.length === 0 || NUR_KANAELE.includes('instagram');
   const alteEintraege = (alteListe?.eintraege ?? [])
-    .filter((e) => !neueDateien.has(e.datei));
+    .filter((e) => !(instagramLief && neueDateien.has(e.datei)));
 
   const zusammen = [...alteUebersicht, ...u.posten];
   const alleEintraege = [...alteEintraege, ...eintraege];
