@@ -827,6 +827,24 @@
       "schluessel": "peptid",
       "inhalt": "seed9030",
       "sprache": "de"
+    },
+    {
+      "app": "wellbooked",
+      "datum": "2026-09-20",
+      "winkel": "last-minute",
+      "medium": "reel",
+      "schluessel": "kategorie",
+      "inhalt": "seed34773",
+      "sprache": "de"
+    },
+    {
+      "app": "wellbooked",
+      "datum": "2026-09-20",
+      "winkel": "regulierte-bereiche",
+      "medium": "bild",
+      "schluessel": "aussage",
+      "inhalt": "seed47783",
+      "sprache": "de"
     }
   ]
 }
