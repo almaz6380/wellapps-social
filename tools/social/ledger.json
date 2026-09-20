@@ -683,6 +683,15 @@
       "schluessel": "kategorie",
       "inhalt": "seed7787",
       "sprache": "de"
+    },
+    {
+      "app": "anigosha",
+      "datum": "2026-09-20",
+      "winkel": "frage-karte",
+      "medium": "bild",
+      "schluessel": "fragen-ids",
+      "inhalt": "seed55659",
+      "sprache": "de"
     }
   ]
 }
