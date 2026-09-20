@@ -647,6 +647,24 @@
       "schluessel": "serie",
       "inhalt": "seed3709",
       "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-20",
+      "winkel": "quick-fakt",
+      "medium": "reel",
+      "schluessel": "wissensthema",
+      "inhalt": "seed9530",
+      "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-20",
+      "winkel": "uebung-karte",
+      "medium": "bild",
+      "schluessel": "uebung",
+      "inhalt": "seed49409",
+      "sprache": "de"
     }
   ]
 }
