@@ -125,6 +125,18 @@
         "de",
         "en"
       ]
+    },
+    {
+      "id": "app-schau",
+      "medium": "bild",
+      "format": "app-schau",
+      "status": "vorhanden",
+      "haken": "Die App selbst: drei echte Store-Screenshots (Start, Solo, Duell, Bestenliste) gefaechert vor dem Herbstpark aus dem eigenen Werbespot. Der EINZIGE Winkel, der zeigt, dass es eine App gibt — alle anderen zeigen eine Frage daraus. Drei Aufzuege: Ueberblick, Duell, Taegliche Challenge.",
+      "schluessel": "bildschirm",
+      "sprachen": [
+        "de",
+        "en"
+      ]
     }
   ]
 }

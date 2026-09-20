@@ -80,6 +80,19 @@
         "en",
         "es"
       ]
+    },
+    {
+      "id": "app-schau",
+      "medium": "bild",
+      "format": "app-schau",
+      "status": "vorhanden",
+      "haken": "Die App selbst: drei echte Store-Screenshots gefaechert auf dem hellen Markenverlauf. Der EINZIGE Winkel, der zeigt, worum es geht — die vier anderen zeigen einen Inhalt daraus. Zwei Aufzuege: der Tausch im Alltag, und die Muster-Auswertung. Haelt die drei Regeln ein: keine Diagnose, kein Heilversprechen, kein Ton mit Schuldzuweisung.",
+      "schluessel": "bildschirm",
+      "sprachen": [
+        "de",
+        "en",
+        "es"
+      ]
     }
   ]
 }
