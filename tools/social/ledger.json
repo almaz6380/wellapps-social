@@ -899,6 +899,33 @@
       "schluessel": "bildschirm",
       "inhalt": "seed44648",
       "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-20",
+      "winkel": "app-schau",
+      "medium": "bild",
+      "schluessel": "bildschirm",
+      "inhalt": "seed22968",
+      "sprache": "de"
+    },
+    {
+      "app": "anigosha",
+      "datum": "2026-09-20",
+      "winkel": "app-schau",
+      "medium": "bild",
+      "schluessel": "bildschirm",
+      "inhalt": "seed88264",
+      "sprache": "de"
+    },
+    {
+      "app": "swaply",
+      "datum": "2026-09-20",
+      "winkel": "app-schau",
+      "medium": "bild",
+      "schluessel": "bildschirm",
+      "inhalt": "seed45090",
+      "sprache": "de"
     }
   ]
 }
