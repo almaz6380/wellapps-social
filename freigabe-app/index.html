@@ -590,7 +590,52 @@ function appBlock(liste, datum) {
   kopf.append(el('h2', null, liste.name || liste.app));
   raus.append(kopf);
 
-  for (const post of liste.uebersicht ?? []) raus.append(postKarte(post, liste));
+  // ⚠ ERLEDIGTES AUS DEM WEG (Josef, 20.09.2026: „Wenn Posts in der
+  // Freigabe-App gepostet wurden, sollten sie nicht mehr auf der
+  // Freigabeseite sein oder in einem Gepostet-Ordner").
+  //
+  // Bis heute stand alles in EINER Liste — auch das, wofuer es hier nichts
+  // mehr zu tun gab. Nach einem Tag mit acht Beitraegen je App muss man jede
+  // Karte einzeln lesen, um die zwei zu finden, die noch einen Knopf haben.
+  //
+  // ⚠ Geloescht wird nichts, nur einsortiert. Zwei Gruende: Die Seite prueft
+  // an `irgendwoDraussen`, ob ein Beitrag schon veroeffentlicht ist (der
+  // Ablehnen-Knopf verschwindet dann), und wer nachsehen will, was heute
+  // rausging, braucht es zu sehen. Ausgeklappt wird mit einem Griff.
+  const erledigt = (p) => {
+    if (p.abgelehnt) return true;
+    // Nur was UEBER DIESE SEITE laeuft, zaehlt: Facebook und Instagram.
+    // TikTok wird in der TikTok-App freigegeben — dort haengt der Entwurf im
+    // Posteingang, und ob er rausging, weiss diese Seite gar nicht. Ihn
+    // mitzuzaehlen hiesse, Beitraege zu verstecken, die hier noch offen sind.
+    const wege = ['facebook', 'instagram']
+      .map((k) => p.kanaele?.[k]).filter(Boolean);
+    return wege.length > 0 && wege.every((e) => e.stand === 'veroeffentlicht');
+  };
+
+  const alle = liste.uebersicht ?? [];
+  const offen = alle.filter((p) => !erledigt(p));
+  const fertig = alle.filter(erledigt);
+
+  for (const post of offen) raus.append(postKarte(post, liste));
+
+  if (!offen.length && alle.length) {
+    const fertigHinweis = el('p', 'leise', 'Für heute ist hier alles erledigt.');
+    fertigHinweis.style.margin = '14px 0';
+    raus.append(fertigHinweis);
+  }
+
+  if (fertig.length) {
+    const klappe = el('details');
+    klappe.style.margin = '18px 0 6px';
+    const titel = el('summary', 'leise',
+      `${fertig.length} erledigt (${fertig.filter((p) => p.abgelehnt).length} abgelehnt) — antippen zum Ansehen`);
+    titel.style.cursor = 'pointer';
+    titel.style.padding = '8px 0';
+    klappe.append(titel);
+    for (const post of fertig) klappe.append(postKarte(post, liste));
+    raus.append(klappe);
+  }
 
   // ⚠ Hier stand bis zum 09.09.2026 ein Sammelknopf „Auf Instagram
   // veröffentlichen" für die ganze App. Er ist weg: Instagram wird jetzt wie
