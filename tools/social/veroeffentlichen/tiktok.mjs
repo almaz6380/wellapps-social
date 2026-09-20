@@ -458,3 +458,61 @@ export async function fotoPosten({
     direkt,
   };
 }
+
+/**
+ * Was ist aus einem hochgeladenen Beitrag geworden?
+ *
+ * --- Wofuer das da ist -------------------------------------------------------
+ *
+ * Josef am 20.09.2026: „Kannst du es nicht so machen, dass TikTok eine
+ * Rueckmeldung gibt?" Bis dahin endete unsere Kenntnis beim Hochladen: Der
+ * Entwurf lag im Posteingang, ein Mensch gab ihn irgendwann in der TikTok-App
+ * frei — oder eben nicht —, und weder die Freigabe-Seite noch das Archiv
+ * erfuhren je davon. Das Archiv sagt deshalb bis heute ausdruecklich, dass es
+ * TikTok NICHT mitzaehlt.
+ *
+ * TikTok hat dafuer einen Endpunkt. Er kostet nichts und braucht denselben
+ * Scope wie der Upload.
+ *
+ * --- ⚠ Was diese Funktion bewusst NICHT tut ---------------------------------
+ *
+ * Sie deutet nichts. Sie gibt zurueck, was TikTok geantwortet hat, und sonst
+ * nichts. Die Zuordnung „welcher Status heisst `veroeffentlicht`" steht in
+ * `tiktok-stand.mjs` — an EINER Stelle, und dort mit der Messung daneben.
+ *
+ * Der Grund dafuer steht in der CLAUDE.md von Anigosha: „Eine Zaehlung ueber
+ * Schleifendurchlaeufe statt ueber Erfolge ist keine Messung, sondern eine
+ * Behauptung." Eine Zuordnung, die hier aus der Doku abgeschrieben waere,
+ * saehe im Protokoll genauso aus wie eine gemessene.
+ *
+ * --- Was die Doku sagt (und was davon ungeprueft ist) ------------------------
+ *
+ * Dokumentiert sind die Statuswerte `PROCESSING_UPLOAD`, `PUBLISH_COMPLETE`,
+ * `FAILED` und `SEND_TO_USER_INBOX`, dazu ein Feld mit der Beitrags-ID, wenn
+ * der Beitrag oeffentlich steht.
+ *
+ * ⚠ UNGEPRUEFT ist der Fall, auf den es uns ankommt: Was antwortet TikTok fuer
+ * einen Entwurf, den ein MENSCH spaeter in der App veroeffentlicht hat? Bleibt
+ * er auf `SEND_TO_USER_INBOX` stehen, oder wechselt er? Und wie lange
+ * beantwortet TikTok eine publish_id ueberhaupt? Das sagt erst der erste
+ * echte Lauf — bis dahin schreibt `tiktok-stand.mjs` nichts fest, sondern
+ * zeigt die rohe Antwort.
+ */
+export async function standHolen({ token, publishId }) {
+  if (!publishId) throw new Error('standHolen ohne publish_id.');
+  const antwort = await fetch(`${API}/post/publish/status/fetch/`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json; charset=UTF-8' },
+    body: JSON.stringify({ publish_id: publishId }),
+  });
+  const daten = await antwort.json().catch(() => ({}));
+  if (!antwort.ok || daten.error?.code !== 'ok') {
+    // Den CODE mitgeben, nicht nur die Meldung — dieselbe Lehre wie bei
+    // `fotoPosten` am 16.09.2026. Bei einer abgelaufenen publish_id ist der
+    // Code die einzige Stelle, an der das steht.
+    throw new Error(`TikTok (Stand abfragen) ${antwort.status}: `
+      + `${daten.error?.message ?? JSON.stringify(daten).slice(0, 300)}`
+      + `${daten.error?.code && daten.error.code !== 'ok' ? ` [${daten.error.code}]` : ''}`);
+  }
+  return daten.data ?? {};
+}

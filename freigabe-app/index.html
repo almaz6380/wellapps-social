@@ -250,6 +250,21 @@ function versuchWarnung(kanal, datum, datei) {
   return p;
 }
 
+/**
+ * „20.09., 18:03" — Tag und Uhrzeit, kein Jahr.
+ *
+ * ⚠ Ein ISO-Zeitstempel („2026-09-20T18:03:11.214Z") wäre auf einer Karte,
+ * die man am Handy überfliegt, keine Auskunft, sondern eine Zumutung. Ein
+ * unlesbarer Wert ist so gut wie kein Wert — dieselbe Überlegung wie bei der
+ * Uhrzeit in `versuchWarnung`.
+ */
+function kurzDatum(iso) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return String(iso ?? '').slice(0, 16);
+  return d.toLocaleString('de-AT',
+    { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
+
 const STAND_TEXT = {
   entwurf: 'Entwurf liegt bereit',
   posteingang: 'im Posteingang',
@@ -258,6 +273,10 @@ const STAND_TEXT = {
   uebersprungen: 'übersprungen',
   fehler: 'Fehler',
   trocken: 'nur Probelauf',
+  // ⚠ Neu seit dem 20.09.2026: Diesen Stand setzt nur `tiktok-stand.mjs`,
+  // wenn TikTok selbst sagt, dass es den Beitrag noch verarbeitet. Er ist
+  // vorübergehend — der nächste Abfragelauf hebt ihn.
+  laeuft: 'wird bei TikTok verarbeitet',
 };
 
 function markeFuer(kanal, stand, eintrag) {
@@ -325,6 +344,19 @@ function postKarte(post, liste) {
     marken.append(markeFuer(kanal, ergebnis.stand, eintrag));
     if (ergebnis.stand === 'fehler' && ergebnis.meldung) {
       gruende.push(`${KANAL_NAME[kanal]}: ${ergebnis.meldung}`);
+    }
+    // ⚠ Woher der Stand kommt, gehört dazu (Josef, 20.09.2026: „Kannst du es
+    // nicht so machen, dass TikTok eine Rückmeldung gibt?"). „im Posteingang"
+    // hieß bis dahin nur „wir haben es hochgeladen" — ob es noch dort liegt,
+    // wusste niemand. Jetzt steht daneben, WANN zuletzt bei TikTok nachgefragt
+    // wurde und was es geantwortet hat. Ohne diese Zeile sähe ein Stand, den
+    // TikTok bestätigt hat, genauso aus wie einer, den nie jemand geprüft hat.
+    if (ergebnis.abfrage?.wann && ergebnis.abfrage.status) {
+      gruende.push(`${KANAL_NAME[kanal]} gefragt am ${kurzDatum(ergebnis.abfrage.wann)}: `
+        + `${ergebnis.abfrage.status}`);
+    }
+    if (ergebnis.abfrage?.fehler) {
+      gruende.push(`${KANAL_NAME[kanal]} antwortete nicht: ${ergebnis.abfrage.fehler}`);
     }
   }
   k.append(marken);

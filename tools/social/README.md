@@ -32,6 +32,47 @@ die vorhandenen Motoren auf und lässt sie in Ruhe.
 | `waehlen.mjs` | Die Auswahl. Sperrfristen, Saison, deterministischer Seed |
 | `vorflug.mjs` | Leitplanken. Verwirft Posts, statt vor ihnen zu warnen |
 | `lauf.mjs` | Kommandozeile: Trockenlauf, Leitplanken-Probe, Tageslauf |
+| `tiktok-stand.mjs` | Fragt bei TikTok nach, was aus den hochgeladenen Beiträgen geworden ist |
+
+## `tiktok-stand.mjs` — die Rückmeldung von TikTok
+
+```bash
+TAGE=7 node tools/social/tiktok-stand.mjs                            # schreibt zurück
+DATUM=2026-09-20 SCHREIBEN=nein node tools/social/tiktok-stand.mjs   # nur messen
+```
+
+Bis zum 20.09.2026 endete unsere Kenntnis beim Hochladen: Ein Entwurf lag in TikToks
+Posteingang, ein Mensch gab ihn in der App frei — oder vergaß es —, und niemand erfuhr
+davon. Auf der Freigabe-Seite stand dauerhaft „im Posteingang", und das Archiv ließ
+TikTok ganz weg.
+
+Jetzt fragt dieses Werkzeug für jede gemerkte `publish_id` bei TikTok nach
+(`/v2/post/publish/status/fetch/`) und schreibt die Antwort in die Merkliste. Der
+Workflow dazu heißt **„TikTok-Stand abfragen"**; er läuft auch abends um 18:00 UTC,
+sobald `SOCIAL_ZEITPLAN` auf `an` steht.
+
+**Drei Regeln, die im Code stehen und bleiben müssen:**
+
+1. **Die rohe Antwort steht im Protokoll**, je Beitrag eine Zeile. Damit ist ein Lauf
+   eine Messung und nicht der Beleg für eine Annahme.
+2. **Ein unbekannter Status ändert nichts.** Die Doku nennt vier Werte; was TikTok für
+   einen vom Menschen freigegebenen Entwurf antwortet, ist **nicht** dokumentiert.
+3. ⚠ **`veroeffentlicht` ist eine Einbahnstraße.** Würde eine falsch gedeutete Antwort
+   einen geposteten Beitrag zurück auf „im Posteingang" stufen, stünde er wieder offen
+   auf der Freigabe-Seite — und TikTok hat gegen Doppelposts keine Sperre.
+
+Die Deutung sitzt in `veroeffentlichen/tiktok-deutung.mjs`, **getrennt** vom Skript:
+`tiktok-stand.mjs` läuft beim Import los, also könnte `test-tiktok-stand.mjs` die Logik
+sonst nur abschreiben — und abgeschriebene Logik läuft auseinander.
+
+⚠ **Beiträge von vor dem 20.09.2026 haben keine `publish_id`** — `posten.mjs` warf sie
+weg, während `tiktok-posten.mjs` sie sich längst merkte. Sie bleiben für immer
+unbekannt; das Werkzeug zählt sie getrennt, statt sie als „nichts Neues" durchgehen zu
+lassen.
+
+Im Archiv der Freigabe-Seite zählt ein TikTok-Beitrag **nur mit dieser Antwort**. Ohne
+sie heißt unser `veroeffentlicht` lediglich „hochgeladen", und das ist keine Zahl,
+sondern eine Behauptung.
 
 ## Benutzung
 

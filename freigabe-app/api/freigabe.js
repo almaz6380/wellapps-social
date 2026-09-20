@@ -83,6 +83,22 @@ function passtDasPasswort(eingabe, erwartet) {
   return timingSafeEqual(a, b);
 }
 
+/**
+ * Zaehlt dieser Kanal-Eintrag als „wirklich draussen"?
+ *
+ * Facebook und Instagram posten wir selbst — dort ist unser eigener Vermerk
+ * der Beleg. Bei TikTok ist er es NICHT: Wir laden nur einen Entwurf hoch, der
+ * letzte Schritt passiert in der TikTok-App. Deshalb zaehlt dort erst, was
+ * TikTok auf Nachfrage geantwortet hat (`abfrage`, gesetzt von
+ * `tools/social/tiktok-stand.mjs`).
+ */
+function zaehltHier(kanal, e) {
+  if (e?.stand !== 'veroeffentlicht') return false;
+  if (kanal === 'facebook' || kanal === 'instagram') return true;
+  if (kanal === 'tiktok') return Boolean(e.abfrage?.status);
+  return false;
+}
+
 async function merklisteHolen(basis, datum, app) {
   // ⚠ Cache umgehen. Ohne das liefert das CDN die Fassung von vor dem letzten
   // Schreiben — ein eben veroeffentlichter Beitrag saehe wieder offen aus,
@@ -143,10 +159,19 @@ export default async function handler(req, res) {
     // fuehrt, laeuft irgendwann gegen die Merkliste, und dann glaubt man der
     // falschen. Hier ist die Merkliste weiterhin die einzige Wahrheit.
     //
-    // ⚠ Nur `veroeffentlicht` zaehlt, und nur bei Facebook und Instagram. Was
-    // in TikToks Posteingang liegt, ist NICHT gepostet — das entscheidet ein
-    // Mensch in der TikTok-App, und niemand meldet es zurueck. Es hier
-    // mitzuzaehlen hiesse, eine Zahl zu behaupten, die nirgends gemessen ist.
+    // ⚠ Nur `veroeffentlicht` zaehlt. Was in TikToks Posteingang liegt, ist
+    // NICHT gepostet — das entscheidet ein Mensch in der TikTok-App.
+    //
+    // ⚠ UND BEI TIKTOK ZAEHLT NUR, WAS TIKTOK SELBST GESAGT HAT (20.09.2026).
+    // Bis dahin blieb TikTok hier ganz draussen, und das war richtig: Unser
+    // `veroeffentlicht` hiess nur „wir haben es hochgeladen", und daraus eine
+    // Zahl zu machen waere eine Behauptung gewesen. Seit `tiktok-stand.mjs`
+    // fragt ein Lauf bei TikTok nach und legt dessen Antwort unter `abfrage`
+    // ab. Nur ein Eintrag MIT dieser Antwort zaehlt.
+    //
+    // Damit ist die Regel selbstbegrenzend: Solange kein Abfragelauf
+    // stattgefunden hat, aendert sich hier gar nichts. Das Archiv wird nicht
+    // durch eine Annahme voller, sondern durch eine Messung.
     if (aktion === 'archiv') {
       const basis = process.env.BLOB_BASIS;
       if (!basis) {
@@ -175,8 +200,7 @@ export default async function handler(req, res) {
       for (const l of listen) {
         for (const p of l.uebersicht ?? []) {
           const kanaele = Object.entries(p.kanaele ?? {})
-            .filter(([k, e]) => ['facebook', 'instagram'].includes(k)
-              && e?.stand === 'veroeffentlicht')
+            .filter(([k, e]) => zaehltHier(k, e))
             .map(([k, e]) => ({ kanal: k, ...e }));
           if (!kanaele.length) continue;
           raus.push({

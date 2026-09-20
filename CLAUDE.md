@@ -171,7 +171,7 @@ Zeitplan (05:00 UTC, nur mit SOCIAL_ZEITPLAN=an)
 
 | Kanal | Was die Automatik tut | Was du tust |
 |---|---|---|
-| TikTok | Video in den Entwurfs-Posteingang der App | In der TikTok-App auf Veröffentlichen tippen. **Text vorher kopieren** — TikToks Posteingang nimmt keinen an; er steht in der Zusammenfassung jedes Laufs und auf der Freigabe-Seite |
+| TikTok | Video in den Entwurfs-Posteingang der App — und später **nachfragen, was daraus wurde** (siehe unten) | In der TikTok-App auf Veröffentlichen tippen. **Text vorher kopieren** — TikToks Posteingang nimmt keinen an; er steht in der Zusammenfassung jedes Laufs und auf der Freigabe-Seite |
 | Facebook | unveröffentlichter Beitrag (`published=false`) | In der Meta Business Suite freigeben |
 | Instagram | Datei öffentlich ablegen, mehr nicht | Auf der Freigabe-Seite auf Veröffentlichen tippen. Instagram kennt keine Entwürfe |
 
@@ -205,6 +205,39 @@ vorderen Teil. Zwei Ausnahmen laufen aus DIESEM Repo: `tools/social/reels-fremd/
 | **Social-Zugaenge pruefen** | sagt je App, ob der Token zur richtigen Seite gehört und ob er abläuft. Sendet nichts |
 | **TikTok-Zugang holen** | tauscht einen OAuth-Code gegen einen Refresh-Token. Protokoll danach löschen |
 | **Freie Karte** | eine Bildkarte mit eigenem Text, auf Zuruf. Ausgelöst von der Freigabe-Seite |
+| **TikTok-Stand abfragen** | fragt bei TikTok nach, was aus den Entwürfen wurde, und schreibt es in die Merklisten. Liest nur ab, veröffentlicht nichts |
+
+### TikTok gibt jetzt Rückmeldung (20.09.2026)
+
+Josef: *„Kannst du es nicht so machen, dass TikTok eine Rückmeldung gibt?"*
+
+Bis dahin endete unsere Kenntnis beim Hochladen. Der Entwurf lag im Posteingang, Josef
+gab ihn in der App frei — oder vergaß es —, und **niemand erfuhr davon**. Auf der
+Freigabe-Seite stand dauerhaft „im Posteingang", im Archiv gar nichts. Ein vergessener
+Entwurf sah genauso aus wie ein geposteter.
+
+`tools/social/tiktok-stand.mjs` fragt für jede gemerkte `publish_id` bei TikTok nach
+(`/v2/post/publish/status/fetch/`) und schreibt die Antwort in die Merkliste. Steht der
+Beitrag öffentlich, verschwindet der TikTok-Block auf der Freigabe-Seite von selbst,
+und das Archiv zählt ihn.
+
+⚠ **Der alte Fehler, den das erst möglich gemacht hat:** `posten.mjs` warf die
+`publish_id` weg, während `tiktok-posten.mjs` (der Knopf auf der Freigabe-Seite) sie
+sich längst merkte. Ausgerechnet bei den Beiträgen, die niemand von Hand angestoßen
+hat, war hinterher nichts mehr feststellbar. **Alles vor dem 20.09.2026 bleibt für
+immer unbekannt** — das Werkzeug zählt diese Beiträge getrennt, statt sie als „nichts
+Neues" durchgehen zu lassen.
+
+⚠ **Im Archiv zählt bei TikTok nur, was TikTok SELBST gesagt hat.** Unser eigenes
+`veroeffentlicht` heißt dort lediglich „hochgeladen". Die Regel ist selbstbegrenzend:
+Ohne Abfragelauf ändert sich im Archiv gar nichts.
+
+⚠ **Die Deutung der Statuswerte ist Doku, nicht Messung.** Dokumentiert sind
+`PROCESSING_UPLOAD`, `PUBLISH_COMPLETE`, `FAILED`, `SEND_TO_USER_INBOX`. Was TikTok für
+einen **vom Menschen freigegebenen** Entwurf antwortet, steht nirgends. Deshalb: Die
+rohe Antwort geht je Beitrag ins Protokoll, ein unbekannter Status ändert nichts, und
+`veroeffentlicht` wird nie zurückgestuft (sonst stünde ein geposteter Beitrag wieder
+offen, und TikTok hat gegen Doppelposts keine Sperre).
 
 ### ⚠ Der Zeitplan war acht Tage tot — an EINEM Anführungszeichen (18.09.2026)
 

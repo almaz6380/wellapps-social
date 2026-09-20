@@ -713,6 +713,15 @@ for (const p of posten) {
         inTiktok = !wirklichDirekt;
         spur.kanaele.tiktok = {
           stand: r.trocken ? 'trocken' : (wirklichDirekt ? 'veroeffentlicht' : 'posteingang'),
+          // ⚠ Die publish_id ist der EINZIGE Faden, an dem TikTok hinterher
+          // noch Auskunft gibt (`tiktok-stand.mjs` fragt damit nach). Bis zum
+          // 20.09.2026 warf dieser Zweig sie weg: `tiktok-posten.mjs` — der
+          // Knopf auf der Freigabe-Seite — merkte sie sich laengst, der
+          // Tageslauf nicht. Damit war ausgerechnet bei den Beitraegen, die
+          // niemand von Hand angestossen hat, spaeter nicht mehr
+          // feststellbar, ob je einer daraus wurde.
+          ...(r.publishId ? { publishId: r.publishId } : {}),
+          ...(r.trocken ? {} : { wann: new Date().toISOString() }),
         };
 
       } else if (kanal === 'instagram') {

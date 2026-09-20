@@ -1,0 +1,64 @@
+// Was TikToks Statusantwort fuer uns bedeutet — und wann sie NICHTS bedeutet.
+//
+// ⚠ Diese Datei steht getrennt von `tiktok-stand.mjs`, damit der Test sie
+// WIRKLICH importieren kann. `tiktok-stand.mjs` laeuft beim Import los (es
+// liest Merklisten und spricht mit TikTok); ein Test dagegen muesste die
+// Logik abschreiben, und abgeschriebene Logik laeuft auseinander. Genau dieses
+// Zugestaendnis steht in `test-merkliste-merge.mjs` als Warnung — hier war es
+// vermeidbar.
+
+// ⚠ TikTok schreibt dieses Feld in seiner eigenen Doku FALSCH: „publicaly"
+// statt „publicly". Beide Schreibweisen werden angenommen. Wer nur auf die
+// richtige prueft, misst je nachdem, welche TikTok gerade ausliefert, gar
+// nichts — und das saehe aus wie „noch nicht veroeffentlicht".
+export const POST_ID_FELDER = ['publicaly_available_post_id', 'publicly_available_post_id'];
+
+/**
+ * Aus TikToks Antwort einen unserer Staende machen — oder ausdruecklich keinen.
+ *
+ * `stand: null` heisst „unbekannt, nichts aendern". Das ist der wichtigste
+ * Rueckgabewert dieser Funktion: Die Doku nennt vier Statuswerte, und was
+ * TikTok fuer einen vom Menschen freigegebenen Entwurf antwortet, ist nicht
+ * dokumentiert. Ein unbekannter Wert darf deshalb nie zu einer Behauptung
+ * werden.
+ */
+export function deutung(daten) {
+  const status = String(daten?.status ?? '').toUpperCase();
+  const postIds = POST_ID_FELDER
+    .flatMap((f) => (Array.isArray(daten?.[f]) ? daten[f] : []))
+    .filter(Boolean)
+    .map(String);
+
+  // Eine oeffentliche Beitrags-ID haengt nicht von unserer Deutung ab: Den
+  // Beitrag gibt es, er hat eine Nummer. Sie schlaegt jeden Status.
+  if (postIds.length) return { stand: 'veroeffentlicht', status, postIds };
+
+  if (status === 'PUBLISH_COMPLETE') return { stand: 'veroeffentlicht', status, postIds };
+  if (status === 'FAILED') return { stand: 'fehler', status, postIds };
+  if (status === 'SEND_TO_USER_INBOX') return { stand: 'posteingang', status, postIds };
+  if (status.startsWith('PROCESSING') || status === 'DOWNLOAD_IN_PROGRESS') {
+    return { stand: 'laeuft', status, postIds };
+  }
+  return { stand: null, status, postIds };
+}
+
+/** Die Staende, die wir kennen. */
+const BEKANNT = new Set(['fehler', 'laeuft', 'posteingang', 'veroeffentlicht']);
+
+/**
+ * Darf der neue Stand den alten ersetzen?
+ *
+ * ⚠ `veroeffentlicht` ist eine Einbahnstrasse. Deutete eine Antwort einen
+ * geposteten Beitrag zurueck auf „im Posteingang", stuende er wieder offen auf
+ * der Freigabe-Seite — und jemand postete ihn ein zweites Mal. TikTok hat
+ * gegen Doppelposts keine Sperre.
+ *
+ * Alles andere darf sich in beide Richtungen bewegen: Ein Upload kann erst
+ * `laeuft` und dann `fehler` sein.
+ */
+export function darfErsetzen(alt, neu) {
+  if (!neu || !BEKANNT.has(neu)) return false;
+  if (alt === neu) return false;
+  if (alt === 'veroeffentlicht') return false;
+  return true;
+}

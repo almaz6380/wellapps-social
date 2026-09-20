@@ -1,0 +1,126 @@
+name: TikTok-Stand abfragen
+
+# Fragt bei TikTok nach, was aus den hochgeladenen Beitraegen geworden ist,
+# und schreibt die Antwort in die Merklisten zurueck.
+#
+# ⚠ Warum es das gibt (Josef, 20.09.2026: „Kannst du es nicht so machen, dass
+# TikTok eine Rueckmeldung gibt?"): Bis dahin endete unsere Kenntnis beim
+# Hochladen. Ein Entwurf lag im Posteingang, ein Mensch gab ihn in der
+# TikTok-App frei — oder vergass es —, und niemand erfuhr davon. Auf der
+# Freigabe-Seite stand dauerhaft „im Posteingang", und das Archiv zaehlte
+# TikTok ausdruecklich NICHT mit, weil es nichts wusste.
+#
+# ⚠ Dieser Lauf veroeffentlicht NICHTS. Er liest nur ab. Er braucht deshalb
+# auch keine Zustimmung eines Menschen nach TikToks Richtlinie — die gilt fuer
+# das Hochladen von Inhalten, nicht fuer eine Statusabfrage.
+#
+# ⚠ Er wird ROT, wenn eine Abfrage nicht beantwortet wird. Das ist Absicht:
+# In diesem Repo haben stille Fehlschlaege schon mehrfach Tage gekostet.
+
+on:
+  # ⚠ 18:00 UTC, also abends. Bewusst nicht morgens: Der Tageslauf laedt um
+  # 05:00 die Entwuerfe hoch, Josef gibt sie ueber den Tag frei. Eine Abfrage
+  # direkt danach haette nichts zu melden.
+  #
+  # ⚠ Wie beim Tageslauf ist der Zeitplan erst scharf, wenn die
+  # Repository-Variable SOCIAL_ZEITPLAN auf 'an' steht.
+  schedule:
+    - cron: '0 18 * * *'
+  workflow_dispatch:
+    inputs:
+      tage:
+        description: 'Wie viele Tage zurueck ansehen (1-90)'
+        type: string
+        default: '7'
+      datum:
+        description: 'Nur dieser eine Tag (JJJJ-MM-TT) — schlaegt tage'
+        type: string
+        required: false
+      app:
+        description: 'Nur diese App (anigosha,mahjong,wellbooked,fullrep,swaply) — leer = alle'
+        type: string
+        required: false
+      schreiben:
+        description: 'ja = Merklisten aktualisieren · nein = nur messen und zeigen'
+        type: choice
+        options: [ja, nein]
+        default: 'ja'
+
+jobs:
+  schalter:
+    runs-on: ubuntu-latest
+    outputs:
+      aktiv: ${{ steps.s.outputs.aktiv }}
+    steps:
+      - name: Ist der Zeitplan hier scharf?
+        id: s
+        env:
+          GEPLANT: ${{ github.event_name == 'schedule' }}
+          ZEITPLAN: ${{ vars.SOCIAL_ZEITPLAN }}
+        # ⚠ KEINE deutschen Anfuehrungszeichen in diesem Skript — siehe den
+        # ausfuehrlichen Kommentar in social-tageslauf.yml. Ein U+201E gefolgt
+        # von einem gewoehnlichen " hat dort acht Morgenlaeufe gekostet.
+        run: |
+          if [ "$GEPLANT" = "true" ] && [ "$ZEITPLAN" != "an" ]; then
+            echo "aktiv=false" >> "$GITHUB_OUTPUT"
+            echo "Zeitplan in diesem Repo nicht scharf - Variable SOCIAL_ZEITPLAN steht nicht auf 'an'. Nichts getan." | tee -a "$GITHUB_STEP_SUMMARY"
+          else
+            echo "aktiv=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  abfragen:
+    needs: schalter
+    if: needs.schalter.outputs.aktiv == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # Nur die Bibliothek: Dieser Lauf rendert nichts und laedt nichts hoch.
+      - name: Abhaengigkeiten
+        run: npm ci --no-audit --no-fund || npm install --no-audit --no-fund
+
+      - name: Nachfragen
+        env:
+          TIKTOK_CLIENT_KEY: ${{ secrets.TIKTOK_CLIENT_KEY }}
+          TIKTOK_CLIENT_SECRET: ${{ secrets.TIKTOK_CLIENT_SECRET }}
+          TIKTOK_REFRESH_TOKEN_ANIGOSHA: ${{ secrets.TIKTOK_REFRESH_TOKEN_ANIGOSHA }}
+          TIKTOK_REFRESH_TOKEN_MAHJONG: ${{ secrets.TIKTOK_REFRESH_TOKEN_MAHJONG }}
+          TIKTOK_REFRESH_TOKEN_WELLBOOKED: ${{ secrets.TIKTOK_REFRESH_TOKEN_WELLBOOKED }}
+          TIKTOK_REFRESH_TOKEN_FULLREP: ${{ secrets.TIKTOK_REFRESH_TOKEN_FULLREP }}
+          TIKTOK_REFRESH_TOKEN_SWAPLY: ${{ secrets.TIKTOK_REFRESH_TOKEN_SWAPLY }}
+          BLOB_TOKEN: ${{ secrets.BLOB_TOKEN }}
+          TAGE: ${{ inputs.tage }}
+          DATUM: ${{ inputs.datum }}
+          APP: ${{ inputs.app }}
+          SCHREIBEN: ${{ inputs.schreiben }}
+        # ⚠ `pipefail` ist hier KEINE Feinheit. Ohne ihn ist der Rueckgabewert
+        # einer Pipe der von `tee`, und `tee` gelingt immer — ein Skript, das
+        # mit exit 1 abbricht, liesse den Lauf gruen. Das waere genau der
+        # stille Fehlschlag, gegen den dieses Werkzeug gebaut ist.
+        # GitHubs Vorgabeschale ist `bash -e`, ohne pipefail; deshalb steht er
+        # hier ausdruecklich.
+        #
+        # ⚠ `2>&1`, weil die Liste der nicht beantworteten Abfragen nach stderr
+        # geht. Ohne sie stuende in der Zusammenfassung alles Gute und nichts
+        # Schlechtes — vom Handy sieht man nur die Zusammenfassung.
+        #
+        # ⚠ Der Rueckgabewert wird gemerkt statt durchgereicht, damit der
+        # abschliessende Zaun noch geschrieben wird; die letzte Zeile gibt ihn
+        # wieder her.
+        shell: bash
+        run: |
+          set -o pipefail
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          if node tools/social/tiktok-stand.mjs 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"; then
+            ok=1
+          else
+            ok=0
+          fi
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          [ "$ok" = 1 ]

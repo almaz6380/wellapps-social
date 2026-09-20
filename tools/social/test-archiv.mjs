@@ -14,10 +14,15 @@
 // oder mit einem Fehler liegen blieb, ist nicht gepostet. Ihn mitzuzaehlen
 // waere eine Zahl ueber etwas, das nie stattgefunden hat.
 //
-// ⚠ 2. TikTok zaehlt NICHT. Was dort im Posteingang liegt, gibt ein Mensch in
-// der TikTok-App frei, und niemand meldet es zurueck. Die Seite weiss es
-// schlicht nicht — sie darf es also auch nicht behaupten. Genau daran haengt
-// der Wert des Archivs: Es soll sagen, was WIRKLICH draussen ist.
+// ⚠ 2. Bei TikTok zaehlt NUR, was TikTok SELBST gesagt hat. Was dort im
+// Posteingang liegt, gibt ein Mensch in der TikTok-App frei — unser eigener
+// Vermerk heisst nur „hochgeladen". Bis zum 20.09.2026 blieb TikTok deshalb
+// ganz draussen. Seitdem fragt `tiktok-stand.mjs` nach und legt die Antwort
+// unter `abfrage` ab; erst mit ihr zaehlt ein Eintrag.
+//
+// Das ist keine Lockerung, sondern dieselbe Regel mit einer Quelle: Genau
+// daran haengt der Wert des Archivs — es soll sagen, was WIRKLICH draussen
+// ist, und nicht, was wir hochgeschickt haben.
 //
 // ⚠ Die Logik steht hier ein zweites Mal statt als Import: Sie sitzt in einer
 // Vercel-Funktion mit `export default async function handler(req, res)`, die
@@ -26,13 +31,19 @@
 // Befund.
 
 /** Die Fassung aus freigabe-app/api/freigabe.js, Stand 20.09.2026. */
+function zaehltHier(kanal, e) {
+  if (e?.stand !== 'veroeffentlicht') return false;
+  if (kanal === 'facebook' || kanal === 'instagram') return true;
+  if (kanal === 'tiktok') return Boolean(e.abfrage?.status);
+  return false;
+}
+
 function archivAus(listen) {
   const raus = [];
   for (const l of listen) {
     for (const p of l.uebersicht ?? []) {
       const kanaele = Object.entries(p.kanaele ?? {})
-        .filter(([k, e]) => ['facebook', 'instagram'].includes(k)
-          && e?.stand === 'veroeffentlicht')
+        .filter(([k, e]) => zaehltHier(k, e))
         .map(([k, e]) => ({ kanal: k, ...e }));
       if (!kanaele.length) continue;
       raus.push({ datum: l.datum, app: l.app, datei: p.datei, kanaele });
@@ -81,8 +92,45 @@ pruefe('Ein Beitrag mit Fehler steht NICHT drin',
   !r.some((x) => x.datei === 'e.jpg'), r.map((x) => x.datei).join(', '));
 
 // ⚠ Die wichtigste Probe der Datei.
-pruefe('Ein TikTok-Beitrag steht NICHT drin, auch wenn TikTok „veroeffentlicht" meldet',
+pruefe('Ein TikTok-Beitrag steht NICHT drin, solange nur WIR ihn veroeffentlicht nennen',
   !r.some((x) => x.datei === 'd.mp4'), r.map((x) => x.datei).join(', '));
+
+// --- Und die Gegenprobe dazu: TikToks eigene Antwort zaehlt sehr wohl -------
+//
+// Ohne sie waere die Probe oben auch dann gruen, wenn TikTok fuer immer
+// ausgesperrt bliebe — und die ganze Rueckmeldung liefe ins Leere.
+{
+  const mitAntwort = archivAus([{
+    datum: '2026-09-20', app: 'fullrep', uebersicht: [
+      {
+        datei: 'f.mp4',
+        kanaele: {
+          tiktok: {
+            stand: 'veroeffentlicht',
+            abfrage: { status: 'PUBLISH_COMPLETE', postIds: ['7351'], wann: '2026-09-20T18:00:00Z' },
+          },
+        },
+      },
+      // Derselbe Stand, aber ohne Antwort von TikTok — der bleibt draussen.
+      { datei: 'g.mp4', kanaele: { tiktok: { stand: 'veroeffentlicht' } } },
+      // Gefragt, aber TikTok sagt: liegt noch im Posteingang.
+      {
+        datei: 'h.mp4',
+        kanaele: {
+          tiktok: { stand: 'posteingang', abfrage: { status: 'SEND_TO_USER_INBOX' } },
+        },
+      },
+    ],
+  }]);
+  pruefe('Mit TikToks eigener Antwort zaehlt der Beitrag',
+    mitAntwort.some((x) => x.datei === 'f.mp4'), mitAntwort.map((x) => x.datei).join(', ') || '(leer)');
+  pruefe('Ohne Antwort zaehlt derselbe Stand NICHT',
+    !mitAntwort.some((x) => x.datei === 'g.mp4'), mitAntwort.map((x) => x.datei).join(', '));
+  pruefe('Gefragt und „liegt noch im Posteingang" zaehlt auch nicht',
+    !mitAntwort.some((x) => x.datei === 'h.mp4'), mitAntwort.map((x) => x.datei).join(', '));
+  pruefe('Von drei TikTok-Beitraegen zaehlt genau einer',
+    mitAntwort.length === 1, String(mitAntwort.length));
+}
 
 pruefe('Teilweise gepostet zaehlt — Facebook draussen reicht fuer den Eintrag',
   r.some((x) => x.datei === 'c.jpg' && x.kanaele.length === 1
@@ -109,4 +157,4 @@ if (schlecht.length) {
   for (const z of schlecht) console.error(`   ${z}`);
   process.exit(1);
 }
-console.log('✓ Das Archiv zeigt nur, was wirklich raus ist — und TikTok behauptet es nicht mit.');
+console.log('✓ Das Archiv zeigt nur, was wirklich raus ist — bei TikTok nur, was TikTok selbst sagt.');
