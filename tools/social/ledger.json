@@ -674,6 +674,15 @@
       "schluessel": "level",
       "inhalt": "seed64916",
       "sprache": "en"
+    },
+    {
+      "app": "swaply",
+      "datum": "2026-09-20",
+      "winkel": "ausloeser",
+      "medium": "bild",
+      "schluessel": "kategorie",
+      "inhalt": "seed7787",
+      "sprache": "de"
     }
   ]
 }
