@@ -649,39 +649,12 @@
       "sprache": "de"
     },
     {
-      "app": "fullrep",
+      "app": "anigosha",
       "datum": "2026-09-20",
-      "winkel": "quick-fakt",
+      "winkel": "ladder",
       "medium": "reel",
-      "schluessel": "wissensthema",
-      "inhalt": "seed9530",
-      "sprache": "de"
-    },
-    {
-      "app": "fullrep",
-      "datum": "2026-09-20",
-      "winkel": "uebung-karte",
-      "medium": "bild",
-      "schluessel": "uebung",
-      "inhalt": "seed49409",
-      "sprache": "de"
-    },
-    {
-      "app": "mahjong",
-      "datum": "2026-09-20",
-      "winkel": "paar-standbild",
-      "medium": "bild",
-      "schluessel": "level",
-      "inhalt": "seed64916",
-      "sprache": "en"
-    },
-    {
-      "app": "swaply",
-      "datum": "2026-09-20",
-      "winkel": "ausloeser",
-      "medium": "bild",
-      "schluessel": "kategorie",
-      "inhalt": "seed7787",
+      "schluessel": "fragen-ids",
+      "inhalt": "seed66580",
       "sprache": "de"
     },
     {
@@ -690,8 +663,26 @@
       "winkel": "frage-karte",
       "medium": "bild",
       "schluessel": "fragen-ids",
-      "inhalt": "seed55659",
+      "inhalt": "seed54572",
       "sprache": "de"
+    },
+    {
+      "app": "mahjong",
+      "datum": "2026-09-20",
+      "winkel": "paar",
+      "medium": "reel",
+      "schluessel": "level",
+      "inhalt": "seed17072",
+      "sprache": "en"
+    },
+    {
+      "app": "mahjong",
+      "datum": "2026-09-20",
+      "winkel": "paar-standbild",
+      "medium": "bild",
+      "schluessel": "level",
+      "inhalt": "seed55843",
+      "sprache": "en"
     },
     {
       "app": "wellbooked",
@@ -699,7 +690,52 @@
       "winkel": "kalender-clip",
       "medium": "reel",
       "schluessel": "screen",
-      "inhalt": "seed4057",
+      "inhalt": "seed25197",
+      "sprache": "de"
+    },
+    {
+      "app": "wellbooked",
+      "datum": "2026-09-20",
+      "winkel": "tirol-wien",
+      "medium": "bild",
+      "schluessel": "region",
+      "inhalt": "seed4441",
+      "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-20",
+      "winkel": "quick-fakt",
+      "medium": "reel",
+      "schluessel": "wissensthema",
+      "inhalt": "seed8862",
+      "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-20",
+      "winkel": "wissens-karte",
+      "medium": "bild",
+      "schluessel": "wissensthema",
+      "inhalt": "seed28239",
+      "sprache": "de"
+    },
+    {
+      "app": "swaply",
+      "datum": "2026-09-20",
+      "winkel": "notfall-loop",
+      "medium": "reel",
+      "schluessel": "kategorie",
+      "inhalt": "seed38503",
+      "sprache": "de"
+    },
+    {
+      "app": "swaply",
+      "datum": "2026-09-20",
+      "winkel": "regel",
+      "medium": "bild",
+      "schluessel": "regel",
+      "inhalt": "seed32510",
       "sprache": "de"
     }
   ]
