@@ -72,28 +72,56 @@ const NUR_STANDBILDER = process.argv.includes('--standbilder');
 
 const B = 1080, H = 1920, FPS = 30;
 
-// Wo der Bildgenerator je Marke liegt. Dieselben Pfade wie in motoren.mjs —
-// sie stehen dort in der Weiche je App und hier in einer Tabelle, weil dieses
-// Skript keinen App-Eintrag durchgereicht bekommt.
-const MOTOREN = {
-  fullrep: { repo: '/home/user/mypeak', skript: 'scripts/post-bild.mjs' },
-  anigosha: { repo: '/home/user/anigosha', skript: 'tools/post-bild.mjs' },
-  swaply: { repo: '/home/user/swaply', skript: 'scripts/post-bild.mjs' },
+// Wo der BILDgenerator je Marke liegt — von ihm kommen die Aufzugdaten.
+//
+// ⚠ NUR DER DATEINAME steht hier, nicht das Verzeichnis. Beim ersten Versuch
+// stand hier eine Tabelle mit `/home/user/mypeak` und Co. Lokal lief das;
+// im Tageslauf scheiterte jedes Reel sofort, weil die Repos auf dem
+// GitHub-Runner unter `$SOCIAL_WURZEL/<name>` ausgecheckt werden und
+// /home/user/ dort nicht existiert.
+//
+// Gemessen am Lauf 36 vom 20.09.2026: „Beitraege erzeugen" war nach sechs
+// Sekunden fertig — genug fuer drei Bilder, zu wenig fuer ein einziges Video.
+// Es kamen drei Bilder und null Reels, und der Lauf war GRUEN, weil lauf.mjs
+// einen gescheiterten Motor faengt und weiterlaeuft.
+//
+// Das Verzeichnis gibt jetzt der Aufrufer mit `--repo` — motoren.mjs kennt
+// es als `app.pfad` und ladeApps() biegt es auf dem Runner ueber
+// SOCIAL_WURZEL um. Damit gibt es die Wahrheit nur noch an EINER Stelle.
+const SKRIPTE = {
+  fullrep: 'scripts/post-bild.mjs',
+  anigosha: 'tools/post-bild.mjs',
+  swaply: 'scripts/post-bild.mjs',
 };
+const REPO = arg('repo', null);
 
-if (!MARKE || !MOTOREN[MARKE]) {
+if (!MARKE || !SKRIPTE[MARKE]) {
   console.error(`✗ --marke fehlt oder ist unbekannt: ${MARKE}`);
-  console.error(`  Bekannt: ${Object.keys(MOTOREN).join(', ')}`);
+  console.error(`  Bekannt: ${Object.keys(SKRIPTE).join(', ')}`);
+  process.exit(1);
+}
+if (!REPO || !existsSync(REPO)) {
+  console.error(`✗ --repo fehlt oder zeigt ins Leere: ${REPO}`);
+  console.error('  Erwartet das Verzeichnis des App-Repos (motoren.mjs gibt app.pfad mit).');
   process.exit(1);
 }
 
 // Das Musikbett liegt in anigosha — dort steht der ganze Klang-Apparat.
-const BETT = join(WURZEL, 'anigosha', 'tools', 'reels', 'assets', 'sfx', 'bett.aac');
-const BETT_ALT = '/home/user/anigosha/tools/reels/assets/sfx/bett.aac';
-const bettDatei = existsSync(BETT) ? BETT : (existsSync(BETT_ALT) ? BETT_ALT : null);
+//
+// ⚠ Zwei Orte, und beide braucht es wirklich: Im Tageslauf wird anigosha
+// NEBEN dieses Repo ausgecheckt (`$SOCIAL_WURZEL/anigosha`), auf Josefs
+// Rechner und in einer Cloud-Sitzung liegt es unter /home/user/. Faellt
+// beides aus, geht das Reel STUMM raus statt gar nicht — eine Meldung
+// darueber steht weiter unten.
+const BETT_ORTE = [
+  join(WURZEL, 'anigosha', 'tools', 'reels', 'assets', 'sfx', 'bett.aac'),
+  '/home/user/anigosha/tools/reels/assets/sfx/bett.aac',
+];
+const bettDatei = BETT_ORTE.find((p) => existsSync(p)) ?? null;
 
 // --- Daten vom Bildgenerator holen ------------------------------------------
-const { repo, skript } = MOTOREN[MARKE];
+const repo = REPO;
+const skript = SKRIPTE[MARKE];
 let daten;
 try {
   const roh = execFileSync('node', [skript, '--format', 'app-schau',
@@ -299,7 +327,7 @@ if (bettDatei) {
   });
 } else {
   console.error('⚠ bett.aac nicht gefunden — das Reel geht STUMM raus.');
-  console.error(`  Erwartet: ${BETT_ALT}`);
+  console.error(`  Gesucht in: ${BETT_ORTE.join(' , ')}`);
 }
 
 const ziel = join(zielOrdner, `${basis}.mp4`);

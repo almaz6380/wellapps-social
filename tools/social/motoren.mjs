@@ -86,6 +86,13 @@ export function aufruf({ appSchluessel, app, post, wuerfel, out }) {
         cmd: 'node',
         args: ['tools/social/reels-fremd/app-schau-reel.mjs',
           '--marke', appSchluessel, '--lang', post.sprache,
+          // ⚠ Das App-Repo MITGEBEN. Der Generator laeuft in wellapps-social
+          // und kann nicht wissen, wo die App liegt: Auf dem Runner ist das
+          // `$SOCIAL_WURZEL/<name>`, lokal /home/user/<name>. `app.pfad` ist
+          // schon umgebogen (ladeApps), also ist es hier richtig — eine
+          // eigene Tabelle im Generator war es NICHT, und jedes Reel im
+          // Tageslauf scheiterte daran.
+          '--repo', p,
           '--seed', String(post.seed), '--name', post.dateiname,
           // ⚠ ABSOLUT. Dieses Skript laeuft in wellapps-social, `out` kommt
           // aber je App relativ herein — relativ uebergeben landete das Reel
