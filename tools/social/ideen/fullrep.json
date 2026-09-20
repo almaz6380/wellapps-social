@@ -100,15 +100,39 @@
       "medium": "bild",
       "format": "uebung-karte",
       "status": "vorhanden",
-      "haken": "Start und Ende nebeneinander, Muskelgruppe farbig markiert. Als Nachschlagebild speicherbar — Saves zaehlen bei Instagram mehr als Likes",
+      "haken": "Uebungsname, Zielmuskel und Ausfuehrung als Karte. ⚠ REIN TYPOGRAFISCH seit 30.08.2026 — die Demofotos gehen nicht mehr in Werbung (Rechtekette nicht belegt), der frueher hier versprochene Bildvergleich Start/Ende existiert nicht mehr",
       "schluessel": "uebung",
       "sprachen": [
         "de",
         "en"
       ],
       "stile": [
-        "mix",
-        "premium"
+        "mix"
+      ]
+    },
+    {
+      "id": "peptid",
+      "medium": "bild",
+      "format": "peptid-karte",
+      "status": "vorhanden",
+      "haken": "Ein Peptid aus peptidesData.js, getragen von der Kettenlaenge: „15 Aminosäuren — BPC-157“. Die Zahl kommt aus dem Wort, das die App selbst benutzt (Pentadecapeptid = 15), sie wird nicht erfunden; Peptide ohne dieses Wort fallen weg. Wirkung nur als „Studien zeigen …“, ohne die einzelne Arbeit zu nennen (Josef, 20.09.2026)",
+      "schluessel": "peptid",
+      "sprachen": [
+        "de",
+        "en"
+      ],
+      "stile": [
+        "zahl"
+      ],
+      "wasserzeichen": [
+        { "datei": "kreuzheben.jpg", "fit": "cover" },
+        { "datei": "kniebeuge.jpg", "fit": "cover" },
+        { "datei": "kettlebell-swing.jpg", "fit": "cover" },
+        { "datei": "klimmzug.jpg", "fit": "cover" },
+        { "datei": "schulterdruecken.jpg", "fit": "cover" },
+        { "datei": "ausfallschritt.jpg", "fit": "cover" },
+        { "datei": "bankdruecken.jpg", "fit": "contain" },
+        { "datei": "rudern.jpg", "fit": "contain" }
       ]
     },
     {
@@ -158,5 +182,6 @@
       ]
     }
   ],
+  "_wasserzeichen": "Nur FullRep, nur Bild-Winkel. Je Eintrag eine Datei aus mypeak/store-assets/social/fotos/wasserzeichen/ und der BESCHNITT, der dort geprueft wurde — waehlen.mjs wuerfelt einen aus, motoren.mjs reicht ihn als --wz/--wz-fit durch. ⚠ `fit` ist keine Geschmacksfrage: Die Bilder sind 1408x768 quer, die Karte 1080x1350 hoch; `cover` schneidet 56 % der Breite weg. Eine stehende Figur uebersteht das, eine liegende (Bankdruecken) oder quer sitzende (Rudern) nicht — die brauchen `contain`. Der Befund je Bild steht in HERKUNFT.md neben den Dateien, gemessen am gerenderten JPEG. ⚠ --wz schaltet die KI-Kennzeichnung automatisch mit; die Bilder zeigen KI-erzeugte Menschen.",
   "_stile": "Je Bild-Winkel die Stile von scripts/post-bild.mjs, die dort WIRKLICH tragen — waehlen.mjs wuerfelt daraus, motoren.mjs reicht sie als --stil durch. Bis 18.09.2026 gab es das Feld nicht und jeder Bildpost lief im Vorgabestil mix. NICHT einfach alle vier ueberall eintragen: premium hat keinen Block fuer den Studienwert (eine Studienkarte steht dort halb leer), und zahl faellt still auf premium zurueck, wo es keine Zahl gibt — studien-fakt liefert keine."
 }

@@ -193,9 +193,25 @@ export function aufruf({ appSchluessel, app, post, wuerfel, out }) {
     // jemand im Feed gesehen. Welcher Stil je Winkel erlaubt ist, steht in
     // ideen/fullrep.json unter `stile`; gewaehlt wird in waehlen.mjs.
     const stil = post.medium === 'bild' && post.stil ? ['--stil', post.stil] : [];
+    // Das Trainingsbild hinter der Karte. Gleiche Regel wie bei `--stil`:
+    // NUR beim Bild, post-reel.mjs kennt die Option nicht.
+    //
+    // ⚠ Der Beschnitt faehrt mit. Ohne ihn liefe `bankdruecken.jpg` im
+    // Vorgabewert `cover` und zeigte von der Uebung nur eine Hantel und einen
+    // Arm — ein Fehler, der im Protokoll gruen aussieht und nur am fertigen
+    // Bild auffaellt. Warum welche Datei welchen Beschnitt braucht, steht in
+    // store-assets/social/fotos/wasserzeichen/HERKUNFT.md im App-Repo.
+    //
+    // ⚠ `--wz` schaltet im Generator die KI-Kennzeichnung automatisch mit.
+    // Hier steht deshalb bewusst KEIN `--ki` daneben: Zwei Wege zur selben
+    // Pflicht sind einer zu viel, und der zweite wird eines Tages vergessen.
+    const wz = post.medium === 'bild' && post.wasserzeichen
+      ? ['--wz', `store-assets/social/fotos/wasserzeichen/${post.wasserzeichen.datei}`,
+         '--wz-fit', post.wasserzeichen.fit ?? 'cover']
+      : [];
     return {
       schritte: [n(skript, '--format', post.format, '--lang', post.sprache,
-        ...stil, '--seed', String(post.seed), '--name', post.dateiname, '--out', out)],
+        ...stil, ...wz, '--seed', String(post.seed), '--name', post.dateiname, '--out', out)],
       endung: post.medium === 'reel' ? '.mp4' : '.jpg',
     };
   }

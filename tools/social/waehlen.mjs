@@ -313,6 +313,22 @@ export function waehlePosts({
       if (!w.stile?.length) return null;
       return w.stile[saat(saatTag, app, w.id, 'stil') % w.stile.length];
     })(),
+    // Das Trainingsbild, das als Wasserzeichen HINTER der Karte liegt — heute
+    // nur FullRep, nur der Winkel `peptid`. Ohne Liste am Winkel bleibt es
+    // null, und motoren.mjs laesst `--wz` dann ganz weg.
+    //
+    // ⚠ Der Eintrag traegt Datei UND Beschnitt zusammen. Sie zu trennen waere
+    // die Einladung, sie gegeneinander zu verschieben: `bankdruecken.jpg` mit
+    // `cover` ist unbrauchbar, und das sieht man erst am gerenderten Bild.
+    // Der Befund je Datei steht in HERKUNFT.md neben den Bildern.
+    //
+    // ⚠ Eigener Saat-Schluessel, wie bei `stil` — und aus demselben Grund:
+    // `saat()` ist ein Hash, kein weiterer Wurf aus dem Winkel-Wuerfel. Ein
+    // zusaetzlicher Wurf haette jeden historischen Seed verschoben.
+    wasserzeichen: (() => {
+      if (!w.wasserzeichen?.length) return null;
+      return w.wasserzeichen[saat(saatTag, app, w.id, 'wz') % w.wasserzeichen.length];
+    })(),
     gesperrteInhalte: [...inhalteWeg],
     winkelSperre: sperre,
     gelockert,
