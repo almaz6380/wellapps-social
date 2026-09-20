@@ -890,6 +890,15 @@
       "schluessel": "peptid",
       "inhalt": "seed9030",
       "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-20",
+      "winkel": "app-schau",
+      "medium": "bild",
+      "schluessel": "bildschirm",
+      "inhalt": "seed44648",
+      "sprache": "de"
     }
   ]
 }
