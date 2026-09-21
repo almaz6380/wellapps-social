@@ -26,9 +26,9 @@ on:
   workflow_dispatch:
     inputs:
       modus:
-        description: 'zeigen = nur ansehen · veroeffentlichen = wirklich posten (oeffentlich!)'
+        description: 'zeigen = ansehen · veroeffentlichen = posten (oeffentlich!) · nachtragen = nur Anzeige reparieren'
         type: choice
-        options: [zeigen, veroeffentlichen]
+        options: [zeigen, veroeffentlichen, nachtragen]
         default: zeigen
       apps:
         description: 'Nur diese Apps (anigosha,mahjong,wellbooked,fullrep,swaply) — leer = alle'
@@ -42,6 +42,14 @@ on:
         description: 'Nur DIESEN Beitrag — leer = alle offenen der App'
         type: string
         required: false
+      tage:
+        description: 'Nur fuer `nachtragen`: so viele Tage rueckwaerts (Vorgabe 30)'
+        type: string
+        required: false
+      trocken:
+        description: 'Nur fuer `nachtragen`: zeigen, was nachgetragen wuerde'
+        type: boolean
+        default: false
 
 jobs:
   freigeben:
@@ -73,4 +81,15 @@ jobs:
           APPS: ${{ inputs.apps }}
           DATUM: ${{ inputs.datum }}
           DATEI: ${{ inputs.datei }}
-        run: node tools/social/freigeben.mjs
+          TAGE: ${{ inputs.tage }}
+          TROCKEN: ${{ inputs.trocken && '1' || '' }}
+        # ⚠ `nachtragen` geht in ein eigenes Skript: Es ruft Instagram gar
+        # nicht an, es gleicht nur `kanaele` an `eintraege` an. In
+        # freigeben.mjs waere es ein dritter Zweig durch eine Schleife, die
+        # fuers Veroeffentlichen gebaut ist.
+        run: |
+          if [ "$MODUS" = "nachtragen" ]; then
+            node tools/social/instagram-nachtragen.mjs
+          else
+            node tools/social/freigeben.mjs
+          fi

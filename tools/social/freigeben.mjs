@@ -30,6 +30,7 @@ import {
   containerAnlegen, karussellAnlegen, aufBereitWarten, veroeffentlichen, KARUSSELL_MIN,
 } from './veroeffentlichen/instagram.mjs';
 import { zugaenge } from './veroeffentlichen/geheimnisse.mjs';
+import { instagramKanal } from './instagram-stand.mjs';
 
 const MODUS = (process.env.MODUS || 'zeigen').trim();
 const DATUM = (process.env.DATUM || new Date().toISOString().slice(0, 10)).trim();
@@ -129,6 +130,35 @@ for (const liste of listen) {
 
       e.veroeffentlicht = new Date().toISOString();
       e.beitragId = r.id;
+
+      // ⚠ AUCH IN DIE UEBERSICHT SCHREIBEN (21.09.2026). Bis hierher stand
+      // das Ergebnis nur in `eintraege`; die Uebersicht kannte weiter
+      // `instagram: wartet`.
+      //
+      // Gemessen am 21.09. an zwei Anigosha-Beitraegen, die um 14:33 und
+      // 16:20 auf Instagram veroeffentlicht wurden: `eintraege` sagte
+      // veroeffentlicht, `kanaele.instagram.stand` sagte wartet. Zwei
+      // sichtbare Folgen, beide still:
+      //
+      //   · Die Freigabe-Seite liest `kanaele` (`erledigt()` in index.html).
+      //     Der Beitrag blieb deshalb in der offenen Liste stehen, MIT
+      //     Instagram-Knopf — ein zweiter Druck haette ihn ein zweites Mal
+      //     gepostet.
+      //   · Das Archiv (`zaehltHier` in freigabe-app/api/freigabe.js) liest
+      //     ebenfalls `kanaele`. Veroeffentlichte Instagram-Beitraege
+      //     fehlten dort also vollstaendig.
+      //
+      // Der Aufraeumpfad war NIE betroffen: `nochGebraucht` sieht
+      // `e.veroeffentlicht`. Genau deshalb ist es so lange niemandem
+      // aufgefallen — die Dateien verschwanden richtig, nur die Anzeige log.
+      const spur = (liste.uebersicht ?? []).find((p) => p.datei === e.datei);
+      if (spur) {
+        spur.kanaele = {
+          ...(spur.kanaele ?? {}),
+          instagram: instagramKanal({ wann: e.veroeffentlicht, beitragId: r.id }),
+        };
+      }
+
       geaendert = true;
       veroeffentlicht += 1;
       console.log(`        ✓ veroeffentlicht — Beitrag ${r.id}`);
