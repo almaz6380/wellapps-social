@@ -474,6 +474,17 @@ async function tageslauf() {
       nurWinkel: NUR_WINKEL.length ? NUR_WINKEL : null,
     });
     console.log(`━━ ${app.name}`);
+    // ⚠ Ein bestellter Winkel, der wegfaellt, wird GENANNT (21.09.2026).
+    //
+    // Am 21.09. waren zwei Winkel bestellt, einer kam — und das Protokoll
+    // sagte nur „1 von 1 Posts fertig". Der Grund war voellig in Ordnung
+    // (`status: "neu"` plus `nurVorhanden` bei jedem echten Lauf), aber er
+    // stand nirgends, und der Lauf war gruen. Eine Bestellung ist die
+    // Handlung eines Menschen; sie halb auszufuehren, ohne es zu sagen, ist
+    // ein stiller Fehlschlag.
+    for (const { id, grund } of posts.weggefallen ?? []) {
+      console.log(`   ⚠ bestellt, aber nicht dabei: ${id} — ${grund}`);
+    }
     if (!posts.length) { console.log('   nichts verfuegbar\n'); continue; }
 
     for (const post of posts) {

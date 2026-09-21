@@ -214,12 +214,51 @@ export function waehlePosts({
   // Die Sperrfrist gilt fuer ihn trotzdem: Faellt er darunter, greift weiter
   // unten der Notausgang und setzt `gelockert`. So steht im Protokoll, dass
   // eine Wiederholung bewusst war.
+  // ⚠ UND EIN TEIL DER BESTELLUNG DARF NICHT STILL WEGFALLEN (21.09.2026).
+  //
+  // Bis heute warf dieser Block nur, wenn KEIN EINZIGER bestellter Winkel
+  // uebrig blieb. Blieb von zwei bestellten einer uebrig, lief es klaglos mit
+  // einem weiter. Genau das ist am 21.09. passiert: Josef wollte die neue
+  // Steckbrief-Karte sehen, bestellt waren `serien-steckbrief` und
+  // `wusstest-du-karte`, und im Protokoll stand
+  //
+  //     ▣ wusstest-du-karte · de · Seed 37867
+  //     1 von 1 Posts fertig
+  //
+  // Der Steckbrief fehlte, der Lauf war gruen, und nichts sagte warum. Der
+  // Grund war voellig in Ordnung — `status: "neu"` und `nurVorhanden` bei
+  // jedem echten Lauf —, aber er stand nirgends.
+  //
+  // Einen Winkel ueber die Workflow-Eingabe zu bestellen ist die HANDLUNG
+  // EINES MENSCHEN. Sie halb auszufuehren, ohne es zu sagen, ist dieselbe
+  // Klasse stiller Fehlschlag wie der geloeschte Merkliste-Eintrag und das
+  // nicht verdrahtete Reel.
+  //
+  // KEIN Abbruch, solange einer uebrig ist: Eine von zwei Karten ist besser
+  // als keine — der Lauf muss es nur sagen. `weggefallen` haengt am Ergebnis,
+  // lauf.mjs schreibt es ins Protokoll.
   const bestellt = (nurWinkel ?? []).filter(Boolean);
+  const weggefallen = [];
   if (bestellt.length) {
     const treffer = verfuegbar.filter((w) => bestellt.includes(w.id));
     if (!treffer.length) {
       throw new Error(`Winkel „${bestellt.join(', ')}" gibt es fuer ${app} nicht `
         + `(oder er ist heute nicht erlaubt). Moeglich: ${alle.map((w) => w.id).join(', ')}`);
+    }
+    // Der Grund kommt aus den Daten, nicht aus einer Vermutung: Entweder der
+    // Winkel steht gar nicht in ideen/<app>.json, oder er steht dort und ist
+    // aus einem benennbaren Grund nicht verfuegbar.
+    for (const id of bestellt) {
+      if (treffer.some((w) => w.id === id)) continue;
+      const w = alle.find((x) => x.id === id);
+      let grund;
+      if (!w) grund = `gibt es fuer ${app} nicht`;
+      else if (nurVorhanden && w.status !== 'vorhanden') {
+        grund = `status: ${w.status} — geht erst live, wenn das Format gebaut `
+          + 'und der Status auf "vorhanden" gesetzt ist';
+      } else if (!winkelErlaubt(w, heute)) grund = 'heute nicht erlaubt (Saison)';
+      else grund = 'aus der Auswahl gefallen';
+      weggefallen.push({ id, grund });
     }
     verfuegbar = treffer;
   }
@@ -361,6 +400,20 @@ export function waehlePosts({
     p.sprache = vorbild.sprache;
   }
 
+  // ⚠ Die weggefallenen Bestellwuensche haengen als EIGENSCHAFT am Feld, nicht
+  // als zweiter Rueckgabewert.
+  //
+  // `waehlePosts` gibt seit jeher ein Feld zurueck, und beide Aufrufer
+  // behandeln es als eines (`posts.length`, `for (const post of posts)`,
+  // `vorschau()` weiter unten). Auf ein Objekt umzustellen haette drei
+  // Stellen geaendert, um eine Zeile Protokoll zu transportieren.
+  //
+  // NICHT aufzaehlbar: So aendert sich weder `JSON.stringify(liste)` noch
+  // `Object.keys` noch das Verhalten irgendeines Aufrufers, der das Feld
+  // weiterreicht. Wer die Liste braucht, fragt sie ausdruecklich ab.
+  Object.defineProperty(liste, 'weggefallen', {
+    value: weggefallen, enumerable: false,
+  });
   return liste;
 }
 

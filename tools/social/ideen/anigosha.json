@@ -106,7 +106,7 @@
       "id": "serien-steckbrief",
       "medium": "bild",
       "format": "steckbrief-karte",
-      "status": "neu",
+      "status": "vorhanden",
       "haken": "Drei Hinweise zu einer Serie untereinander, Name erst am Ende. Wer frueh raet, kommentiert",
       "schluessel": "kategorie",
       "sprachen": [
