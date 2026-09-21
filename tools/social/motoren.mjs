@@ -129,6 +129,27 @@ export function aufruf({ appSchluessel, app, post, wuerfel, out }) {
       '--lang', post.sprache, '--seed', String(post.seed), '--out', out,
       '--store', app.storeSatz];
 
+    // ⚠ Das Wasserzeichen mit den beiden Figuren (Josef, 21.09.2026):
+    // „bei den anigoshaposts gerne im hintergrund als wasserzeichen ein bild
+    // von den beiden figuren".
+    //
+    // Es faehrt bei JEDER Anigosha-Bildkarte mit, nicht nach Wuerfel. Anders
+    // als bei FullReps acht Trainingsbildern gibt es hier genau EINES, und ein
+    // Wuerfel ueber eine einelementige Menge waere kein Wuerfel, sondern ein
+    // gelegentliches Weglassen — also das Gegenteil eines Wiedererkennungs-
+    // zeichens.
+    //
+    // ⚠ NICHT bei app-schau. Dort traegt dasselbe Einzelbild bereits die ganze
+    // Flaeche als Milieu; beides zugleich waere das Motiv zweimal, einmal hell
+    // und einmal dunkel. Der Generator bricht in dem Fall ausdruecklich ab —
+    // diese Zeile haelt den Abbruch nur von vornherein fern.
+    //
+    // ⚠ Der Dateiname ist Pflicht, kein blosses `--wz`. Die Kommandozeile des
+    // Generators liest jedes `--x` als „naechstes Argument ist der Wert"; ein
+    // nacktes `--wz` verschluckte `--seed`, und der Beitrag saehe morgen
+    // anders aus als heute, ohne dass irgendwo ein Fehler stuende.
+    if (post.format !== 'app-schau') bild.push('--wz', 'spot-start.jpg');
+
     // Die freie Karte ist der einzige Beitrag, dessen Inhalt nicht aus den
     // 804 Fragen kommt, sondern von aussen. Er haengt als `post.frei` am
     // Beitrag — gesetzt vom Kartenlauf in lauf.mjs, nie von der Rotation.
