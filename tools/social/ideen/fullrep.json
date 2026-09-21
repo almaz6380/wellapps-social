@@ -29,6 +29,40 @@
         "mix",
         "poster",
         "zahl"
+      ],
+      "wasserzeichen": [
+        {
+          "datei": "kreuzheben.jpg",
+          "fit": "cover"
+        },
+        {
+          "datei": "kniebeuge.jpg",
+          "fit": "cover"
+        },
+        {
+          "datei": "kettlebell-swing.jpg",
+          "fit": "cover"
+        },
+        {
+          "datei": "klimmzug.jpg",
+          "fit": "cover"
+        },
+        {
+          "datei": "schulterdruecken.jpg",
+          "fit": "cover"
+        },
+        {
+          "datei": "ausfallschritt.jpg",
+          "fit": "cover"
+        },
+        {
+          "datei": "bankdruecken.jpg",
+          "fit": "contain"
+        },
+        {
+          "datei": "rudern.jpg",
+          "fit": "contain"
+        }
       ]
     },
     {
@@ -94,6 +128,40 @@
         "mix",
         "poster",
         "zahl"
+      ],
+      "wasserzeichen": [
+        {
+          "datei": "kreuzheben.jpg",
+          "fit": "cover"
+        },
+        {
+          "datei": "kniebeuge.jpg",
+          "fit": "cover"
+        },
+        {
+          "datei": "kettlebell-swing.jpg",
+          "fit": "cover"
+        },
+        {
+          "datei": "klimmzug.jpg",
+          "fit": "cover"
+        },
+        {
+          "datei": "schulterdruecken.jpg",
+          "fit": "cover"
+        },
+        {
+          "datei": "ausfallschritt.jpg",
+          "fit": "cover"
+        },
+        {
+          "datei": "bankdruecken.jpg",
+          "fit": "contain"
+        },
+        {
+          "datei": "rudern.jpg",
+          "fit": "contain"
+        }
       ]
     },
     {
@@ -109,7 +177,8 @@
       ],
       "stile": [
         "mix"
-      ]
+      ],
+      "_kein_wasserzeichen": "⚠ BEWUSST OHNE FOTO (21.09.2026). studien-fakt, wissens-karte und peptid tragen dieselben acht Trainingsbilder; diese Karte nicht. Sie NENNT eine bestimmte Uebung („Uebung: Seilspringen“) — ein Kniebeugen-Foto dahinter behauptet dann etwas Falsches. Gerendert und angesehen, nicht vermutet. Wer sie bebildern will, braucht eine Zuordnung Uebung → Motiv; die acht Bilder decken nur acht der 162 Uebungen ab."
     },
     {
       "id": "peptid",

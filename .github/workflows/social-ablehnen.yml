@@ -1,6 +1,7 @@
 name: Beitrag ablehnen
 
-# Vermerkt EINEN Beitrag als abgelehnt — ausgeloest von der Freigabe-Seite.
+# Vermerkt Beitraege als abgelehnt — EINEN auf Knopfdruck von der
+# Freigabe-Seite, oder alles Offene als Aufraeumlauf.
 #
 # Er geht danach nirgends mehr hin: Der Instagram-Eintrag wird entfernt, die
 # Freigabe-Seite zeigt ihn durchgestrichen, die abgelegte Datei wird
@@ -9,27 +10,49 @@ name: Beitrag ablehnen
 #
 # Den Ersatz erzeugt dieser Lauf nicht. Das ist der Tageslauf mit
 # `variante: N`; die Freigabe-Seite loest beides nacheinander aus.
+#
+# ⚠ AUFRAEUMLAUF: `datei` leer lassen und `apps` setzen (Komma-Liste oder
+# `alle`), bei Bedarf mit `tage`. Dann wird ALLES Offene dieser Apps und Tage
+# abgelehnt und die Dateien werden geloescht. Das laesst sich nicht
+# zurueckholen — veroeffentlichte Beitraege werden dabei uebersprungen und
+# genannt, alles andere ist weg.
+#
+# ⚠ Was im TikTok-POSTEINGANG liegt, kann kein Lauf loeschen. Das Skript sagt
+# am Ende, wie viele davon betroffen sind; sie muessen in der TikTok-App
+# selbst verworfen werden.
 
 on:
   workflow_dispatch:
     inputs:
       app:
-        description: 'Welche App? anigosha,mahjong,wellbooked,fullrep,swaply'
+        description: 'EINE App — zusammen mit `datei` der Knopf von der Freigabe-Seite'
         type: string
-        required: true
+        required: false
+      apps:
+        description: 'Aufraeumlauf: Komma-Liste oder `alle`. Nur ohne `datei`'
+        type: string
+        required: false
       datei:
-        description: 'Dateiname des Beitrags'
+        description: 'Dateiname des Beitrags. Leer = alles Offene (Aufraeumlauf)'
         type: string
-        required: true
+        required: false
       datum:
         description: 'Welcher Tag (JJJJ-MM-TT), leer = heute'
         type: string
         required: false
+      tage:
+        description: 'So viele Tage rueckwaerts ab `datum`. Leer = nur dieser eine'
+        type: string
+        required: false
+      trocken:
+        description: 'Nur zeigen, was passieren wuerde — nichts aendern, nichts loeschen'
+        type: boolean
+        default: false
 
 jobs:
   ablehnen:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
 
     steps:
       - uses: actions/checkout@v4
@@ -45,6 +68,9 @@ jobs:
         env:
           BLOB_TOKEN: ${{ secrets.BLOB_TOKEN }}
           APP: ${{ inputs.app }}
+          APPS: ${{ inputs.apps }}
           DATEI: ${{ inputs.datei }}
           DATUM: ${{ inputs.datum }}
+          TAGE: ${{ inputs.tage }}
+          TROCKEN: ${{ inputs.trocken && '1' || '' }}
         run: node tools/social/ablehnen.mjs
