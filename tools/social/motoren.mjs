@@ -67,6 +67,27 @@ const mahjongLevel = (winkel, wuerfel) => {
  * in lauf.mjs, damit ein Trockenlauf dieselbe Tabelle lesen kann, ohne etwas
  * zu starten.
  */
+// --- Die Randfigur (Josef, 21.09.2026) --------------------------------------
+//
+// „Ich will einen Prompt fuer eine Figur … Diese sollen immer so am Rand des
+// Bildes sein." Drei Apps, drei freigestellte Figuren, die seitlich an der
+// Karte stehen.
+//
+// ⚠ DIE QUELLE IST apps.json, KEINE TABELLE HIER. Solange dort kein `figur`
+// steht, wird die Option NICHT angehaengt — und der Tageslauf laeuft
+// unveraendert weiter. Das ist Absicht: Die Bilder erzeugt Josef, und ein
+// Generator, der auf eine noch nicht vorhandene Datei zeigt, bricht bei
+// jedem Lauf ab. Wenn die Datei da ist, ist die Freischaltung EINE Zeile in
+// apps.json — kein Codeeingriff.
+//
+// ⚠ NUR BEI BILDERN, und nie bei der App-Schau: Die zeigt die App selbst,
+// dort steht keine Figur daneben. Beide Generatoren brechen sonst ab — die
+// Sperre steht dort, damit sie auch beim Aufruf von Hand greift.
+export function figurArgs(app, post) {
+  if (!app.figur || post.medium !== 'bild' || post.format === 'app-schau') return [];
+  return ['--figur', app.figur];
+}
+
 export function aufruf({ appSchluessel, app, post, wuerfel, out }) {
   const p = app.pfad;
   const n = (...a) => ({ cmd: 'node', args: a, cwd: p });
@@ -148,7 +169,14 @@ export function aufruf({ appSchluessel, app, post, wuerfel, out }) {
     // Generators liest jedes `--x` als „naechstes Argument ist der Wert"; ein
     // nacktes `--wz` verschluckte `--seed`, und der Beitrag saehe morgen
     // anders aus als heute, ohne dass irgendwo ein Fehler stuende.
-    if (post.format !== 'app-schau') bild.push('--wz', 'spot-start.jpg');
+    //
+    // ⚠ UND ES WEICHT DER RANDFIGUR (21.09.2026). Steht in apps.json eine
+    // `figur`, geht sie vor: Beides zugleich waere dieselbe Figur zweimal auf
+    // einer Karte — einmal blass im Hintergrund, einmal scharf am Rand. Der
+    // Generator bricht in dem Fall ab; diese Zeile haelt den Abbruch fern.
+    const figur = figurArgs(app, post);
+    if (figur.length) bild.push(...figur);
+    else if (post.format !== 'app-schau') bild.push('--wz', 'spot-start.jpg');
 
     // Die freie Karte ist der einzige Beitrag, dessen Inhalt nicht aus den
     // 804 Fragen kommt, sondern von aussen. Er haengt als `post.frei` am
@@ -266,7 +294,8 @@ export function aufruf({ appSchluessel, app, post, wuerfel, out }) {
       : [];
     return {
       schritte: [n(skript, '--format', post.format, '--lang', post.sprache,
-        ...stil, ...wz, '--seed', String(post.seed), '--name', post.dateiname, '--out', out)],
+        ...stil, ...wz, ...figurArgs(app, post),
+        '--seed', String(post.seed), '--name', post.dateiname, '--out', out)],
       endung: post.medium === 'reel' ? '.mp4' : '.jpg',
     };
   }
@@ -278,7 +307,8 @@ export function aufruf({ appSchluessel, app, post, wuerfel, out }) {
     // Weiche hin wie bei fullrep — und nicht vorher.
     return {
       schritte: [n('scripts/post-bild.mjs', '--format', post.format,
-        '--lang', post.sprache, '--seed', String(post.seed),
+        '--lang', post.sprache, ...figurArgs(app, post),
+        '--seed', String(post.seed),
         '--name', post.dateiname, '--out', out)],
       endung: '.jpg',
     };
