@@ -1034,6 +1034,96 @@
       "schluessel": "bildschirm",
       "inhalt": "seed81288",
       "sprache": "de"
+    },
+    {
+      "app": "anigosha",
+      "datum": "2026-09-21",
+      "winkel": "fandom",
+      "medium": "reel",
+      "schluessel": "kategorie",
+      "inhalt": "seed98208",
+      "sprache": "de"
+    },
+    {
+      "app": "anigosha",
+      "datum": "2026-09-21",
+      "winkel": "schwierigkeitsleiter",
+      "medium": "bild",
+      "schluessel": "kategorie",
+      "inhalt": "seed49776",
+      "sprache": "de"
+    },
+    {
+      "app": "mahjong",
+      "datum": "2026-09-21",
+      "winkel": "blumen-falle",
+      "medium": "reel",
+      "schluessel": "level",
+      "inhalt": "seed57835",
+      "sprache": "en"
+    },
+    {
+      "app": "mahjong",
+      "datum": "2026-09-21",
+      "winkel": "figur-galerie",
+      "medium": "bild",
+      "schluessel": "figur-vierer",
+      "inhalt": "seed81469",
+      "sprache": "en"
+    },
+    {
+      "app": "wellbooked",
+      "datum": "2026-09-21",
+      "winkel": "mythos",
+      "medium": "reel",
+      "schluessel": "aussage",
+      "inhalt": "seed95425",
+      "sprache": "de"
+    },
+    {
+      "app": "wellbooked",
+      "datum": "2026-09-21",
+      "winkel": "kategorie-karte",
+      "medium": "bild",
+      "schluessel": "kategorie",
+      "inhalt": "seed56155",
+      "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-21",
+      "winkel": "uebung-karte",
+      "medium": "bild",
+      "schluessel": "uebung",
+      "inhalt": "seed87067",
+      "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-21",
+      "winkel": "naehrstoff",
+      "medium": "bild",
+      "schluessel": "wissensthema",
+      "inhalt": "seed26514",
+      "sprache": "de"
+    },
+    {
+      "app": "swaply",
+      "datum": "2026-09-21",
+      "winkel": "ausloeser",
+      "medium": "bild",
+      "schluessel": "kategorie",
+      "inhalt": "seed9458",
+      "sprache": "de"
+    },
+    {
+      "app": "swaply",
+      "datum": "2026-09-21",
+      "winkel": "notfall",
+      "medium": "bild",
+      "schluessel": "kategorie",
+      "inhalt": "seed27504",
+      "sprache": "de"
     }
   ]
 }
