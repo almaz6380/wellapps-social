@@ -1178,6 +1178,96 @@
       "schluessel": "studie",
       "inhalt": "seed87499",
       "sprache": "de"
+    },
+    {
+      "app": "anigosha",
+      "datum": "2026-09-21",
+      "winkel": "ladder",
+      "medium": "reel",
+      "schluessel": "fragen-ids",
+      "inhalt": "seed3998",
+      "sprache": "de"
+    },
+    {
+      "app": "anigosha",
+      "datum": "2026-09-21",
+      "winkel": "app-schau",
+      "medium": "bild",
+      "schluessel": "bildschirm",
+      "inhalt": "seed79359",
+      "sprache": "de"
+    },
+    {
+      "app": "mahjong",
+      "datum": "2026-09-21",
+      "winkel": "fakt",
+      "medium": "reel",
+      "schluessel": "fakt-index",
+      "inhalt": "seed80444",
+      "sprache": "en"
+    },
+    {
+      "app": "mahjong",
+      "datum": "2026-09-21",
+      "winkel": "clear",
+      "medium": "reel",
+      "schluessel": "level",
+      "inhalt": "seed1180",
+      "sprache": "en"
+    },
+    {
+      "app": "wellbooked",
+      "datum": "2026-09-21",
+      "winkel": "mythos",
+      "medium": "reel",
+      "schluessel": "aussage",
+      "inhalt": "seed26552",
+      "sprache": "de"
+    },
+    {
+      "app": "wellbooked",
+      "datum": "2026-09-21",
+      "winkel": "regulierte-bereiche",
+      "medium": "bild",
+      "schluessel": "aussage",
+      "inhalt": "seed39737",
+      "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-21",
+      "winkel": "quick-fakt",
+      "medium": "reel",
+      "schluessel": "wissensthema",
+      "inhalt": "seed73632",
+      "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-21",
+      "winkel": "studien-fakt",
+      "medium": "bild",
+      "schluessel": "studie",
+      "inhalt": "seed52808",
+      "sprache": "de"
+    },
+    {
+      "app": "swaply",
+      "datum": "2026-09-21",
+      "winkel": "tausch-loop",
+      "medium": "reel",
+      "schluessel": "kategorie",
+      "inhalt": "seed26265",
+      "sprache": "de"
+    },
+    {
+      "app": "swaply",
+      "datum": "2026-09-21",
+      "winkel": "notfall",
+      "medium": "bild",
+      "schluessel": "kategorie",
+      "inhalt": "seed94247",
+      "sprache": "de"
     }
   ]
 }
