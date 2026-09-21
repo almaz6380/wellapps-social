@@ -1110,10 +1110,10 @@
     {
       "app": "anigosha",
       "datum": "2026-09-21",
-      "winkel": "wusstest-du-karte",
+      "winkel": "serien-steckbrief",
       "medium": "bild",
-      "schluessel": "fragen-ids",
-      "inhalt": "seed37867",
+      "schluessel": "kategorie",
+      "inhalt": "seed76864",
       "sprache": "de"
     }
   ]
