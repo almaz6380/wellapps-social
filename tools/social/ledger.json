@@ -1036,24 +1036,6 @@
       "sprache": "de"
     },
     {
-      "app": "anigosha",
-      "datum": "2026-09-21",
-      "winkel": "fandom",
-      "medium": "reel",
-      "schluessel": "kategorie",
-      "inhalt": "seed98208",
-      "sprache": "de"
-    },
-    {
-      "app": "anigosha",
-      "datum": "2026-09-21",
-      "winkel": "schwierigkeitsleiter",
-      "medium": "bild",
-      "schluessel": "kategorie",
-      "inhalt": "seed49776",
-      "sprache": "de"
-    },
-    {
       "app": "mahjong",
       "datum": "2026-09-21",
       "winkel": "blumen-falle",
@@ -1123,6 +1105,15 @@
       "medium": "bild",
       "schluessel": "kategorie",
       "inhalt": "seed27504",
+      "sprache": "de"
+    },
+    {
+      "app": "anigosha",
+      "datum": "2026-09-21",
+      "winkel": "wusstest-du-karte",
+      "medium": "bild",
+      "schluessel": "fragen-ids",
+      "inhalt": "seed37867",
       "sprache": "de"
     }
   ]
