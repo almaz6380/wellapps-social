@@ -232,12 +232,39 @@ Neues" durchgehen zu lassen.
 `veroeffentlicht` heißt dort lediglich „hochgeladen". Die Regel ist selbstbegrenzend:
 Ohne Abfragelauf ändert sich im Archiv gar nichts.
 
-⚠ **Die Deutung der Statuswerte ist Doku, nicht Messung.** Dokumentiert sind
-`PROCESSING_UPLOAD`, `PUBLISH_COMPLETE`, `FAILED`, `SEND_TO_USER_INBOX`. Was TikTok für
-einen **vom Menschen freigegebenen** Entwurf antwortet, steht nirgends. Deshalb: Die
-rohe Antwort geht je Beitrag ins Protokoll, ein unbekannter Status ändert nichts, und
-`veroeffentlicht` wird nie zurückgestuft (sonst stünde ein geposteter Beitrag wieder
-offen, und TikTok hat gegen Doppelposts keine Sperre).
+✅ **Der offene Punkt ist gemessen (erster Lauf, 20.09.2026).** Die Frage war: Was
+antwortet TikTok für einen Entwurf, den ein **Mensch** in der App freigegeben hat? Die
+Doku sagt es nicht. Der Lauf schon — Beitrag `wellbooked-anruf-de-s3709-1.jpg`, bei uns
+auf `posteingang`:
+
+```
+{"publicaly_available_post_id":[…],"status":"PUBLISH_COMPLETE"}
+```
+
+Der Stand wechselt also wirklich, und TikTok schickt tatsächlich die **falsch
+geschriebene** Feldvariante (`publicaly`, ohne das zweite „l"). Beide Schreibweisen
+bleiben im Code — wer nur auf die richtige prüft, misst nichts.
+
+⚠ **Und derselbe Lauf hat einen Fehler aufgedeckt: `JSON.parse` rundet die
+Beitrags-ID.** Sie ist 19-stellig, also größer als 2^53; aus ihr wurde
+`7687305154307182000`, und die drei Nullen am Ende sind der Rundungsfehler.
+Gespeichert hätten wir eine Nummer, die auf **keinen** Beitrag zeigt — und niemandem
+wäre es aufgefallen, weil sie wie eine plausible ID aussieht. `standHolen` liest die
+Antwort deshalb erst als **Text**, und `genaueIds()` holt die Ziffernfolge unverändert
+als Zeichenkette zurück. Passt die Anzahl nicht, wird nichts ersetzt: eine halb
+ersetzte Liste wäre schlimmer als die gerundete.
+
+**Merksatz:** Eine ID ist keine Zahl, auch wenn sie aus Ziffern besteht. Facebook und
+TikTok führen ihre IDs überall als Strings — das ist kein Stil, sondern der Grund.
+
+⚠ Ungemessen bleibt, **wie lange** TikTok eine `publish_id` überhaupt beantwortet.
+Deshalb gilt weiter: Die rohe Antwort geht je Beitrag ins Protokoll, ein unbekannter
+Status ändert nichts, und `veroeffentlicht` wird nie zurückgestuft (sonst stünde ein
+geposteter Beitrag wieder offen, und TikTok hat gegen Doppelposts keine Sperre).
+
+**Das Ausmaß des alten Fehlers, gezählt statt geschätzt:** Im ersten Lauf hatten
+**3 Beiträge eine `publish_id` und 82 keine.** Die 82 stammen von vor dem 20.09.2026
+und bleiben für immer unbekannt.
 
 ### ⚠ Der Zeitplan war acht Tage tot — an EINEM Anführungszeichen (18.09.2026)
 

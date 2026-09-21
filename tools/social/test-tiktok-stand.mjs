@@ -29,7 +29,7 @@
 // deshalb sitzt sie in `veroeffentlichen/tiktok-deutung.mjs` statt in
 // `tiktok-stand.mjs`: Das Skript laeuft beim Import los.
 
-import { deutung, darfErsetzen, POST_ID_FELDER }
+import { deutung, darfErsetzen, genaueIds, POST_ID_FELDER }
   from './veroeffentlichen/tiktok-deutung.mjs';
 
 let gut = 0;
@@ -173,6 +173,85 @@ pruefe('Ein erfundener Stand wird abgewiesen',
   neu.abfrage = { ...(neu.abfrage ?? {}), fehler: 'HTTP 500', fehlerWann: 'jetzt' };
   pruefe('Eine gescheiterte Erstabfrage erfindet keinen Status',
     neu.abfrage.status === undefined, JSON.stringify(neu.abfrage));
+}
+
+// --- 8. Die Beitrags-ID darf nicht gerundet werden ---------------------------
+//
+// ⚠ DIESE PROBE KOMMT AUS DEM ERSTEN ECHTEN LAUF (20.09.2026). TikTok
+// antwortete woertlich:
+//
+//   {"publicaly_available_post_id":[7687305154307182000],"status":"PUBLISH_COMPLETE"}
+//
+// Die drei Nullen am Ende sind kein Zufall: Die ID ist 19-stellig, also
+// groesser als 2^53. `JSON.parse` macht daraus eine Gleitkommazahl und
+// rundet. Gespeichert haetten wir eine Nummer, die auf KEINEN Beitrag zeigt —
+// und niemandem waere es aufgefallen, weil sie wie eine plausible ID aussieht.
+{
+  const ROH = '{"data":{"publicaly_available_post_id":[7687305154307181943],'
+    + '"status":"PUBLISH_COMPLETE"},"error":{"code":"ok"}}';
+  const gerundet = JSON.parse(ROH).data;
+
+  pruefe('Die Gegenprobe: JSON.parse rundet die ID wirklich',
+    String(gerundet.publicaly_available_post_id[0]) !== '7687305154307181943',
+    String(gerundet.publicaly_available_post_id[0]));
+
+  const genau = genaueIds(gerundet, ROH);
+  pruefe('genaueIds holt die Ziffernfolge unveraendert aus dem Rohtext',
+    genau.publicaly_available_post_id[0] === '7687305154307181943',
+    String(genau.publicaly_available_post_id[0]));
+
+  pruefe('… und sie kommt als Zeichenkette, nicht als Zahl',
+    typeof genau.publicaly_available_post_id[0] === 'string',
+    typeof genau.publicaly_available_post_id[0]);
+
+  pruefe('deutung() reicht die genaue ID durch',
+    deutung(genau).postIds[0] === '7687305154307181943', deutung(genau).postIds[0]);
+
+  // Mehrere IDs (ein Karussell kann mehrere Beitraege ergeben).
+  const ROH2 = '{"publicaly_available_post_id":[7687305154307181943,7687305154307181944]}';
+  const zwei = genaueIds(JSON.parse(ROH2), ROH2);
+  pruefe('Mehrere IDs werden alle genau uebernommen',
+    zwei.publicaly_available_post_id.join(',') === '7687305154307181943,7687305154307181944',
+    zwei.publicaly_available_post_id.join(','));
+
+  // ⚠ Passt die Anzahl nicht, wird NICHTS ersetzt — eine halb ersetzte Liste
+  // waere schlimmer als die gerundete.
+  const krumm = genaueIds({ publicaly_available_post_id: [1, 2, 3] }, ROH2);
+  pruefe('Bei ungleicher Anzahl bleibt die Liste, wie sie war',
+    krumm.publicaly_available_post_id.length === 3
+      && typeof krumm.publicaly_available_post_id[0] === 'number',
+    JSON.stringify(krumm.publicaly_available_post_id));
+
+  // Ohne Rohtext bleibt alles, wie es ist — kein Absturz.
+  pruefe('Ohne Rohtext kracht genaueIds nicht',
+    genaueIds({ status: 'FAILED' }, null).status === 'FAILED', 'ok');
+  pruefe('Ohne Daten kracht genaueIds nicht',
+    genaueIds(null, ROH) === null, String(genaueIds(null, ROH)));
+
+  // Und ein Feld, das gar keine Liste ist, wird nicht angefasst.
+  pruefe('Ein ID-Feld ohne Liste wird in Ruhe gelassen',
+    genaueIds({ publicaly_available_post_id: 'kaputt' }, ROH)
+      .publicaly_available_post_id === 'kaputt', 'ok');
+}
+
+// --- 9. Was TikTok am 20.09.2026 wirklich geantwortet hat --------------------
+//
+// ⚠ Das ist die Messung, auf die alles andere wartete: Was antwortet TikTok
+// fuer einen Entwurf, den ein MENSCH in der App freigegeben hat? Die Doku sagt
+// es nicht. Der erste Lauf schon — Beitrag
+// `wellbooked-anruf-de-s3709-1.jpg`, bei uns auf `posteingang`:
+//
+//   {"publicaly_available_post_id":[…],"status":"PUBLISH_COMPLETE"}
+//
+// Damit ist belegt: Der Stand wechselt, und das falsch geschriebene Feld ist
+// das, das TikTok wirklich schickt.
+{
+  const echt = { publicaly_available_post_id: ['7687305154307181943'], status: 'PUBLISH_COMPLETE' };
+  const d = deutung(echt);
+  pruefe('Gemessen: der freigegebene Entwurf wird veroeffentlicht',
+    d.stand === 'veroeffentlicht', d.stand);
+  pruefe('Gemessen: aus posteingang darf er das auch werden',
+    darfErsetzen('posteingang', d.stand) === true, String(darfErsetzen('posteingang', d.stand)));
 }
 
 console.log(`\n${gut} von ${gut + schlecht.length} Proben gruen.`);

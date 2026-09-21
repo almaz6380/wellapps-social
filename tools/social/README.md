@@ -51,6 +51,18 @@ Jetzt fragt dieses Werkzeug für jede gemerkte `publish_id` bei TikTok nach
 Workflow dazu heißt **„TikTok-Stand abfragen"**; er läuft auch abends um 18:00 UTC,
 sobald `SOCIAL_ZEITPLAN` auf `an` steht.
 
+**Gemessen im ersten Lauf (20.09.2026):** Ein Entwurf, den ein Mensch in der TikTok-App
+freigegeben hat, wechselt wirklich auf `PUBLISH_COMPLETE` und trägt dann eine
+Beitrags-ID. TikTok schickt dabei die **falsch geschriebene** Feldvariante
+(`publicaly`, ohne zweites „l"). 3 Beiträge hatten eine `publish_id`, **82 nicht** —
+das ist das Ausmaß des alten Fehlers.
+
+⚠ **Die Beitrags-ID darf nicht durch `JSON.parse` laufen.** Sie ist 19-stellig, also
+größer als 2^53; im ersten Lauf wurde aus ihr `7687305154307182000` — die drei Nullen
+am Ende sind der Rundungsfehler. `standHolen` liest die Antwort deshalb erst als Text,
+`genaueIds()` holt die Ziffernfolge unverändert als Zeichenkette zurück. *Eine ID ist
+keine Zahl, auch wenn sie aus Ziffern besteht.*
+
 **Drei Regeln, die im Code stehen und bleiben müssen:**
 
 1. **Die rohe Antwort steht im Protokoll**, je Beitrag eine Zeile. Damit ist ein Lauf

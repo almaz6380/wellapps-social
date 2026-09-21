@@ -29,6 +29,8 @@
 // keinen oeffentlichen Host. Der zweite Weg (PULL_FROM_URL) verlangt eine bei
 // TikTok verifizierte Domain und faellt damit ohnehin aus.
 
+import { genaueIds } from './tiktok-deutung.mjs';
+
 const API = 'https://open.tiktokapis.com/v2';
 
 /**
@@ -505,14 +507,21 @@ export async function standHolen({ token, publishId }) {
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json; charset=UTF-8' },
     body: JSON.stringify({ publish_id: publishId }),
   });
-  const daten = await antwort.json().catch(() => ({}));
+  // ⚠ Erst als TEXT lesen, dann parsen. Die Beitrags-ID ist 19-stellig, also
+  // groesser als 2^53 — `JSON.parse` rundet sie. Am 20.09.2026 im ersten
+  // echten Lauf gesehen: aus der ID wurde `7687305154307182000`, und die
+  // drei Nullen am Ende sind der Rundungsfehler. `genaueIds` holt die
+  // Ziffernfolge unveraendert aus diesem Rohtext zurueck.
+  const roh = await antwort.text();
+  let daten = {};
+  try { daten = JSON.parse(roh); } catch { /* unten faellt es als Fehler auf */ }
   if (!antwort.ok || daten.error?.code !== 'ok') {
     // Den CODE mitgeben, nicht nur die Meldung — dieselbe Lehre wie bei
     // `fotoPosten` am 16.09.2026. Bei einer abgelaufenen publish_id ist der
     // Code die einzige Stelle, an der das steht.
     throw new Error(`TikTok (Stand abfragen) ${antwort.status}: `
-      + `${daten.error?.message ?? JSON.stringify(daten).slice(0, 300)}`
+      + `${daten.error?.message ?? roh.slice(0, 300)}`
       + `${daten.error?.code && daten.error.code !== 'ok' ? ` [${daten.error.code}]` : ''}`);
   }
-  return daten.data ?? {};
+  return genaueIds(daten.data ?? {}, roh);
 }
