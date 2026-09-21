@@ -21,9 +21,30 @@ const SEITE = join(HIER, '..', '..', 'freigabe-app', 'index.html');
 
 // Ein Server nur fuer diesen Lauf. file:// ginge nicht: Dort verweigert
 // Chromium sessionStorage, und genau darauf beruht die Warnung.
-const server = createServer((_, antwort) => {
+// ⚠ Der Server muss mehr als die Seite ausliefern, seit das Archiv
+// Vorschaubilder zeigt. Gaebe er auf JEDEN Pfad HTML zurueck, schluege auch
+// das GUELTIGE Bild fehl — der Browser kann HTML nicht als Bild dekodieren,
+// `onerror` feuerte, und die Probe „zeigt es das Bild" waere gruen, ohne je
+// etwas gemessen zu haben. Genau die Sorte Probe, die nichts wert ist.
+//
+// Deshalb: /bild.jpg liefert ein echtes (1×1) PNG, alles andere mit
+// Bild-Endung eine 404 — das stellt ein aufgeraeumtes Blob nach.
+const EIN_PIXEL = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+  'base64',
+);
+const server = createServer((anfrage, antwort) => {
+  const pfad = (anfrage.url ?? '/').split('?')[0];
+  if (pfad === '/bild.jpg') {
+    antwort.writeHead(200, { 'Content-Type': 'image/png' });
+    return antwort.end(EIN_PIXEL);
+  }
+  if (/\.(jpg|jpeg|png|mp4)$/.test(pfad)) {
+    antwort.writeHead(404);
+    return antwort.end();
+  }
   antwort.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-  antwort.end(readFileSync(SEITE));
+  return antwort.end(readFileSync(SEITE));
 }).listen(0, '127.0.0.1');
 await new Promise((f) => server.once('listening', f));
 const ORT = `http://127.0.0.1:${server.address().port}`;
@@ -61,6 +82,34 @@ await seite.route('**/api/freigabe', async (route) => {
   const körper = JSON.parse(route.request().postData() ?? '{}');
   if (körper.aktion === 'liste') {
     return route.fulfill({ json: { listen: [LISTE], datum: DATUM } });
+  }
+  // ⚠ Das Archiv („Gepostet") — mit und OHNE Bild.
+  //
+  // Josef am 21.09.2026: „Wieso wird das nur so angezeigt?" Die Ansicht zeigte
+  // bis dahin reinen Text; die Bildadresse wurde nie durchgereicht.
+  //
+  // Der Haken dabei: Sie ist nicht verlaesslich. `freigeben.mjs` raeumt die
+  // Datei nach dem Veroeffentlichen aus dem Blob — aber nur, wenn kein Kanal
+  // sie mehr braucht. Deshalb hat ein Beitrag mal ein Bild und mal keines,
+  // und BEIDES ist richtig. Die Attrappe deckt daher drei Faelle ab:
+  // gueltige Adresse, tote Adresse (aufgeraeumt), gar keine Adresse.
+  if (körper.aktion === 'archiv') {
+    return route.fulfill({ json: {
+      von: '2026-09-01', bis: DATUM,
+      beitraege: [
+        { datum: DATUM, app: 'swaply', name: 'Swaply', datei: 'mit-bild.jpg',
+          text: 'Beitrag mit Bild', istVideo: false,
+          url: `${ORT}/bild.jpg`,
+          kanaele: [{ kanal: 'facebook', stand: 'veroeffentlicht' }] },
+        { datum: DATUM, app: 'swaply', name: 'Swaply', datei: 'aufgeraeumt.jpg',
+          text: 'Bild ist schon weg', istVideo: false,
+          url: `${ORT}/gibtsnicht.jpg`,
+          kanaele: [{ kanal: 'instagram', stand: 'veroeffentlicht' }] },
+        { datum: DATUM, app: 'swaply', name: 'Swaply', datei: 'clip.mp4',
+          text: 'Ein Reel', istVideo: true, url: null,
+          kanaele: [{ kanal: 'facebook', stand: 'veroeffentlicht' }] },
+      ],
+    } });
   }
   // facebook / veroeffentlichen: so tun, als sei der Lauf gestartet
   return route.fulfill({ json: { ok: true } });
@@ -158,6 +207,31 @@ pruefe('Versuch ist vermerkt', vermerkt !== null, String(vermerkt));
 
 const fristen = await seite.evaluate(() => window.__fristen);
 pruefe('das Nachladen ist geplant', fristen.includes(60000), `Fristen: ${fristen.join(', ') || '(keine)'}`);
+
+// --- Das Archiv: zeigt es die Bilder, und vertraegt es die fehlenden? -------
+await seite.click('#archiv-an');
+await seite.waitForFunction(() => document.body.innerText.includes('Gepostet'));
+// Dem Browser Zeit geben, die tote Adresse abzulehnen — `onerror` kommt
+// asynchron, und ohne diese Pause misst die Probe den Zustand davor.
+await seite.waitForTimeout(600);
+
+const bilder = await seite.$$eval('#liste img', (xs) => xs.map((x) => x.getAttribute('src')));
+pruefe('Archiv zeigt das Bild, wo es noch eines gibt',
+  bilder.some((s) => (s ?? '').endsWith('/bild.jpg')), bilder.join(', ') || '(keine)');
+
+// ⚠ DIE WICHTIGSTE PROBE. Ein aufgeraeumtes Bild ist kein Fehler, sondern der
+// Normalfall fuer einen fertig veroeffentlichten Beitrag. Es darf kein
+// kaputtes Bildsymbol stehenbleiben.
+pruefe('eine tote Adresse hinterlaesst KEIN kaputtes Bildsymbol',
+  !bilder.some((s) => (s ?? '').includes('gibtsnicht')), bilder.join(', ') || '(keine)');
+
+pruefe('ein Reel bekommt gar kein Vorschaubild',
+  bilder.length === 1, `${bilder.length} Bild(er): ${bilder.join(', ')}`);
+
+const archivText = await seite.innerText('#liste');
+pruefe('alle drei Beitraege stehen trotzdem in der Liste',
+  ['Beitrag mit Bild', 'Bild ist schon weg', 'Ein Reel'].every((s) => archivText.includes(s)),
+  archivText.slice(0, 120));
 
 await browser.close();
 server.close();

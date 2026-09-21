@@ -755,6 +755,27 @@ async function archivLaden(tage = 30) {
       zeile.append(el('strong', null, b.name || b.app));
       zeile.append(el('span', 'leise', b.istVideo ? 'Reel' : 'Bild'));
       karte.append(zeile);
+
+      // ⚠ Das Vorschaubild, und warum es verschwinden DARF.
+      //
+      // Nach dem Veröffentlichen räumt `freigeben.mjs` die Datei aus dem Blob
+      // — aber nur, wenn kein Kanal sie mehr braucht. Ein Beitrag, der auf
+      // Facebook raus ist und bei Instagram noch wartet, hat sein Bild noch;
+      // einer, der überall durch ist, nicht mehr.
+      //
+      // Deshalb KEIN Platzhalter und kein „Bild fehlt": Ein aufgeräumtes Bild
+      // ist kein Fehler, sondern der Normalfall für einen fertigen Beitrag.
+      // Die Karte lässt die Zeile dann einfach weg (`onerror`), statt das
+      // kaputte Bildsymbol des Browsers zu zeigen.
+      if (b.url && !b.istVideo) {
+        const bild = el('img');
+        bild.src = b.url;
+        bild.alt = '';
+        bild.loading = 'lazy';
+        bild.style.cssText = 'width:100%;border-radius:12px;margin:8px 0;display:block';
+        bild.onerror = () => bild.remove();
+        karte.append(bild);
+      }
       if (b.text) {
         const t = el('p', null, b.text.split('\n')[0].slice(0, 160));
         t.style.margin = '6px 0';

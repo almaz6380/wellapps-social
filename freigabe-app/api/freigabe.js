@@ -206,6 +206,22 @@ export default async function handler(req, res) {
           raus.push({
             datum: l.datum, app: l.app, name: l.name,
             datei: p.datei, text: p.text, istVideo: p.istVideo === true,
+            // ⚠ Die Bildadresse faehrt mit, aber sie ist NICHT verlaesslich
+            // (Josef, 21.09.2026: „Wieso wird das nur so angezeigt?").
+            //
+            // Das Archiv zeigte nur Text — weil ich sie nie durchgereicht
+            // habe, nicht aus einem technischen Grund. Der Grund kommt erst
+            // jetzt: `freigeben.mjs` und `facebook-posten.mjs` rufen nach dem
+            // Veroeffentlichen `aufraeumen()` und loeschen die Datei aus dem
+            // Blob — allerdings nur, wenn KEIN Kanal sie mehr braucht
+            // (`nochGebraucht`). Gemessen am 21.09. an einem Beitrag vom
+            // 20.09.: Facebook war raus, Instagram stand noch auf „wartet",
+            // die Datei lag noch da (HTTP 200).
+            //
+            // Also: mal ist das Bild da, mal nicht, und beides ist richtig so.
+            // Die Seite muss den fehlenden Fall vertragen, statt ein kaputtes
+            // Bildsymbol zu zeigen.
+            url: p.url ?? null,
             kanaele,
           });
         }
