@@ -1072,24 +1072,6 @@
       "sprache": "de"
     },
     {
-      "app": "fullrep",
-      "datum": "2026-09-21",
-      "winkel": "uebung-karte",
-      "medium": "bild",
-      "schluessel": "uebung",
-      "inhalt": "seed87067",
-      "sprache": "de"
-    },
-    {
-      "app": "fullrep",
-      "datum": "2026-09-21",
-      "winkel": "naehrstoff",
-      "medium": "bild",
-      "schluessel": "wissensthema",
-      "inhalt": "seed26514",
-      "sprache": "de"
-    },
-    {
       "app": "swaply",
       "datum": "2026-09-21",
       "winkel": "ausloeser",
@@ -1153,21 +1135,30 @@
       "sprache": "de"
     },
     {
-      "app": "fullrep",
-      "datum": "2026-09-21",
-      "winkel": "app-schau-reel",
-      "medium": "reel",
-      "schluessel": "bildschirm",
-      "inhalt": "seed63898",
-      "sprache": "de"
-    },
-    {
       "app": "swaply",
       "datum": "2026-09-21",
       "winkel": "app-schau-reel",
       "medium": "reel",
       "schluessel": "bildschirm",
       "inhalt": "seed30340",
+      "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-21",
+      "winkel": "uebung-karte",
+      "medium": "bild",
+      "schluessel": "uebung",
+      "inhalt": "seed87067",
+      "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-21",
+      "winkel": "naehrstoff",
+      "medium": "bild",
+      "schluessel": "wissensthema",
+      "inhalt": "seed26514",
       "sprache": "de"
     }
   ]
