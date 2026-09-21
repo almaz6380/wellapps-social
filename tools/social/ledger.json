@@ -1124,6 +1124,51 @@
       "schluessel": "fragen-ids",
       "inhalt": "seed60248",
       "sprache": "de"
+    },
+    {
+      "app": "anigosha",
+      "datum": "2026-09-21",
+      "winkel": "app-schau-reel",
+      "medium": "reel",
+      "schluessel": "bildschirm",
+      "inhalt": "seed63842",
+      "sprache": "de"
+    },
+    {
+      "app": "mahjong",
+      "datum": "2026-09-21",
+      "winkel": "figur-des-tages",
+      "medium": "reel",
+      "schluessel": "figur",
+      "inhalt": "seed90326",
+      "sprache": "en"
+    },
+    {
+      "app": "wellbooked",
+      "datum": "2026-09-21",
+      "winkel": "rechenbeispiel",
+      "medium": "bild",
+      "schluessel": "kennzahl",
+      "inhalt": "seed95519",
+      "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-21",
+      "winkel": "app-schau-reel",
+      "medium": "reel",
+      "schluessel": "bildschirm",
+      "inhalt": "seed63898",
+      "sprache": "de"
+    },
+    {
+      "app": "swaply",
+      "datum": "2026-09-21",
+      "winkel": "app-schau-reel",
+      "medium": "reel",
+      "schluessel": "bildschirm",
+      "inhalt": "seed30340",
+      "sprache": "de"
     }
   ]
 }
