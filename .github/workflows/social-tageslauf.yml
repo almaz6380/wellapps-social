@@ -52,6 +52,25 @@ on:
         description: 'Nur diese Kanaele (facebook,tiktok,instagram) — leer = alle. Fuer das Nachholen eines einzelnen'
         type: string
         required: false
+      # ⚠ Der Ausweg aus der Doppel-Sperre (22.09.2026). `posten.mjs`
+      # ueberspringt seit diesem Tag, was heute schon im TikTok-Posteingang
+      # liegt — sonst legt jeder Lauf einen zweiten Entwurf daneben, und jeder
+      # zaehlt auf `spam_risk_too_many_pending_share`.
+      #
+      # Gebraucht wird die Fahne fuer genau einen Fall: Jemand hat sein
+      # Postfach in der TikTok-App geleert und will die Beitraege wiederhaben.
+      # Fuer die Merkliste liegen sie dann noch drin.
+      #
+      # ⚠ SIE GEHT NICHT UEBER steps.plan.outputs, und das ist Absicht. Der
+      # Planungsschritt setzt die Vorgaben fuer den ZEITPLAN. Beim Lauf um
+      # 05:00 ist `inputs.erzwingen` leer, leer ist nicht `ja`, und damit ist
+      # die Sperre dort zwangslaeufig aktiv. Ein Zeitplan, der jeden Morgen
+      # erzwingt, haette die Sperre nie gehabt.
+      erzwingen:
+        description: 'ja = auch senden, was heute schon im TikTok-Posteingang liegt (nach dem Leeren des Postfachs)'
+        type: choice
+        options: [nein, ja]
+        default: nein
       zweige:
         description: 'Andere Zweige der App-Repos, z. B. swaply=claude/xy — leer = Standardzweig'
         type: string
@@ -479,6 +498,10 @@ jobs:
           DATUM: ${{ steps.plan.outputs.datum }}
           KANAELE: ${{ steps.plan.outputs.kanaele }}
           MODUS: ${{ steps.plan.outputs.modus }}
+          # ⚠ Direkt aus `inputs`, NICHT aus steps.plan.outputs — siehe den
+          # Kommentar bei der Eingabe. Beim Zeitplan ist der Wert leer, und
+          # leer ist nicht `ja`: Die Sperre bleibt dort aktiv.
+          ERZWINGEN: ${{ inputs.erzwingen }}
         run: |
           DATUM_ARG=""
           [ -n "$DATUM" ] && DATUM_ARG="--datum $DATUM"
