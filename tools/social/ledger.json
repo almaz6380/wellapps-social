@@ -1412,6 +1412,24 @@
       "schluessel": "bildschirm",
       "inhalt": "seed25435",
       "sprache": "de"
+    },
+    {
+      "app": "mahjong",
+      "datum": "2026-09-22",
+      "winkel": "paar",
+      "medium": "reel",
+      "schluessel": "level",
+      "inhalt": "seed59160",
+      "sprache": "en"
+    },
+    {
+      "app": "mahjong",
+      "datum": "2026-09-22",
+      "winkel": "paar-standbild",
+      "medium": "bild",
+      "schluessel": "level",
+      "inhalt": "seed5067",
+      "sprache": "en"
     }
   ]
 }
