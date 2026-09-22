@@ -266,6 +266,67 @@ geposteter Beitrag wieder offen, und TikTok hat gegen Doppelposts keine Sperre).
 **3 Beiträge eine `publish_id` und 82 keine.** Die 82 stammen von vor dem 20.09.2026
 und bleiben für immer unbekannt.
 
+### ⚠ `spam_risk_too_many_pending_share` — TikTok macht zu (22.09.2026)
+
+Am 22.09. hat TikTok **jeden** Upload abgewiesen, in zwei Ausprägungen desselben
+Fehlers:
+
+```
+400  spam_risk_too_many_pending_share   beim Video-init
+403  spam_risk_too_many_pending_share   beim Foto-Posteingang
+```
+
+**Die Messreihe — sie schließt das Naheliegende aus:**
+
+| Zeit | Reel | Foto/Karussell |
+|---|---|---|
+| 10:32 | ✓ Posteingang | ✗ 403 |
+| *Josef leert die Posteingänge* | | |
+| 10:50 | ✗ 400 | ✗ 403 |
+| 12:53 (zwei Stunden später) | ✗ 400 | ✗ 403 |
+
+Es liegt **nicht** am Karussell und nicht am neuen Rezeptformat: Das Reel war
+unverändert und ging um 10:32 noch durch. Und es wurde nach dem Leeren
+schlechter, nicht besser.
+
+**Was der Abfragelauf desselben Tages gezählt hat** (`SCHREIBEN=nein`, 14 Tage,
+alle fünf):
+
+| App | `SEND_TO_USER_INBOX` | `PUBLISH_COMPLETE` |
+|---|---|---|
+| anigosha | 8 | 3 |
+| wellbooked | 7 | 1 |
+| mahjong | 6 | 1 |
+| swaply | 6 | 1 |
+| **fullrep** | **5** | 0 |
+| **gesamt** | **32** | **6** |
+
+⚠ **FullRep hat die WENIGSTEN offenen und wird trotzdem abgewiesen.** Das spricht
+gegen eine Grenze je Konto. Die beste Erklärung — ausdrücklich eine **Vermutung**,
+nicht gemessen: Alle fünf Kanäle hängen an **einem** `TIKTOK_CLIENT_KEY` (App
+„WELLapps Social", siehe `veroeffentlichen/geheimnisse.mjs`). Zählt TikTok je
+Entwickler-App statt je Konto, sind es 32 auf einem Zähler. Wer das bestätigt
+findet, weiß auch die Abhilfe: je Kanal eine eigene Entwickler-App.
+
+⚠ **Zwei Erklärungen sind WIDERLEGT** und stehen hier, damit sie niemand wieder
+ausgräbt:
+
+1. *„Warten hilft, die Sperre läuft ab."* Nach zwei Stunden unverändert.
+2. *„Da wurden Entwürfe gelöscht, nicht der Posteingang abgearbeitet."* Josef hat
+   die Posteingänge geleert. TikTok meldet die Einträge trotzdem weiter als
+   `SEND_TO_USER_INBOX` — Löschen in der App räumt die Statusliste offenbar nicht
+   mit auf.
+
+⚠ **Bei diesem Fehler NICHT wiederholen.** Jeder Versuch ist ein weiterer
+„pending share" auf demselben Client. Am 22.09. sind drei verbraucht worden, und
+der dritte hat nichts gebracht außer einem weiteren Eintrag auf dem Zähler.
+
+**Merksatz:** Unsere Merkliste sagt nur, was WIR hochgeladen haben. Was TikTok
+davon noch als offen führt, sagt allein der Abfragelauf — und für die Sperre
+zählt seine Zahl, nicht unsere. Am 22.09. standen in den Merklisten 94 Beiträge
+auf „im Posteingang"; TikTok kannte davon 38, und 32 waren wirklich offen. Wer
+die 94 für die Ursache hält, sucht an der falschen Stelle.
+
 ### ⚠ Der Zeitplan war acht Tage tot — an EINEM Anführungszeichen (18.09.2026)
 
 Josef sah in der Freigabe-App nichts und fragte nach. Gemessen statt vermutet:
