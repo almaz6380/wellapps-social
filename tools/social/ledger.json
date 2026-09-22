@@ -1394,6 +1394,24 @@
       "schluessel": "rezept",
       "inhalt": "seed60327",
       "sprache": "de"
+    },
+    {
+      "app": "anigosha",
+      "datum": "2026-09-22",
+      "winkel": "app-schau-reel",
+      "medium": "reel",
+      "schluessel": "bildschirm",
+      "inhalt": "seed25435",
+      "sprache": "de"
+    },
+    {
+      "app": "anigosha",
+      "datum": "2026-09-22",
+      "winkel": "app-schau",
+      "medium": "bild",
+      "schluessel": "bildschirm",
+      "inhalt": "seed25435",
+      "sprache": "de"
     }
   ]
 }
