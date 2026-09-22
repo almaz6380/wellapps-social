@@ -14,7 +14,9 @@
       "android": true
     },
     "linkInBio": "anigosha.vercel.app/get",
-    "sprachen": ["de"],
+    "sprachen": [
+      "de"
+    ],
     "kanaele": [
       "tiktok",
       "instagram",
@@ -32,7 +34,8 @@
       "nur_typografie": true,
       "verbotene_medien": "Bilder erkennbarer Anime-Figuren, auch KI-erzeugte — Takedown-Risiko fuer das ganze Entwicklerkonto",
       "store_link_in_caption": false
-    }
+    },
+    "figur": "junge.png"
   },
   "mahjong": {
     "name": "Mahjong Royale",
@@ -48,7 +51,9 @@
       "android": true
     },
     "linkInBio": "mahjong-app-plum.vercel.app/links",
-    "sprachen": ["en"],
+    "sprachen": [
+      "en"
+    ],
     "kanaele": [
       "tiktok",
       "instagram",
@@ -84,7 +89,9 @@
       "android": true
     },
     "linkInBio": "wellbooked.at",
-    "sprachen": ["de"],
+    "sprachen": [
+      "de"
+    ],
     "kanaele": [
       "instagram",
       "facebook",
@@ -125,7 +132,9 @@
       "android": true
     },
     "linkInBio": "my-peak.vercel.app",
-    "sprachen": ["de"],
+    "sprachen": [
+      "de"
+    ],
     "kanaele": [
       "tiktok",
       "facebook",
@@ -146,7 +155,8 @@
       "store_link_in_caption": false,
       "_quellen_entfallen": "Quellenangaben stehen nicht mehr in Social-Media-Beitraegen. Apples 1.4.1-Ablehnung vom 29.07.2026 betraf medizinische Inhalte IN DER APP; dort (References.jsx) bleiben sie sichtbar. Josefs Entscheidung vom 29.08.2026.",
       "_bildquelle_offen": "Die Uebungsfotos aus public/exercise-demos/ gehen NICHT in Werbung. Geprueft am 30.08.2026: free-exercise-db und die Quelle davor (wrkout/exercises.json) erklaeren beide die Unlicense, nennen aber nirgends die Herkunft der Fotos; die Dateien tragen kein Copyright-EXIF; die Issues #2 und #12 stellen genau diese Frage und sind seit Jahren unbeantwortet. Eine Unlicense-Erklaerung des Weiterverteilers ist keine Rechtekette. In der App bleiben die Fotos. Fuer Social liegt FOTO_BEREICHE in mypeak/scripts/social-daten.mjs leer — die Posts laufen typografisch. Ersatzquelle: store-assets/social/fotos/ mit HERKUNFT.md je Datei."
-    }
+    },
+    "figur": "trainer.png"
   },
   "swaply": {
     "name": "Swaply",
@@ -162,7 +172,9 @@
       "android": true
     },
     "linkInBio": "getswaply.vercel.app/app",
-    "sprachen": ["de"],
+    "sprachen": [
+      "de"
+    ],
     "kanaele": [
       "tiktok",
       "facebook",
@@ -180,7 +192,8 @@
       "verbotene_medien": "keine Diagnosen, keine Therapieversprechen, keine Suchtbehandlung — Swaply ist ein Gewohnheits-Werkzeug, kein Medizinprodukt. Auch keine Vorher-Nachher-Behauptungen ueber Menschen.",
       "_ton": "Sachlich und ohne Schuldzuweisung. Die Zielgruppe hoert genug davon, dass sie sich zusammenreissen soll.",
       "_nur_bilder": "Es gibt (noch) keinen Reel-Generator. ideen/swaply.json fuehrt nur medium: bild — wer Reels will, baut erst scripts/post-reel.mjs und ergaenzt dann die Weiche in motoren.mjs."
-    }
+    },
+    "figur": "begleiter.png"
   },
   "_meta_ids": "Seiten- und Instagram-IDs sind OEFFENTLICH (jede Facebook-Seite zeigt ihre ID) und stehen deshalb hier statt in den Secrets — das spart zehn Handy-Eingaben. Geheim ist NUR der Seiten-Token (FB_SEITEN_TOKEN_<APP>). Erhoben am 03.09.2026 ueber GET /<Seiten-ID>?fields=name,instagram_business_account mit dem WELLapps-Token; die FullRep-Seite ist „FullRep – Fitness, Supplemente und Nutrition\" (1245653821967923), NICHT die aeltere „FullRepapp\" (1336912066163023).",
   "_linkInBio": "Die Landeseite, die seit 18.09.2026 in JEDER Beschreibung steht (Josefs Regel). Bewusst NICHT die rohen Store-Adressen: eine kurze Domain kann man sich merken, sie erkennt die Plattform des Lesers und sie ueberlebt jeden Store-Umbau. Angehaengt wird sie zentral in beschreibung.mjs; \"linkWort\" aendert nur die Anrede davor (Vorgabe \"Hier laden\" / \"Get it here\").",

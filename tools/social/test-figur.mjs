@@ -27,6 +27,9 @@
 // abgeschriebene Zweitfassung.
 
 import { figurArgs, aufruf } from './motoren.mjs';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
+
 import { ladeApps } from './waehlen.mjs';
 
 let gut = 0;
@@ -83,8 +86,13 @@ const reel = (format) => ({ ...bild(format), medium: 'reel' });
 // zweimal auf einer Karte, einmal blass hinten und einmal scharf am Rand.
 {
   const apps = ladeApps();
+  // ⚠ Den Fall „ohne Figur" AUSDRUECKLICH bauen, nicht aus apps.json nehmen.
+  // Seit dem 22.09.2026 steht dort eine Figur; die Probe haette sonst nur
+  // geprueft, was gerade eingetragen ist, statt was die Weiche tut.
+  const ohneFigur = { ...apps.anigosha };
+  delete ohneFigur.figur;
   const ohne = aufruf({
-    appSchluessel: 'anigosha', app: apps.anigosha, post: bild('zitat-karte'),
+    appSchluessel: 'anigosha', app: ohneFigur, post: bild('zitat-karte'),
     wuerfel: () => 0.5, out: '/tmp/o',
   }).schritte[0].args.map(String);
 
@@ -128,17 +136,35 @@ const reel = (format) => ({ ...bild(format), medium: 'reel' });
     s.join(' ').includes('--figur begleiter.png'), s.join(' '));
 }
 
-// --- 7. Der Stand von heute -------------------------------------------------
+// --- 7. Was eingetragen ist, muss auch dort liegen ---------------------------
 //
-// ⚠ Diese Probe faellt um, sobald jemand `figur` in apps.json eintraegt —
-// und genau dann MUSS die Datei auch wirklich im App-Repo liegen. Sie ist die
-// Erinnerung daran, beides gemeinsam zu tun.
+// ⚠ DIE PROBE, DIE EINEN ROTEN TAGESLAUF VERHINDERT. Ein `figur`-Eintrag ohne
+// Datei laesst den Generator abbrechen — und zwar bei JEDER Bildkarte dieser
+// App, im selben Durchgang wie die vier anderen. Der Fehler ist statisch
+// pruefbar, also wird er hier geprueft und nicht im Lauf entdeckt.
+//
+// Bis zum 22.09.2026 stand hier die umgekehrte Probe („noch keine Figur
+// scharfgeschaltet"). Sie war die Erinnerung, Eintrag und Datei gemeinsam zu
+// machen, und hat ihren Zweck an dem Tag erfuellt.
 {
   const apps = ladeApps();
-  const eingetragen = ['anigosha', 'fullrep', 'swaply'].filter((k) => apps[k].figur);
-  pruefe('Heute ist noch keine Figur scharfgeschaltet (Josef erzeugt die Bilder)',
-    eingetragen.length === 0,
-    eingetragen.length ? `eingetragen: ${eingetragen.join(', ')} — liegen die PNGs wirklich da?` : '—');
+  const ORT = {
+    anigosha: 'store-assets/social/figuren',
+    fullrep: 'store-assets/social/figuren',
+    swaply: 'marketing/social/figuren',
+  };
+  const fehlend = [];
+  for (const [k, ordner] of Object.entries(ORT)) {
+    const datei = apps[k]?.figur;
+    if (!datei) continue;
+    if (!existsSync(join(apps[k].pfad, ordner, datei))) fehlend.push(`${k}/${datei}`);
+  }
+  pruefe('⚠ Jede eingetragene Figur liegt wirklich im App-Repo',
+    fehlend.length === 0, fehlend.length ? `fehlt: ${fehlend.join(', ')}` : '—');
+
+  const scharf = Object.keys(ORT).filter((k) => apps[k]?.figur);
+  pruefe('Die drei Figuren sind scharfgeschaltet',
+    scharf.length === 3, scharf.join(', ') || 'keine');
 }
 
 console.log(`\n${gut} von ${gut + schlecht.length} Proben gruen.`);
