@@ -1376,6 +1376,24 @@
       "schluessel": "aussage",
       "inhalt": "seed74821",
       "sprache": "de"
+    },
+    {
+      "app": "wellbooked",
+      "datum": "2026-09-22",
+      "winkel": "bauchbinde",
+      "medium": "reel",
+      "schluessel": "aussage",
+      "inhalt": "seed49606",
+      "sprache": "de"
+    },
+    {
+      "app": "wellbooked",
+      "datum": "2026-09-22",
+      "winkel": "anruf",
+      "medium": "bild",
+      "schluessel": "serie",
+      "inhalt": "seed84364",
+      "sprache": "de"
     }
   ]
 }
