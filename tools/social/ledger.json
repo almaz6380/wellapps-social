@@ -1378,24 +1378,6 @@
       "sprache": "de"
     },
     {
-      "app": "fullrep",
-      "datum": "2026-09-22",
-      "winkel": "mythos-check",
-      "medium": "reel",
-      "schluessel": "wissensthema",
-      "inhalt": "seed18113",
-      "sprache": "de"
-    },
-    {
-      "app": "fullrep",
-      "datum": "2026-09-22",
-      "winkel": "rezept-karte",
-      "medium": "bild",
-      "schluessel": "rezept",
-      "inhalt": "seed60327",
-      "sprache": "de"
-    },
-    {
       "app": "anigosha",
       "datum": "2026-09-22",
       "winkel": "app-schau-reel",
@@ -1430,6 +1412,24 @@
       "schluessel": "level",
       "inhalt": "seed5067",
       "sprache": "en"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-22",
+      "winkel": "mythos-check",
+      "medium": "reel",
+      "schluessel": "wissensthema",
+      "inhalt": "seed18113",
+      "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-22",
+      "winkel": "rezept-karte",
+      "medium": "bild",
+      "schluessel": "rezept",
+      "inhalt": "seed60327",
+      "sprache": "de"
     }
   ]
 }
