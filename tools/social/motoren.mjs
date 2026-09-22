@@ -83,8 +83,33 @@ const mahjongLevel = (winkel, wuerfel) => {
 // ⚠ NUR BEI BILDERN, und nie bei der App-Schau: Die zeigt die App selbst,
 // dort steht keine Figur daneben. Beide Generatoren brechen sonst ab — die
 // Sperre steht dort, damit sie auch beim Aufruf von Hand greift.
+/**
+ * Formate, die KEINE Randfigur tragen — und je einen Grund dafuer.
+ *
+ * ⚠ Eine ausdrueckliche Liste, keine Ableitung aus „alles ausser app-schau".
+ * Bis zum 22.09.2026 stand die Regel nur implizit da, und dadurch bekam auch
+ * die Rezeptkarte eine Figur, ohne dass das je jemand entschieden haette.
+ *
+ *   app-schau    Dort zeigt die Karte die APP selbst — drei Bildschirme
+ *                tragen sie. Beide Generatoren brechen ab, wenn daneben eine
+ *                Figur steht; die Sperre liegt dort, damit sie auch beim
+ *                Aufruf von Hand greift.
+ *
+ *   rezept-karte Dort ist das GERICHT das Motiv. Seit dem 22.09. liegt hinter
+ *                jeder Rezeptkarte ein Foto des fertigen Essens, und die Figur
+ *                stand mitten darin — zwei Motive, die um dieselbe Flaeche
+ *                streiten. Josef am selben Abend: „Essensposts ohne die figur.
+ *                Die figur bei wissensposts einfügen."
+ *
+ * ⚠ Das Umgekehrte braucht KEINEN Eintrag: Wissens-, Studien-, Peptid- und
+ * Naehrstoffkarten tragen die Figur, weil sie nicht in dieser Liste stehen.
+ * Genau so ist die Regel gemeint — die Figur ist der Normalfall, die Ausnahme
+ * begruendet sich.
+ */
+export const OHNE_FIGUR = new Set(['app-schau', 'rezept-karte']);
+
 export function figurArgs(app, post) {
-  if (!app.figur || post.medium !== 'bild' || post.format === 'app-schau') return [];
+  if (!app.figur || post.medium !== 'bild' || OHNE_FIGUR.has(post.format)) return [];
   return ['--figur', app.figur];
 }
 

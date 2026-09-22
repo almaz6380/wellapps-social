@@ -26,7 +26,7 @@
 // ⚠ Geprueft wird die ECHTE `figurArgs` aus motoren.mjs, nicht eine
 // abgeschriebene Zweitfassung.
 
-import { figurArgs, aufruf } from './motoren.mjs';
+import { figurArgs, aufruf, OHNE_FIGUR } from './motoren.mjs';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -67,6 +67,34 @@ const reel = (format) => ({ ...bild(format), medium: 'reel' });
   pruefe('⚠ app-schau bekommt NIE eine Figur',
     figurArgs({ figur: 'junge.png' }, bild('app-schau')).length === 0,
     JSON.stringify(figurArgs({ figur: 'junge.png' }, bild('app-schau'))));
+}
+
+// --- 3b. Essen ohne Figur, Wissen mit (22.09.2026) --------------------------
+//
+// Josef: „Essensposts ohne die figur. Die figur bei wissensposts einfügen."
+//
+// Seit dem 22.09. liegt hinter jeder Rezeptkarte ein Foto des fertigen
+// Gerichts. Die Figur stand mitten darin — zwei Motive um dieselbe Flaeche.
+//
+// ⚠ BEIDE RICHTUNGEN, und die zweite ist die wichtigere. Die Figur von der
+// Rezeptkarte zu nehmen ist eine Zeile; sie versehentlich ueberall zu nehmen
+// auch. Ohne die Gegenprobe faellt das erst im Feed auf — an einer
+// Wissenskarte, auf der ploetzlich niemand mehr steht.
+{
+  pruefe('⚠ rezept-karte bekommt KEINE Figur — dort ist das Gericht das Motiv',
+    figurArgs({ figur: 'trainer.png' }, bild('rezept-karte')).length === 0,
+    JSON.stringify(figurArgs({ figur: 'trainer.png' }, bild('rezept-karte'))));
+
+  // Die vier Bildkarten, die bei FullRep Wissen zeigen. Sie stehen NICHT in
+  // OHNE_FIGUR — genau das ist hier die Aussage.
+  for (const f of ['studien-fakt', 'wissens-karte', 'peptid-karte', 'naehrstoff']) {
+    pruefe(`${f} traegt die Figur`,
+      figurArgs({ figur: 'trainer.png' }, bild(f)).join(' ') === '--figur trainer.png',
+      figurArgs({ figur: 'trainer.png' }, bild(f)).join(' ') || '(nichts)');
+  }
+
+  pruefe('Die Ausnahmeliste ist genau {app-schau, rezept-karte}',
+    [...OHNE_FIGUR].sort().join() === 'app-schau,rezept-karte', [...OHNE_FIGUR].join());
 }
 
 // --- 4. Nie an ein Reel ------------------------------------------------------
