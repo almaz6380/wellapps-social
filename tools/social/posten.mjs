@@ -50,6 +50,7 @@ import { fotosInDenPosteingang } from './folien-video.mjs';
 import { hochladen, merklisteAblegen, merklistenLesen } from './veroeffentlichen/blob.mjs';
 import { containerAnlegen, karussellAnlegen, aufBereitWarten, veroeffentlichen as igVeroeffentlichen }
   from './veroeffentlichen/instagram.mjs';
+import { schonImPosteingang, meldung as doppelMeldung } from './tiktok-schon-drin.mjs';
 import { riechtNachBeiblatt } from './vorflug.mjs';
 import { beschreibungBauen } from './beschreibung.mjs';
 import { folienFinden } from './folien.mjs';
@@ -82,6 +83,15 @@ const NUR_KANAELE = (wert('kanal', '') || '')
 // Dieselbe Sorte Schutz wie --kanal, nur auf der anderen Achse: dort ein
 // Kanal von dreien, hier ein Beitrag von mehreren.
 const NUR_SEED = wert('seed', null);
+
+// ⚠ Schickt einen Beitrag auch dann zu TikTok, wenn er dort heute schon liegt.
+//
+// Gebraucht fuer den einen Fall, in dem das richtig ist: Der Entwurf ist im
+// Posteingang verlorengegangen (von Hand geloescht, in der App nicht mehr zu
+// finden) und soll wirklich noch einmal hin. Ohne diesen Ausweg wuerde jemand
+// im Ernstfall die Sperre im Code auskommentieren — und sie danach drin
+// lassen.
+const ERZWINGEN = (process.env.ERZWINGEN || '').trim().toLowerCase() === 'ja' || hat('trotzdem');
 
 // --- Wie weit die Automatik geht --------------------------------------------
 //
@@ -544,7 +554,32 @@ async function abgelegt(spur, p, z) {
   return { ...erste, urls: spur.urls, folienZahl: folien.length };
 }
 
-let fertig = 0, offen = 0;
+// --- Was heute schon bei TikTok liegt ---------------------------------------
+//
+// ⚠ EINMAL VOR DEM VERSAND GELESEN, nicht je Beitrag. Die Merklisten liegen
+// im Blob; sie je Beitrag zu holen waere derselbe Abruf fuenfmal und macht den
+// Lauf von der Netzlaune abhaengig, genau waehrend er verschickt.
+//
+// ⚠ Und ein Fehlschlag hier darf den Versand NICHT aufhalten. Ist der Blob
+// nicht erreichbar, wissen wir nur nicht, was schon drin liegt — das ist
+// genau der Zustand von vor dem 22.09.2026 und war monatelang der Normalfall.
+// Lieber ein Doppel-Entwurf als ein Tageslauf, der an einer Vorsichtsmassnahme
+// scheitert.
+const schonDrin = new Map();
+if (!ERZWINGEN) {
+  for (const app of new Set(posten.map((p) => p.app))) {
+    try {
+      const listen = await merklistenLesen({ datum: DATUM, token: zugaenge(app).blobToken });
+      const l = listen.find((x) => x.app === app);
+      if (l) schonDrin.set(app, l);
+    } catch (e) {
+      console.log(`   (Merkliste fuer ${app} nicht lesbar: ${e.message} — `
+        + 'die Doppel-Sperre greift fuer diese App nicht)');
+    }
+  }
+}
+
+let fertig = 0, offen = 0, uebersprungen = 0;
 for (const p of posten) {
   console.log(`━━ ${p.name} · ${basename(p.medium)}`);
   const istVideo = /\.(mp4|mov)$/i.test(p.medium);
@@ -593,6 +628,40 @@ for (const p of posten) {
         }
 
       } else if (kanal === 'tiktok') {
+        // ⚠ ERST NACHSEHEN, OB ER HEUTE SCHON DRIN LIEGT (22.09.2026).
+        //
+        // Josef: „Wieso liegt immer jeder post mehrmals im tiktok postfach und
+        // wieso kommt er wieder wenn ich ihn vom postfach lösche?"
+        //
+        // Weil es diese Probe nicht gab. Die alte Merkliste wurde erst NACH
+        // dem Versand gelesen, und nur zum Zusammenfuehren der Anzeige. Am
+        // selben Abend nachgemessen: 19:09 ein Lauf mit `--kanal tiktok`,
+        // 19:16 einer ueber alle Kanaele — dieselbe Karte zweimal im
+        // Posteingang, obwohl beim zweiten Mal `tiktok: posteingang` in der
+        // Merkliste stand.
+        //
+        // ⚠ Und es „kommt nicht wieder": TikTok stellt nichts wieder her. Ein
+        // spaeterer Lauf legt einen NEUEN Entwurf daneben, der genauso
+        // aussieht. Wer seinen Posteingang leert und danach einen Lauf
+        // startet, hat ihn wieder voll.
+        //
+        // ⚠ Jeder dieser Uploads zaehlt auf `spam_risk_too_many_pending_share`
+        // — dieselbe Sperre, die am 22.09. einen halben Tag gekostet hat, und
+        // sie zaehlt ueber ALLE fuenf Apps, weil sie an einem
+        // TIKTOK_CLIENT_KEY haengen.
+        const fund = schonImPosteingang({
+          liste: schonDrin.get(p.app), datei: basename(p.medium),
+        });
+        if (fund) {
+          console.log(`   • tiktok     ${doppelMeldung(fund)}`);
+          uebersprungen += 1;
+          // Den bekannten Stand uebernehmen, sonst faellt er beim
+          // Zusammenfuehren der Merkliste als „nie dagewesen" heraus.
+          spur.kanaele.tiktok = { stand: fund.stand, wann: fund.wann,
+            ...(fund.publishId ? { publishId: fund.publishId } : {}) };
+          continue;
+        }
+
         // ⚠ Bis zum 19.09.2026 stand hier `if (!istVideo) continue` — Bilder
         // wurden uebersprungen, und im Repo stand, TikTok-Fotobeitraege seien
         // „ungeprueft". Das war kein Befund, sondern ein abgebrochener
@@ -964,6 +1033,11 @@ if (nachzutragen.length && process.env.GITHUB_STEP_SUMMARY) {
 
 console.log(ECHT
   ? `${fertig} Beitrag/Beitraege gesendet, ${offen} warten auf die Freigabe.`
+    // ⚠ Die Zahl gehoert in die Schlusszeile, nicht nur in die Einzelmeldungen.
+    // Ein Lauf, der NICHTS gesendet hat, weil schon alles drinliegt, sieht
+    // sonst aus wie einer, der nichts zu tun hatte — und beim naechsten Mal
+    // sucht jemand den Fehler im Waehlen statt hier.
+    + (uebersprungen ? ` ${uebersprungen} lag bei TikTok schon drin.` : '')
   : `Trockenlauf beendet — nichts gesendet. Mit --echt wirklich senden.`);
 
 // ⚠ GANZ ZUM SCHLUSS rot faerben, nicht vorher abbrechen.
