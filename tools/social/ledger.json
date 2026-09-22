@@ -1358,6 +1358,24 @@
       "schluessel": "rezept",
       "inhalt": "seed60327",
       "sprache": "de"
+    },
+    {
+      "app": "wellbooked",
+      "datum": "2026-09-22",
+      "winkel": "last-minute",
+      "medium": "reel",
+      "schluessel": "kategorie",
+      "inhalt": "seed16027",
+      "sprache": "de"
+    },
+    {
+      "app": "wellbooked",
+      "datum": "2026-09-22",
+      "winkel": "regulierte-bereiche",
+      "medium": "bild",
+      "schluessel": "aussage",
+      "inhalt": "seed74821",
+      "sprache": "de"
     }
   ]
 }
