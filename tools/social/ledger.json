@@ -1324,24 +1324,6 @@
       "sprache": "de"
     },
     {
-      "app": "fullrep",
-      "datum": "2026-09-22",
-      "winkel": "mythos-check",
-      "medium": "reel",
-      "schluessel": "wissensthema",
-      "inhalt": "seed18113",
-      "sprache": "de"
-    },
-    {
-      "app": "fullrep",
-      "datum": "2026-09-22",
-      "winkel": "rezept-karte",
-      "medium": "bild",
-      "schluessel": "rezept",
-      "inhalt": "seed60327",
-      "sprache": "de"
-    },
-    {
       "app": "swaply",
       "datum": "2026-09-22",
       "winkel": "notfall-loop",
@@ -1357,6 +1339,24 @@
       "medium": "bild",
       "schluessel": "kategorie",
       "inhalt": "seed63267",
+      "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-22",
+      "winkel": "mythos-check",
+      "medium": "reel",
+      "schluessel": "wissensthema",
+      "inhalt": "seed18113",
+      "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-22",
+      "winkel": "rezept-karte",
+      "medium": "bild",
+      "schluessel": "rezept",
+      "inhalt": "seed60327",
       "sprache": "de"
     }
   ]
