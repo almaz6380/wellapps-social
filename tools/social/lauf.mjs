@@ -145,6 +145,14 @@ function vorflugProbe() {
         tonquelle: 'stille', medienherkunft: 'ki-menschen (Wasserzeichen gesetzt)',
         wasserzeichen: true } },
 
+    { name: 'WELLbooked!-Clip OHNE Menschen braucht KEIN Plaettchen',
+      // Josef, 23.09.2026: „ai wasserzeichen weg wenn keine person sichtbar".
+      // Wortlaut wie im Beiblatt aus make-reel.mjs (clip-reel, menschen: false).
+      app: 'wellbooked', post: { sprache: 'de', medium: 'reel' },
+      texte: { caption: 'WELLbooked! organisiert, du arbeitest.', tonquelle: 'stille',
+        medienherkunft: 'ki-bild (KI-Clip ohne Menschen, kein Plättchen) — aus '
+          + 'wellbooked/docs/social/clips/, Herkunft in HERKUNFT.md' } },
+
     { name: 'Echtes Foto braucht KEIN Wasserzeichen',
       app: 'fullrep', post: { sprache: 'de' },
       texte: { caption: 'Bankdruecken mit der Langhantel.', medienherkunft: 'echtes Foto' } },

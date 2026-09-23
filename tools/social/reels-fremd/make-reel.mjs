@@ -214,7 +214,7 @@ if (MARKE === 'wellbooked' && FORMAT === 'clip-reel') {
   const zielOrdner = resolve(OUT);
   mkdirSync(zielOrdner, { recursive: true });
   const ziel = join(zielOrdner, `${dateiname}.mp4`);
-  const r = await clipReel({ appPfad: APP.pfad, marke: M, wuerfel, ziel, wurzel: WURZEL });
+  const r = await clipReel({ appPfad: APP.pfad, wuerfel, ziel });
 
   writeFileSync(join(zielOrdner, `${dateiname}.txt`), [
     dateiname,
@@ -254,8 +254,14 @@ if (MARKE === 'wellbooked' && FORMAT === 'clip-reel') {
     '• Das Video ist stumm und bleibt es — bei WELLbooked! ist Stille Vorgabe.',
     '  Den Sprechtext sprichst du in der TikTok-App selbst ein oder lässt ihn vorlesen.',
     '',
-    '- Medienherkunft: ki-menschen (Wasserzeichen gesetzt) — KI-Clip aus '
-      + 'wellbooked/docs/social/clips/, Herkunft in HERKUNFT.md',
+    // Josef, 23.09.2026: AI-Plättchen nur, wenn Menschen sichtbar sind.
+    // lauf.mjs liest diese Zeile: „ki-menschen" verlangt in vorflug.mjs das
+    // Wasserzeichen, „ki-bild" nicht.
+    r.menschen
+      ? '- Medienherkunft: ki-menschen (Wasserzeichen gesetzt) — KI-Clip aus '
+        + 'wellbooked/docs/social/clips/, Herkunft in HERKUNFT.md'
+      : '- Medienherkunft: ki-bild (KI-Clip ohne Menschen, kein Plättchen) — aus '
+        + 'wellbooked/docs/social/clips/, Herkunft in HERKUNFT.md',
     '',
   ].join('\n'));
   console.log(`✓ ${dateiname}.mp4  ${r.sekunden.toFixed(1)} s  ${B}×${H}  stumm  (${r.datei})`);
