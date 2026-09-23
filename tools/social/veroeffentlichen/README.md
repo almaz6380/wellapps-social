@@ -304,6 +304,46 @@ Beim Absenden fragt ein Fenster nach einem Grund (120 Zeichen). Eingetragen:
 *„First submission. We publish marketing videos for our own five apps to our
 own five TikTok accounts as drafts."*
 
+**❌ Abgelehnt am 23.09.2026, am selben Tag neu eingereicht.** TikToks
+Begründung betraf nur die Website (eingetragen war inzwischen
+`https://wellapps-freigabe.vercel.app/`, die Freigabe-Seite):
+
+> The app icon submitted in the Basic info does not match the icon displayed
+> on the website. Please ensure the same icon is used consistently across both
+> the TikTok, the website and Browser tab (favicon) … Your externally facing
+> website must be fully developed and cannot be a landing or login page. If it
+> is a login page, you must provide a test account and password in the Apply
+> Reason field.
+
+Behoben in PR #5: Die Seite trägt jetzt das App-Icon als Favicon und als Logo,
+und es gibt einen Prüfzugang (`FREIGABE_PRUEFER_PASSWORT`, siehe
+`freigabe-app/README.md`), der alles zeigt und nichts sendet.
+
+⚠ **Drei Dinge beim Neu-Einreichen, die nicht offensichtlich sind:**
+
+1. **„Return to Draft" leert das App-Icon.** Das Formular meldet danach
+   „This form has 1 error". Das Icon muss neu hochgeladen werden, und zwar
+   dieselbe Datei wie auf der Website.
+2. **„Apply Reason" ist ein Fenster, das erst nach „Submit for review"
+   aufgeht** („Please describe your reason for this submission", 120 Zeichen).
+   Im Formular selbst steht es nirgends. Beim ersten Versuch am 23.09. ist das
+   Fenster offenbar übersehen worden, und die Einreichung ging ohne Passwort
+   raus. Sie wurde zurückgezogen und neu eingereicht. ⚠ Deshalb steht die
+   Test-Anmeldung jetzt an **beiden** Stellen: im Fenster *„Icon now matches
+   site+favicon. Test login: password … (review mode, sends nothing)"* und als
+   Zeile `TEST LOGIN: https://wellapps-freigabe.vercel.app/ - password: …` im
+   Erklärtext (gekürzt auf 944 von 1000 Zeichen).
+3. **Bei einer Überarbeitung will TikTok die Änderung im Erklärtext.** Angehängt:
+   *„Revision: website now shows the same icon and favicon."* (im gekürzten
+   Text enthalten).
+
+⚠ Die beiden Demo-Videos (vom 15.09.) zeigen die Seite noch ohne Logo. TikTok
+hat das nicht beanstandet. Kommt die nächste Ablehnung wegen des Videos, liegt
+es daran.
+
+**Nach TikToks Entscheidung** `FREIGABE_PRUEFER_PASSWORT` in Vercel wieder
+löschen.
+
 **Wenn die Freigabe da ist:** Client Key und Secret der PRODUKTION in die
 Secrets, dann je Konto den Workflow „TikTok-Zugang holen" erneut laufen
 lassen. Die fuenf Sandbox-Refresh-Token gelten in der Produktion NICHT.
