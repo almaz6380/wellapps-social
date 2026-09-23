@@ -53,14 +53,16 @@
       "id": "last-minute",
       "medium": "reel",
       "format": "kategorie-loop",
-      "status": "vorhanden",
+      "status": "pausiert",
       "haken": "Das Alleinstellungsmerkmal: freier Termin heute, guenstiger. 'Too Good To Go fuer Wellness' — verstaendlich in einem Satz",
       "schluessel": "kategorie",
       "zielgruppe": "b2c",
       "sprachen": [
         "de"
       ],
-      "_hinweis": "Reel als Kategorien-Schleife."
+      "_hinweis": "Reel als Kategorien-Schleife.",
+      "_vorher": "vorhanden",
+      "_pausiert": "23.09.2026, Josef: „du sollst auf keine gebiete eingehen … es soll grundsätzlich darum gehen, dass wir den anbietern mitteilen, dass ihnen wellbooked die arbeit und organisation erleichtert“. Kundinnen-Post mit Bereichen bzw. Kundinnen-Sicht — raus aus der Rotation. Zurück: status auf den Wert in _vorher."
     },
     {
       "id": "mythos",
@@ -124,14 +126,16 @@
       "id": "anruf",
       "medium": "bild",
       "format": "anruf",
-      "status": "vorhanden",
+      "status": "pausiert",
       "haken": "Sechs Folien: der Telefontermin, der nie zustande kommt — und der Bruch",
       "schluessel": "serie",
       "zielgruppe": "b2c",
       "sprachen": [
         "de"
       ],
-      "_hinweis": "Erstes echtes Karussell. Die id geht als --format an den Generator — motoren.mjs reicht post.winkel durch, NICHT post.format — und muss deshalb buchstabengleich zum Schluessel in FORMATE in wellbooked/docs/social/post-bild.mjs sein."
+      "_hinweis": "Erstes echtes Karussell. Die id geht als --format an den Generator — motoren.mjs reicht post.winkel durch, NICHT post.format — und muss deshalb buchstabengleich zum Schluessel in FORMATE in wellbooked/docs/social/post-bild.mjs sein.",
+      "_vorher": "vorhanden",
+      "_pausiert": "23.09.2026, Josef: „du sollst auf keine gebiete eingehen … es soll grundsätzlich darum gehen, dass wir den anbietern mitteilen, dass ihnen wellbooked die arbeit und organisation erleichtert“. Kundinnen-Post mit Bereichen bzw. Kundinnen-Sicht — raus aus der Rotation. Zurück: status auf den Wert in _vorher."
     },
     {
       "id": "karussell-blatt",
@@ -215,6 +219,20 @@
       ],
       "_hinweis": "Texte in wellbooked/docs/social/anbieter.json → einwaende[] (8). Nur geprueft:true.",
       "_freigegeben": "23.09.2026, Josef: „alle frei“"
+    },
+    {
+      "id": "entlastung",
+      "medium": "reel",
+      "format": "clip-reel",
+      "status": "vorhanden",
+      "haken": "Bewegtbild-Reel (KI-Clip) mit zwei Sätzen: kein Telefonieren, kein Hin und Her, kein Papierkram — WELLbooked! nimmt Anbieter:innen die Organisation ab.",
+      "schluessel": "entlastung",
+      "zielgruppe": "b2b",
+      "sprachen": [
+        "de"
+      ],
+      "_hinweis": "Seit 23.09.2026 KI-Clips statt Typografie (Josef: „die reel sehen billig aus“). Clips in wellbooked/docs/social/clips/ (6, Herkunft in HERKUNFT.md), Sätze in docs/social/anbieter.json → clips[]. Gebaut in tools/social/reels-fremd/clip-reel.mjs.",
+      "_freigegeben": "23.09.2026, Josef: „ja, ins repo legen und einbauen“"
     }
   ]
 }

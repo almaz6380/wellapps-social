@@ -199,6 +199,61 @@ function wellbookedInhalt() {
   };
 }
 
+// Hashtags für Anbieter-Reels. ⚠ Kein Bereich, keine Region (Josef,
+// 23.09.2026: „du sollst auf keine gebiete eingehen"). Dieselben fünf wie
+// ANBIETER_TAGS in wellbooked/docs/social/post-bild.mjs.
+const ANBIETER_HASHTAGS = '#WELLbooked #Selbstständig #Terminbuchung #Terminplanung #Kleinunternehmen';
+
+// --- Sonderweg: KI-Clip mit zwei Sätzen (23.09.2026) -------------------------
+//
+// Ersetzt das Typografie-Reel für Anbieter:innen — Josef: „die reel sehen
+// billig aus". Eigene Datei, eigener Ablauf, siehe clip-reel.mjs.
+if (MARKE === 'wellbooked' && FORMAT === 'clip-reel') {
+  const { clipReel } = await import('./clip-reel.mjs');
+  const dateiname = NAME ?? `${MARKE}-${FORMAT}-${LANG}-s${SEED}`;
+  const zielOrdner = resolve(OUT);
+  mkdirSync(zielOrdner, { recursive: true });
+  const ziel = join(zielOrdner, `${dateiname}.mp4`);
+  const r = await clipReel({ appPfad: APP.pfad, marke: M, wuerfel, ziel, wurzel: WURZEL });
+
+  writeFileSync(join(zielOrdner, `${dateiname}.txt`), [
+    dateiname,
+    '='.repeat(dateiname.length),
+    '',
+    `Marke: ${M.wortmarke}   Format: ${FORMAT}   Sprache: ${LANG.toUpperCase()}`,
+    `Laenge: ${r.sekunden.toFixed(1)} s   Seed: ${SEED}   Ton: keiner (stumm)   Clip: ${r.datei}`,
+    '',
+    '── CAPTION ZUM KOPIEREN ──────────────────────────────',
+    '',
+    `${r.saetze[0]} ${r.saetze[1]}`,
+    '',
+    'Buchung, Bestätigung, Erinnerung und Zahlung laufen über WELLbooked! – '
+      + 'du konzentrierst dich voll und ganz auf deine Arbeit. Kein Telefonieren, '
+      + 'kein Hin und Her wegen der Terminvereinbarung.',
+    '',
+    `Als Gründungspartner:in: ${r.gratisMonate} Monate ohne Abo und ohne Provision.`,
+    '',
+    'Was kostet dich im Alltag am meisten Zeit – Telefon, Nachrichten oder Papierkram? 👇',
+    '',
+    ANBIETER_HASHTAGS,
+    '',
+    '── LINK ──────────────────────────────────────────────',
+    '',
+    `Gründungspartner:in werden: ${r.ziel}`,
+    '',
+    '── VOR DEM POSTEN ────────────────────────────────────',
+    '',
+    '• Das Video ist stumm und bleibt es — bei WELLbooked! ist Stille Vorgabe.',
+    '',
+    '- Medienherkunft: ki-menschen (Wasserzeichen gesetzt) — KI-Clip aus '
+      + 'wellbooked/docs/social/clips/, Herkunft in HERKUNFT.md',
+    '',
+  ].join('\n'));
+  console.log(`✓ ${dateiname}.mp4  ${r.sekunden.toFixed(1)} s  ${B}×${H}  stumm  (${r.datei})`);
+  console.log(`✓ ${dateiname}.txt`);
+  process.exit(0);
+}
+
 // --- Sonderweg: der echte Kalender (23.09.2026) ------------------------------
 //
 // Kein Typografie-Reel, sondern ein Bildschirmmitschnitt mit Streifen darüber
@@ -231,7 +286,7 @@ if (MARKE === 'wellbooked' && FORMAT === 'kalender-demo') {
     '',
     'Wie planst du deine Termine heute – Buch, Handy oder Kopf? 👇',
     '',
-    '#WELLbooked #Selbstständig #Kosmetikstudio #Massagepraxis #Terminbuchung',
+    ANBIETER_HASHTAGS,
     '',
     '── LINK ──────────────────────────────────────────────',
     '',
