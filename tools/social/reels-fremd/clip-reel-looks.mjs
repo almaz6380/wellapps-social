@@ -32,7 +32,8 @@ import { tmpdir } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
 
-import { lauf, videoSenke } from '../../reels/encode.mjs';
+import { lauf, videoSenke, FFMPEG } from '../../reels/encode.mjs';
+import { execFileSync } from 'node:child_process';
 
 const HIER = dirname(fileURLToPath(import.meta.url));
 const WURZEL = resolve(HIER, '..', '..', '..');
@@ -124,10 +125,10 @@ export const LOOKS = {
 // --- Seite -------------------------------------------------------------------
 //
 // ⚠ Keine Backticks in den Kommentaren innerhalb des Templates.
-function seiteHtml({ look, bilder, dauerClip, satz1, satz2, einspielungen, zusatz, ziel, menschen, etikett }) {
+function seiteHtml({ look, bilder, dauerClip, schluss, satz1, satz2, einspielungen, zusatz, ziel, menschen, etikett }) {
   const L = LOOKS[look];
   const daten = JSON.stringify({
-    bilder, fps: FPS, dauerClip, schluss: SCHLUSS_SEK, satz1, satz2, einspielungen, zusatz, ziel,
+    bilder, fps: FPS, dauerClip, schluss, satz1, satz2, einspielungen, zusatz, ziel,
     licht: L.lichtFarbe, baender: look === 'C',
   });
   return `<!doctype html><html><head><meta charset="utf-8"><style>
@@ -304,12 +305,54 @@ document.fonts.ready.then(() => { window.__bereit = true; });
 </script></body></html>`;
 }
 
+// --- Ton ---------------------------------------------------------------------
+//
+// Stimme und Musik liegen fertig im wellbooked-Repo (docs/social/clips/ton/,
+// einmalig über fal.ai erzeugt). Hier werden sie nur gemischt: Stimme auf
+// −16 LUFS, Musik auf −34 LUFS — rund 18 dB darunter, damit die Stimme klar
+// vorne steht. Die Musik blendet ein und am Ende aus.
+export const STIMME_START = 0.3;   // s nach Beginn
+const STIMME_NACHLAUF = 0.9;       // s Luft nach dem letzten Wort
+
+/** Länge einer Mediendatei in Sekunden, aus ffmpegs Kopfzeile. */
+export function laenge(datei) {
+  let aus = '';
+  try {
+    execFileSync(FFMPEG, ['-hide_banner', '-i', datei], { stdio: ['ignore', 'ignore', 'pipe'] });
+  } catch (e) { aus = String(e.stderr ?? ''); }
+  const m = aus.match(/Duration: (\d+):(\d+):([\d.]+)/);
+  if (!m) throw new Error(`Länge von ${datei} nicht lesbar.`);
+  return Number(m[1]) * 3600 + Number(m[2]) * 60 + Number(m[3]);
+}
+
+// ⚠ In ZWEI Schritten: erst jede Spur einzeln normalisieren, dann mischen.
+// In einem gemeinsamen filter_complex verlor loudnorm am Ende ~0,3 s (sein
+// Vorlaufpuffer wird nicht geleert, wenn amix fertig ist). Die Tonspur war
+// dann kürzer als das Bild, ffmpeg brach wegen `-shortest` vorzeitig ab —
+// und der Renderlauf hing auf einem „drain", der nie kam (23.09.2026).
+async function tonMischen({ stimme, musik, gesamt, ziel, tmp }) {
+  const s = join(tmp, 'stimme.wav');
+  const m = join(tmp, 'musik.wav');
+  const aus = Math.max(0, gesamt - 1.3).toFixed(2);
+  const ms = STIMME_START * 1000;
+  await lauf(['-y', '-i', stimme, '-af',
+    `loudnorm=I=-16:TP=-1.5,aformat=sample_rates=48000:channel_layouts=stereo,adelay=${ms}|${ms}`, s]);
+  await lauf(['-y', '-i', musik, '-af',
+    `atrim=0:${gesamt},asetpts=N/SR/TB,loudnorm=I=-34,aformat=sample_rates=48000:channel_layouts=stereo,`
+      + `afade=t=in:d=0.6,afade=t=out:st=${aus}:d=1.2`, m]);
+  // apad + atrim: die Mischung ist auf die Sekunde so lang wie das Bild.
+  await lauf(['-y', '-i', s, '-i', m, '-filter_complex',
+    `[0:a][1:a]amix=inputs=2:normalize=0:duration=longest,apad=whole_dur=${gesamt},atrim=0:${gesamt}[a]`,
+    '-map', '[a]', ziel]);
+}
+
 /**
  * Rendert ein Clip-Reel im gewünschten Look. Gibt die Dauer in Sekunden zurück.
- * `tonDatei` optional — ohne sie wird stumm kodiert.
+ * `ton` optional ({ stimme, musik }) — ohne ihn wird stumm kodiert. Mit Ton
+ * bleibt die Schlusskarte stehen, bis die Stimme zu Ende gesprochen hat.
  */
 export async function lookRendern({
-  quelle, look, satz1, satz2, einspielungen, zusatz, ziel, datei, menschen, tonDatei = null, etikett = null,
+  quelle, look, satz1, satz2, einspielungen, zusatz, ziel, datei, menschen, ton = null, etikett = null,
 }) {
   if (typeof menschen !== 'boolean') {
     throw new Error(`lookRendern: \`menschen\` muss true oder false sein (war ${menschen}) — `
@@ -324,7 +367,17 @@ export async function lookRendern({
       '-q:v', '3', join(tmp, 'f', '%04d.jpg')]);
     const bilder = readdirSync(join(tmp, 'f')).filter((x) => x.endsWith('.jpg')).sort().map((x) => `f/${x}`);
     const dauerClip = bilder.length / FPS;
-    writeFileSync(join(tmp, 'seite.html'), seiteHtml({ look, bilder, dauerClip, satz1, satz2, einspielungen, zusatz, ziel, menschen, etikett }));
+    let schluss = SCHLUSS_SEK;
+    let tonDatei = null;
+    if (ton) {
+      const ende = STIMME_START + laenge(ton.stimme) + STIMME_NACHLAUF;
+      schluss = Math.max(SCHLUSS_SEK, ende - dauerClip);
+      tonDatei = join(tmp, 'ton.wav');
+      await tonMischen({ stimme: ton.stimme, musik: ton.musik,
+        gesamt: Math.round((dauerClip + schluss) * FPS) / FPS, ziel: tonDatei, tmp });
+    }
+    writeFileSync(join(tmp, 'seite.html'), seiteHtml({
+      look, bilder, dauerClip, schluss, satz1, satz2, einspielungen, zusatz, ziel, menschen, etikett }));
 
     const browser = await chromium.launch(
       process.env.CHROMIUM_PFAD ? { executablePath: process.env.CHROMIUM_PFAD } : {},
@@ -333,15 +386,26 @@ export async function lookRendern({
       const seite = await browser.newPage({ viewport: { width: B, height: H } });
       await seite.goto(pathToFileURL(join(tmp, 'seite.html')).href, { waitUntil: 'load' });
       await seite.waitForFunction('window.__bereit === true', null, { timeout: 20000 });
-      const gesamt = Math.round((dauerClip + SCHLUSS_SEK) * FPS);
+      const gesamt = Math.round((dauerClip + schluss) * FPS);
       const senke = videoSenke({ fps: FPS, ziel: datei, tonDatei });
       for (let n = 0; n < gesamt; n++) {
         await seite.evaluate((i) => window.setFrame(i), n);
         const bild = await seite.screenshot({ type: 'jpeg', quality: 92 });
-        if (!senke.stdin.write(bild)) await new Promise((r) => senke.stdin.once('drain', r));
+        // ⚠ Stirbt ffmpeg, kommt nie wieder ein „drain" — ohne das Rennen gegen
+        // `fertig` hinge der Lauf ewig (23.09.: fünf Minuten ohne Meldung).
+        if (!senke.stdin.write(bild)) {
+          await Promise.race([new Promise((r) => senke.stdin.once('drain', r)), senke.fertig]);
+        }
       }
       senke.stdin.end();
       await senke.fertig;
+      // Nachmessen statt glauben: Endet ffmpeg vorzeitig, fehlen hinten Bilder
+      // — genau das Ende mit Logo und Link.
+      const ist = laenge(datei);
+      if (ist < gesamt / FPS - 0.15) {
+        throw new Error(`Reel ist nur ${ist.toFixed(2)} s lang statt ${(gesamt / FPS).toFixed(2)} s — `
+          + 'ffmpeg hat vorzeitig aufgehört (Tonspur zu kurz?).');
+      }
       return gesamt / FPS;
     } finally {
       await browser.close();
@@ -368,6 +432,11 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
     einspielungen: c.einspielungen ?? ['Neue Buchung · bezahlt ✓', 'Erinnerung verschickt ✓'],
     zusatz: TEXTE.clipSchluss.zusatz.replace('{gratis_monate}', String(GRATIS_MONATE)),
     ziel: ZIEL, datei, menschen: c.menschen,
+    // --ton: Stimme + Musik aus wellbooked/docs/social/clips/ton/ dazumischen.
+    ton: process.argv.includes('--ton') ? {
+      stimme: join(app, 'docs', 'social', 'clips', 'ton', c.datei.replace('.mp4', '-stimme.mp3')),
+      musik: join(app, 'docs', 'social', 'clips', 'ton', 'musik.mp3'),
+    } : null,
     // --etikett: nur für die Vorschau — schreibt „A · Hell & elegant" ins Bild.
     etikett: process.argv.includes('--etikett') ? `${look} · ${LOOKS[look].name}` : null,
   });

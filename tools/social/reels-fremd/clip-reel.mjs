@@ -30,8 +30,13 @@
 // sichtbar"), Beiblatt dann „ki-bild". Fehlt `menschen`, bricht das Reel ab
 // statt zu raten.
 //
-// ⚠ Stumm. Ohne `tonDatei` setzt videoSenke `-an`; die Leitplanke
-// `tonspur-leer` in vorflug.mjs verwirft sonst den ganzen Beitrag.
+// ⚠ MIT Ton: KI-Stimme (Sprechtext des Clips) + KI-Musik, beides einmalig
+// erzeugt und in wellbooked/docs/social/clips/ton/ abgelegt. Das ist die
+// EINZIGE Ausnahme von WELLbooked!s Stille-Regel — die Inhaberin hat ihr
+// zugestimmt (übermittelt von Josef, 23.09.2026). Das Beiblatt meldet
+// „Tonquelle: eigen"; vorflug.mjs lässt das nur bei `format: clip-reel` zu
+// (apps.json → ton_erlaubt_formate). Fehlt eine Tondatei, bricht das Reel ab,
+// statt stumm oder mit fremdem Ton rauszugehen.
 
 import { existsSync, statSync } from 'node:fs';
 import { join } from 'node:path';
@@ -63,6 +68,14 @@ export async function clipReel({ appPfad, wuerfel, ziel }) {
   if (!Array.isArray(wahl.einspielungen) || wahl.einspielungen.length !== 2) {
     throw new Error(`Clip ${wahl.datei}: \`einspielungen\` braucht genau zwei Texte in anbieter.json.`);
   }
+  const tonOrdner = join(ordner, 'ton');
+  const ton = {
+    stimme: join(tonOrdner, wahl.datei.replace(/\.mp4$/, '-stimme.mp3')),
+    musik: join(tonOrdner, 'musik.mp3'),
+  };
+  for (const d of Object.values(ton)) {
+    if (!existsSync(d)) throw new Error(`Tondatei fehlt: ${d} — siehe docs/social/clips/ton/HERKUNFT.md.`);
+  }
   const zusatz = TEXTE.clipSchluss.zusatz.replace('{gratis_monate}', String(GRATIS_MONATE));
 
   const sekunden = await lookRendern({
@@ -75,6 +88,7 @@ export async function clipReel({ appPfad, wuerfel, ziel }) {
     ziel: ZIEL,
     datei: ziel,
     menschen: wahl.menschen,
+    ton,
   });
 
   // ffmpeg kann mit 0 enden und trotzdem nur einen leeren Container
@@ -90,6 +104,7 @@ export async function clipReel({ appPfad, wuerfel, ziel }) {
     saetze: wahl.saetze,
     sprechtext: wahl.sprechtext ?? null,
     menschen: wahl.menschen,
+    ton: true,
     titel: TEXTE.clipSchluss.titel,
     zusatz,
     sekunden,

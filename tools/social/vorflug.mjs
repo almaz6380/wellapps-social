@@ -213,10 +213,16 @@ export function pruefe({ appSchluessel, app, post, texte }) {
       }
     }
   }
-  if (r.tonspur_muss_leer_sein && texte.tonquelle && texte.tonquelle !== 'stille') {
+  // Einzige Ausnahme: eigener Ton (KI-Stimme + KI-Musik aus dem App-Repo) in
+  // den Formaten aus `ton_erlaubt_formate` — bei WELLbooked! nur `clip-reel`.
+  // Die Inhaberin hat dem zugestimmt, uebermittelt von Josef am 23.09.2026.
+  // Fremder Ton (Musikbett, Trending-Sound) bleibt ueberall verboten.
+  const tonErlaubt = texte.tonquelle === 'eigen'
+    && (r.ton_erlaubt_formate ?? []).includes(post.format ?? post.winkel);
+  if (r.tonspur_muss_leer_sein && texte.tonquelle && texte.tonquelle !== 'stille' && !tonErlaubt) {
     funde.push(befund(true, 'tonspur-leer',
-      'WELLbooked!-Videos gehen stumm raus. Josef legt die Musik selbst darueber ' +
-      '(Anweisung vom 01.08.2026).'));
+      'WELLbooked!-Videos gehen stumm raus (Anweisung vom 01.08.2026). Ausnahme ' +
+      'nur eigener Ton in: ' + ((r.ton_erlaubt_formate ?? []).join(', ') || '—') + '.'));
   }
 
   // --- FullRep -------------------------------------------------------------

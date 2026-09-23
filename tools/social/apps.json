@@ -108,6 +108,7 @@
     "regeln": {
       "marke_mit_ausrufezeichen": true,
       "tonspur_muss_leer_sein": true,
+      "ton_erlaubt_formate": ["clip-reel"],
       "verbotene_medien": "KI-Nahaufnahmen von Gesichtern, starke Mimik, grosser Mund- oder Haaransatz; keine Prominenten-Doppelgaenger; kein Text in KI-Bildern",
       "preise_nur_aus": "src/lib/constants.ts",
       "store_link_in_caption": false,

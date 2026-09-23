@@ -644,7 +644,9 @@ nicht noch einmal tun.
 - Der Store-Satz wird aus `apps.json` gebaut, nie getippt; Store-Links gehören in die
   Bio, nicht in die Caption (`vorflug.mjs`).
 - Anigosha: nur Typografie, nie Bilder erkennbarer Anime-Figuren. Mahjong: nur
-  eigener Ton. WELLbooked!: Marke mit `!`, Tonspur leer. FullRep und Swaply: keine
+  eigener Ton. WELLbooked!: Marke mit `!`, Tonspur leer — außer im Format `clip-reel`
+  (eigene KI-Stimme + KI-Musik, Zustimmung der Inhaberin vom 23.09.2026, `ton_erlaubt_formate`
+  in `apps.json`; das Beiblatt meldet `- Tonquelle: eigen`). FullRep und Swaply: keine
   Diagnosen, keine Therapieversprechen.
 - Videos wandern nicht ins Repo (`out/` ist gitignored); eingecheckt werden Ledger,
   Ideen und Kanal-Assets. Die Motoren sind deterministisch — der Ledger ist ein Bauplan.

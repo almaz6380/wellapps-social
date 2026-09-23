@@ -221,7 +221,7 @@ if (MARKE === 'wellbooked' && FORMAT === 'clip-reel') {
     '='.repeat(dateiname.length),
     '',
     `Marke: ${M.wortmarke}   Format: ${FORMAT}   Sprache: ${LANG.toUpperCase()}`,
-    `Laenge: ${r.sekunden.toFixed(1)} s   Seed: ${SEED}   Ton: keiner (stumm)   Clip: ${r.datei}`,
+    `Laenge: ${r.sekunden.toFixed(1)} s   Seed: ${SEED}   Ton: ${r.ton ? 'KI-Stimme + KI-Musik (eigen)' : 'keiner (stumm)'}   Clip: ${r.datei}`,
     '',
     '── CAPTION ZUM KOPIEREN ──────────────────────────────',
     '',
@@ -241,9 +241,9 @@ if (MARKE === 'wellbooked' && FORMAT === 'clip-reel') {
     '',
     `Gründungspartner:in werden: ${r.ziel}`,
     '',
-    // ⚠ Nach Caption und LINK, nie davor: captionAus() endet am ersten
-    // „──"-Abschnitt. So kann der Sprechtext nicht in die Beschreibung rutschen.
-    ...(r.sprechtext ? [
+    // Der Sprechtext steckt jetzt als KI-Stimme IM Video. Früher stand er hier
+    // zum Einsprechen in der TikTok-App — mit Ton im Video wäre das doppelt.
+    ...(r.ton ? [] : r.sprechtext ? [
       '── SPRECHTEXT (zum Einsprechen, geht NICHT mit raus) ─',
       '',
       r.sprechtext,
@@ -251,9 +251,20 @@ if (MARKE === 'wellbooked' && FORMAT === 'clip-reel') {
     ] : []),
     '── VOR DEM POSTEN ────────────────────────────────────',
     '',
-    '• Das Video ist stumm und bleibt es — bei WELLbooked! ist Stille Vorgabe.',
-    '  Den Sprechtext sprichst du in der TikTok-App selbst ein oder lässt ihn vorlesen.',
+    ...(r.ton ? [
+      '• Das Video hat Ton: KI-Stimme + ruhige KI-Musik, beides eigen.',
+      '  Keinen weiteren Sound in TikTok/Instagram darüberlegen.',
+    ] : [
+      '• Das Video ist stumm und bleibt es — bei WELLbooked! ist Stille Vorgabe.',
+      '  Den Sprechtext sprichst du in der TikTok-App selbst ein oder lässt ihn vorlesen.',
+    ]),
     '',
+    // lauf.mjs liest diese Zeile. „eigen" erlaubt vorflug.mjs bei WELLbooked!
+    // nur im Format clip-reel (Zustimmung der Inhaberin, 23.09.2026).
+    r.ton
+      ? '- Tonquelle: eigen (KI-Stimme ElevenLabs „Sarah" + KI-Musik, '
+        + 'wellbooked/docs/social/clips/ton/, Herkunft in HERKUNFT.md)'
+      : '- Tonquelle: stille',
     // Josef, 23.09.2026: AI-Plättchen nur, wenn Menschen sichtbar sind.
     // lauf.mjs liest diese Zeile: „ki-menschen" verlangt in vorflug.mjs das
     // Wasserzeichen, „ki-bild" nicht.
@@ -264,7 +275,7 @@ if (MARKE === 'wellbooked' && FORMAT === 'clip-reel') {
         + 'wellbooked/docs/social/clips/, Herkunft in HERKUNFT.md',
     '',
   ].join('\n'));
-  console.log(`✓ ${dateiname}.mp4  ${r.sekunden.toFixed(1)} s  ${B}×${H}  stumm  (${r.datei})`);
+  console.log(`✓ ${dateiname}.mp4  ${r.sekunden.toFixed(1)} s  ${B}×${H}  ${r.ton ? 'mit Ton' : 'stumm'}  (${r.datei})`);
   console.log(`✓ ${dateiname}.txt`);
   process.exit(0);
 }

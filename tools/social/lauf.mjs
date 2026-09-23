@@ -89,6 +89,14 @@ function vorflugProbe() {
       app: 'wellbooked', post: { sprache: 'de' },
       texte: { caption: 'WELLbooked! findet freie Termine.', tonquelle: 'musikbett' } },
 
+    { name: 'WELLbooked!-Kalender-Reel mit eigenem Ton (nur clip-reel darf)',
+      app: 'wellbooked', post: { sprache: 'de', medium: 'reel', format: 'kalender-demo' },
+      texte: { caption: 'WELLbooked! organisiert, du arbeitest.', tonquelle: 'eigen' } },
+
+    { name: 'WELLbooked!-Clip-Reel mit FREMDEM Ton',
+      app: 'wellbooked', post: { sprache: 'de', medium: 'reel', format: 'clip-reel' },
+      texte: { caption: 'WELLbooked! organisiert, du arbeitest.', tonquelle: 'musikbett' } },
+
     { name: 'Mahjong mit Trending-Sound',
       app: 'mahjong', post: { sprache: 'en' },
       texte: { caption: 'Can you spot the pair?', tonquelle: 'tiktok-trending' } },
@@ -152,6 +160,11 @@ function vorflugProbe() {
       texte: { caption: 'WELLbooked! organisiert, du arbeitest.', tonquelle: 'stille',
         medienherkunft: 'ki-bild (KI-Clip ohne Menschen, kein Plättchen) — aus '
           + 'wellbooked/docs/social/clips/, Herkunft in HERKUNFT.md' } },
+
+    { name: 'WELLbooked!-Clip-Reel mit eigenem Ton (Zustimmung Inhaberin)',
+      app: 'wellbooked', post: { sprache: 'de', medium: 'reel', format: 'clip-reel' },
+      texte: { caption: 'WELLbooked! organisiert, du arbeitest.', tonquelle: 'eigen',
+        medienherkunft: 'ki-menschen (Wasserzeichen gesetzt)', wasserzeichen: true } },
 
     { name: 'Echtes Foto braucht KEIN Wasserzeichen',
       app: 'fullrep', post: { sprache: 'de' },
@@ -564,9 +577,13 @@ async function tageslauf() {
           caption,
           hashtags,
           applink: linkZeile(app, post.sprache, beiblatt),
-          tonquelle: post.medium === 'reel'
-            ? (k === 'mahjong' ? 'synth' : k === 'wellbooked' ? 'stille' : 'eigen')
-            : undefined,
+          // Steht die Tonquelle im Beiblatt („- Tonquelle: eigen …"), gilt
+          // sie — die WELLbooked!-Clip-Reels haben seit 23.09.2026 Ton. Sonst
+          // die bisherige Annahme je App.
+          tonquelle: beiblatt.match(/^- Tonquelle:\s*([a-z-]+)/m)?.[1]
+            ?? (post.medium === 'reel'
+              ? (k === 'mahjong' ? 'synth' : k === 'wellbooked' ? 'stille' : 'eigen')
+              : undefined),
           // Die Herkunft steht im Beiblatt („Medienherkunft: …"). Sie dort
           // zu lesen ist verlaesslicher, als sie hier zu erraten.
           medienherkunft: (beiblatt.match(/^- Medienherkunft:\s*(.+)$/m)?.[1]
