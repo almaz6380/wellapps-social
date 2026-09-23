@@ -542,16 +542,47 @@ jobs:
       #
       # [skip ci] haelt Vercel davon ab, fuer eine reine Datenzeile die
       # Freigabe-Seite neu zu bauen.
+      #
+      # ⚠ Parallele Laeufe (23.09.2026). Am Abend des 22.09. starteten mehrere
+      # Laeufe binnen Sekunden; nur der erste bekam seinen Ledger auf main,
+      # die anderen scheiterten mit `! [rejected] (fetch first)` und wurden
+      # rot — obwohl ihre Beitraege laengst in den Kanaelen lagen. Ihre
+      # Ledger-Zeilen waren verloren.
+      #
+      # Deshalb wird nicht mehr blind gepusht, sondern auf den NEUESTEN Stand
+      # von main eingespielt: Was dieser Lauf gegenueber seinem Checkout
+      # geaendert hat, kommt dazu, was ein anderer inzwischen geschrieben hat,
+      # bleibt stehen (ledger-einspielen.mjs). Wird der Push trotzdem
+      # abgewiesen, war in der Zwischenzeit noch einer schneller — dann das
+      # Ganze noch einmal, bis zu fuenfmal.
+      #
+      # ⚠ Kein `git pull --rebase`: Zwei Laeufe haengen an dieselbe Stelle an,
+      # das ist fuer git jedes Mal ein Konflikt.
       - name: Ledger zurueckschreiben
         if: steps.plan.outputs.modus == 'echt'
         working-directory: wellapps-social
+        env:
+          ZWEIG: ${{ github.ref_name }}
+          NACHRICHT: "Social: Ledger vom Tageslauf ${{ steps.plan.outputs.datum || 'heute' }} [skip ci]"
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add tools/social/ledger.json
-          git diff --cached --quiet && { echo "Ledger unveraendert."; exit 0; }
-          git commit -m "Social: Ledger vom Tageslauf ${{ steps.plan.outputs.datum || 'heute' }} [skip ci]"
-          git push origin HEAD:${{ github.ref_name }}
+          git diff --quiet -- tools/social/ledger.json && { echo "Ledger unveraendert."; exit 0; }
+          cp tools/social/ledger.json "$RUNNER_TEMP/ledger-unsere.json"
+          git show HEAD:tools/social/ledger.json > "$RUNNER_TEMP/ledger-basis.json"
+          for versuch in 1 2 3 4 5; do
+            git fetch -q origin "$ZWEIG"
+            git checkout -q -f -B ledger-schreiben "origin/$ZWEIG"
+            node tools/social/ledger-einspielen.mjs "$RUNNER_TEMP/ledger-basis.json" "$RUNNER_TEMP/ledger-unsere.json" tools/social/ledger.json
+            git add tools/social/ledger.json
+            git diff --cached --quiet && { echo "Ledger steht schon so auf $ZWEIG."; exit 0; }
+            git commit -q -m "$NACHRICHT"
+            git push -q origin "HEAD:$ZWEIG" && { echo "Ledger geschrieben (Versuch $versuch)."; exit 0; }
+            echo "Push abgewiesen (Versuch $versuch) - ein paralleler Lauf war schneller. Neu einspielen."
+            sleep $((versuch * 3))
+          done
+          echo "Ledger nach 5 Versuchen nicht geschrieben."
+          exit 1
 
       # ⚠ Ganz zum Schluss, damit eine gescheiterte App die uebrigen weder am
       # Versand noch am Ledger hindert — der Lauf wird trotzdem rot. Ein
