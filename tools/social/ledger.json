@@ -1430,6 +1430,96 @@
       "schluessel": "rezept",
       "inhalt": "seed60327",
       "sprache": "de"
+    },
+    {
+      "app": "anigosha",
+      "datum": "2026-09-23",
+      "winkel": "app-schau-reel",
+      "medium": "reel",
+      "schluessel": "bildschirm",
+      "inhalt": "seed75420",
+      "sprache": "de"
+    },
+    {
+      "app": "anigosha",
+      "datum": "2026-09-23",
+      "winkel": "serien-steckbrief",
+      "medium": "bild",
+      "schluessel": "kategorie",
+      "inhalt": "seed24357",
+      "sprache": "de"
+    },
+    {
+      "app": "mahjong",
+      "datum": "2026-09-23",
+      "winkel": "blumen-falle",
+      "medium": "reel",
+      "schluessel": "level",
+      "inhalt": "seed86173",
+      "sprache": "en"
+    },
+    {
+      "app": "mahjong",
+      "datum": "2026-09-23",
+      "winkel": "figur-galerie",
+      "medium": "bild",
+      "schluessel": "figur-vierer",
+      "inhalt": "seed43379",
+      "sprache": "en"
+    },
+    {
+      "app": "wellbooked",
+      "datum": "2026-09-23",
+      "winkel": "kalender-clip",
+      "medium": "reel",
+      "schluessel": "screen",
+      "inhalt": "seed70094",
+      "sprache": "de"
+    },
+    {
+      "app": "wellbooked",
+      "datum": "2026-09-23",
+      "winkel": "tirol-wien",
+      "medium": "bild",
+      "schluessel": "region",
+      "inhalt": "seed16944",
+      "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-23",
+      "winkel": "uebung-loop",
+      "medium": "reel",
+      "schluessel": "uebung",
+      "inhalt": "seed37050",
+      "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-23",
+      "winkel": "rezept-karte",
+      "medium": "bild",
+      "schluessel": "rezept",
+      "inhalt": "seed45914",
+      "sprache": "de"
+    },
+    {
+      "app": "swaply",
+      "datum": "2026-09-23",
+      "winkel": "app-schau",
+      "medium": "bild",
+      "schluessel": "bildschirm",
+      "inhalt": "seed79595",
+      "sprache": "de"
+    },
+    {
+      "app": "swaply",
+      "datum": "2026-09-23",
+      "winkel": "regel",
+      "medium": "bild",
+      "schluessel": "regel",
+      "inhalt": "seed60265",
+      "sprache": "de"
     }
   ]
 }
