@@ -324,16 +324,18 @@ und es gibt einen Prüfzugang (`FREIGABE_PRUEFER_PASSWORT`, siehe
 1. **„Return to Draft" leert das App-Icon.** Das Formular meldet danach
    „This form has 1 error". Das Icon muss neu hochgeladen werden, und zwar
    dieselbe Datei wie auf der Website.
-2. **Ein Feld „Apply Reason" gibt es NICHT, weder im Formular noch als
-   Fenster nach „Submit for review".** Hier stand zuerst, es erscheine nach dem
-   Absenden. Das stimmte nicht: Am 23.09. ging die Einreichung deshalb ohne
-   Prüfpasswort raus. ⚠ Die Test-Anmeldung gehört in den Erklärtext
-   („Explain how each product and scope works"), den liest der Prüfer sicher.
-   Der gekürzte Text mit Zeile `TEST LOGIN: … password: …` passt mit einem
-   16-stelligen Passwort in 944 von 1000 Zeichen.
+2. **„Apply Reason" ist ein Fenster, das erst nach „Submit for review"
+   aufgeht** („Please describe your reason for this submission", 120 Zeichen).
+   Im Formular selbst steht es nirgends. Beim ersten Versuch am 23.09. ist das
+   Fenster offenbar übersehen worden, und die Einreichung ging ohne Passwort
+   raus. Sie wurde zurückgezogen und neu eingereicht. ⚠ Deshalb steht die
+   Test-Anmeldung jetzt an **beiden** Stellen: im Fenster *„Icon now matches
+   site+favicon. Test login: password … (review mode, sends nothing)"* und als
+   Zeile `TEST LOGIN: https://wellapps-freigabe.vercel.app/ - password: …` im
+   Erklärtext (gekürzt auf 944 von 1000 Zeichen).
 3. **Bei einer Überarbeitung will TikTok die Änderung im Erklärtext.** Angehängt:
-   *„Revision: website now shows the same icon + favicon."* (Stand danach:
-   997 von 1000 Zeichen).
+   *„Revision: website now shows the same icon and favicon."* (im gekürzten
+   Text enthalten).
 
 ⚠ Die beiden Demo-Videos (vom 15.09.) zeigen die Seite noch ohne Logo. TikTok
 hat das nicht beanstandet. Kommt die nächste Ablehnung wegen des Videos, liegt
