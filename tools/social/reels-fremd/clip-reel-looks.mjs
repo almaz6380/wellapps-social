@@ -125,10 +125,10 @@ export const LOOKS = {
 // --- Seite -------------------------------------------------------------------
 //
 // ⚠ Keine Backticks in den Kommentaren innerhalb des Templates.
-function seiteHtml({ look, bilder, dauerClip, schluss, satz1, satz2, einspielungen, zusatz, ziel, menschen, etikett }) {
+function seiteHtml({ look, bilder, dauerClip, halb, schluss, satz1, satz2, einspielungen, zusatz, ziel, menschen, etikett }) {
   const L = LOOKS[look];
   const daten = JSON.stringify({
-    bilder, fps: FPS, dauerClip, schluss, satz1, satz2, einspielungen, zusatz, ziel,
+    bilder, fps: FPS, dauerClip, halb, schluss, satz1, satz2, einspielungen, zusatz, ziel,
     licht: L.lichtFarbe, baender: look === 'C',
   });
   return `<!doctype html><html><head><meta charset="utf-8"><style>
@@ -244,7 +244,7 @@ window.setFrame = async (n) => {
   $('licht').style.opacity = String(lstark);
 
   // 3) Sätze: Satz 1 bis 2,55 s, Satz 2 ab 2,75 s bis zum Übergang.
-  const halb = 2.55;
+  const halb = D.halb;
   const satz = t < halb + 0.1 ? D.satz1 : D.satz2;
   if (satz !== aktSatz) { satzBauen(satz); aktSatz = satz; }
   const start = satz === D.satz1 ? 0.35 : halb + 0.2;
@@ -268,7 +268,7 @@ window.setFrame = async (n) => {
   }
 
   // 4) Einspielungen: Benachrichtigung gleitet von oben herein.
-  const slots = [[1.1, 2.45], [3.3, D.dauerClip - 0.55]];
+  const slots = [[1.1, D.halb - 0.1], [D.halb + 0.75, D.dauerClip - 0.55]];
   let meldung = null, mp = 0;
   slots.forEach(([a, e], i) => {
     if (t >= a - 0.05 && t <= e + 0.35 && D.einspielungen[i]) {
@@ -366,18 +366,40 @@ export async function lookRendern({
       `fps=${FPS},scale=${B}:${H}:force_original_aspect_ratio=increase,crop=${B}:${H}`,
       '-q:v', '3', join(tmp, 'f', '%04d.jpg')]);
     const bilder = readdirSync(join(tmp, 'f')).filter((x) => x.endsWith('.jpg')).sort().map((x) => `f/${x}`);
-    const dauerClip = bilder.length / FPS;
+    // Zeitleiste. Ohne Ton: fest (Satzwechsel bei 2,55 s, Schlusskarte am
+    // Clip-Ende). Mit Ton richtet sie sich nach der Stimme: Der Bildtext
+    // wechselt, wenn der zweite Takt beginnt, die Schlusskarte kommt bei
+    // „Du arbeitest" (`ton.zeiten` aus docs/social/clips/ton/zeiten.json).
+    // Sonst sagt die Stimme noch Satz 2, während schon das Logo steht.
+    let szene = bilder.length / FPS;   // Länge bis zur Schlusskarte
+    let halb = 2.55;                   // Wechsel Satz 1 → Satz 2
     let schluss = SCHLUSS_SEK;
     let tonDatei = null;
     if (ton) {
-      const ende = STIMME_START + laenge(ton.stimme) + STIMME_NACHLAUF;
-      schluss = Math.max(SCHLUSS_SEK, ende - dauerClip);
+      const stimme = laenge(ton.stimme);
+      if (ton.zeiten) {
+        halb = Math.max(1.8, STIMME_START + ton.zeiten.satz2 - 0.15);
+        const e0 = ton.zeiten.schluss != null
+          ? STIMME_START + ton.zeiten.schluss - 0.35
+          : STIMME_START + stimme + 0.15;
+        szene = Math.max(szene, e0 + 0.1);
+      }
+      schluss = Math.max(SCHLUSS_SEK, STIMME_START + stimme + STIMME_NACHLAUF - szene);
       tonDatei = join(tmp, 'ton.wav');
       await tonMischen({ stimme: ton.stimme, musik: ton.musik,
-        gesamt: Math.round((dauerClip + schluss) * FPS) / FPS, ziel: tonDatei, tmp });
+        gesamt: Math.round((szene + schluss) * FPS) / FPS, ziel: tonDatei, tmp });
     }
+    // Ist die Szene länger als der Clip, läuft er vor und zurück weiter
+    // (Pendel) — die Clips sind ruhig genug, dass man das nicht sieht, und
+    // ein stehendes Bild unter laufender Stimme sähe nach Fehler aus.
+    const noetig = Math.ceil((szene + schluss) * FPS);
+    const pendel = [...bilder];
+    for (let rueck = true; pendel.length < noetig; rueck = !rueck) {
+      pendel.push(...(rueck ? [...bilder].reverse() : bilder).slice(1));
+    }
+    const dauerClip = szene;
     writeFileSync(join(tmp, 'seite.html'), seiteHtml({
-      look, bilder, dauerClip, schluss, satz1, satz2, einspielungen, zusatz, ziel, menschen, etikett }));
+      look, bilder: pendel, dauerClip, halb, schluss, satz1, satz2, einspielungen, zusatz, ziel, menschen, etikett }));
 
     const browser = await chromium.launch(
       process.env.CHROMIUM_PFAD ? { executablePath: process.env.CHROMIUM_PFAD } : {},
@@ -436,6 +458,8 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
     ton: process.argv.includes('--ton') ? {
       stimme: join(app, 'docs', 'social', 'clips', 'ton', c.datei.replace('.mp4', '-stimme.mp3')),
       musik: join(app, 'docs', 'social', 'clips', 'ton', 'musik.mp3'),
+      zeiten: JSON.parse(readFileSync(join(app, 'docs', 'social', 'clips', 'ton', 'zeiten.json'), 'utf8'))[
+        c.datei.replace('.mp4', '-stimme.mp3')] ?? null,
     } : null,
     // --etikett: nur für die Vorschau — schreibt „A · Hell & elegant" ins Bild.
     etikett: process.argv.includes('--etikett') ? `${look} · ${LOOKS[look].name}` : null,

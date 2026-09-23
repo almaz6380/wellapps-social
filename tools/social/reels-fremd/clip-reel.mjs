@@ -38,8 +38,8 @@
 // (apps.json → ton_erlaubt_formate). Fehlt eine Tondatei, bricht das Reel ab,
 // statt stumm oder mit fremdem Ton rauszugehen.
 
-import { existsSync, statSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync, readFileSync, statSync } from 'node:fs';
+import { basename, join } from 'node:path';
 
 import { lookRendern } from './clip-reel-looks.mjs';
 
@@ -75,6 +75,12 @@ export async function clipReel({ appPfad, wuerfel, ziel }) {
   };
   for (const d of Object.values(ton)) {
     if (!existsSync(d)) throw new Error(`Tondatei fehlt: ${d} — siehe docs/social/clips/ton/HERKUNFT.md.`);
+  }
+  // Satzanfänge in der Stimme — ohne sie liefen Bildtext und Stimme auseinander.
+  const zeiten = JSON.parse(readFileSync(join(tonOrdner, 'zeiten.json'), 'utf8'));
+  ton.zeiten = zeiten[basename(ton.stimme)];
+  if (!ton.zeiten || typeof ton.zeiten.satz2 !== 'number') {
+    throw new Error(`Keine Satzanfänge für ${basename(ton.stimme)} in docs/social/clips/ton/zeiten.json.`);
   }
   const zusatz = TEXTE.clipSchluss.zusatz.replace('{gratis_monate}', String(GRATIS_MONATE));
 

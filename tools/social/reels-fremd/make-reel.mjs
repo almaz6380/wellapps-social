@@ -262,7 +262,7 @@ if (MARKE === 'wellbooked' && FORMAT === 'clip-reel') {
     // lauf.mjs liest diese Zeile. „eigen" erlaubt vorflug.mjs bei WELLbooked!
     // nur im Format clip-reel (Zustimmung der Inhaberin, 23.09.2026).
     r.ton
-      ? '- Tonquelle: eigen (KI-Stimme ElevenLabs „Sarah" + KI-Musik, '
+      ? '- Tonquelle: eigen (Markenstimme „Ela" + KI-Musik, '
         + 'wellbooked/docs/social/clips/ton/, Herkunft in HERKUNFT.md)'
       : '- Tonquelle: stille',
     // Josef, 23.09.2026: AI-Plättchen nur, wenn Menschen sichtbar sind.
