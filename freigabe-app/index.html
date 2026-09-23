@@ -59,6 +59,14 @@
     background: #12101c; border: 1px solid var(--rand); border-radius: 10px;
     padding: 10px; margin: 10px 0 8px; max-height: 8.5em; overflow: auto;
   }
+  /* Sprechtext (23.09.2026): nur zum Einsprechen in der TikTok-App, nie Teil
+     der Beschreibung. Eigene Farbe, damit niemand ihn für die Caption hält. */
+  .sprech {
+    white-space: pre-wrap; word-break: break-word; font-size: 14px;
+    background: #16231d; border: 1px dashed #24543f; border-radius: 10px;
+    padding: 10px; margin: 0 0 8px;
+  }
+  .sprech b { display: block; font-size: 12px; color: var(--gut); margin-bottom: 4px; }
   .reihe { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
   button {
     font: inherit; font-weight: 600; border: 0; border-radius: 11px;
@@ -382,6 +390,14 @@ function postKarte(post, liste) {
   }
 
   k.append(el('div', 'text', post.text || '(kein Text)'));
+  // ⚠ Der Sprechtext steht GETRENNT vom Text oben. „Text kopieren" nimmt nur
+  // die Beschreibung; der Sprechtext hat seinen eigenen Knopf weiter unten.
+  if (post.sprechtext) {
+    const sp = el('div', 'sprech');
+    sp.append(el('b', null, '🎙 Sprechtext — zum Einsprechen oder Vorlesenlassen, nicht in die Beschreibung'),
+      document.createTextNode(post.sprechtext));
+    k.append(sp);
+  }
 
   const marken = el('div', 'reihe');
   // ⚠ Der GRUND eines Fehlers gehört auf die Seite, nicht nur ins
@@ -439,6 +455,19 @@ function postKarte(post, liste) {
     }
   };
   knoepfe.append(kopieren);
+  if (post.sprechtext) {
+    const sprechKopieren = el('button', 'rand', 'Sprechtext kopieren');
+    sprechKopieren.onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(post.sprechtext.replace(/\s*\|\s*/g, ' '));
+        sprechKopieren.textContent = 'Kopiert ✓';
+        setTimeout(() => { sprechKopieren.textContent = 'Sprechtext kopieren'; }, 1600);
+      } catch {
+        sprechKopieren.textContent = 'Ging nicht — von Hand markieren';
+      }
+    };
+    knoepfe.append(sprechKopieren);
+  }
 
   // Facebook: ein Knopf, sonst nichts zu waehlen — der Beitrag entsteht aus
   // genau der Datei und dem Text, die hier darueber stehen.

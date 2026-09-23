@@ -241,9 +241,18 @@ if (MARKE === 'wellbooked' && FORMAT === 'clip-reel') {
     '',
     `Gründungspartner:in werden: ${r.ziel}`,
     '',
+    // ⚠ Nach Caption und LINK, nie davor: captionAus() endet am ersten
+    // „──"-Abschnitt. So kann der Sprechtext nicht in die Beschreibung rutschen.
+    ...(r.sprechtext ? [
+      '── SPRECHTEXT (zum Einsprechen, geht NICHT mit raus) ─',
+      '',
+      r.sprechtext,
+      '',
+    ] : []),
     '── VOR DEM POSTEN ────────────────────────────────────',
     '',
     '• Das Video ist stumm und bleibt es — bei WELLbooked! ist Stille Vorgabe.',
+    '  Den Sprechtext sprichst du in der TikTok-App selbst ein oder lässt ihn vorlesen.',
     '',
     '- Medienherkunft: ki-menschen (Wasserzeichen gesetzt) — KI-Clip aus '
       + 'wellbooked/docs/social/clips/, Herkunft in HERKUNFT.md',

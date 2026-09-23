@@ -52,7 +52,7 @@ import { containerAnlegen, karussellAnlegen, aufBereitWarten, veroeffentlichen a
   from './veroeffentlichen/instagram.mjs';
 import { schonImPosteingang, meldung as doppelMeldung } from './tiktok-schon-drin.mjs';
 import { riechtNachBeiblatt } from './vorflug.mjs';
-import { beschreibungBauen } from './beschreibung.mjs';
+import { beschreibungBauen, sprechtextAus } from './beschreibung.mjs';
 import { folienFinden } from './folien.mjs';
 
 const HIER = dirname(fileURLToPath(import.meta.url));
@@ -232,7 +232,10 @@ function tagesposten() {
       // hoechstens fuenf Hashtags mit raus — beides Josefs Regel, beides an
       // EINER Stelle fuer alle fuenf Apps (siehe beschreibung.mjs).
       raus.push({ app: k, name: app.name, kanaele, medium: hauptdatei, folien, sprache,
-        text: beschreibungBauen({ app, beiblatt, sprache }).trim() });
+        text: beschreibungBauen({ app, beiblatt, sprache }).trim(),
+        // Nur zum Einsprechen — landet auf der Freigabe-Seite und in der
+        // TikTok-Zusammenfassung, NIE in `text` (siehe sprechtextAus).
+        sprechtext: sprechtextAus(beiblatt) });
     }
   }
   return raus;
@@ -586,6 +589,7 @@ for (const p of posten) {
   const z = zugaenge(p.app);
   let inTiktok = false;
   const spur = { datei: basename(p.medium), text: p.text, istVideo, kanaele: {} };
+  if (p.sprechtext) spur.sprechtext = p.sprechtext;
 
   for (const kanal of p.kanaele) {
     try {
@@ -869,7 +873,7 @@ for (const p of posten) {
   }
   if (!uebersicht.has(p.app)) uebersicht.set(p.app, { name: p.name, posten: [] });
   uebersicht.get(p.app).posten.push(spur);
-  if (inTiktok) nachzutragen.push({ name: p.name, datei: basename(p.medium), text: p.text });
+  if (inTiktok) nachzutragen.push({ name: p.name, datei: basename(p.medium), text: p.text, sprechtext: p.sprechtext });
   console.log();
 }
 
@@ -1021,6 +1025,12 @@ if (nachzutragen.length && process.env.GITHUB_STEP_SUMMARY) {
     const zaun = e.text.includes('```') ? '````' : '```';
     zeilen.push(`### ${e.name}`, `<sub>${e.datei}</sub>`, '',
       zaun, e.text || '(kein Text erzeugt)', zaun, '');
+    // Der Sprechtext steht getrennt darunter — er ist zum Einsprechen oder
+    // für TikToks Text-zu-Sprache, nicht für die Beschreibung.
+    if (e.sprechtext) {
+      zeilen.push('🎙 **Sprechtext** (zum Einsprechen, nicht in die Beschreibung):', '',
+        zaun, e.sprechtext, zaun, '');
+    }
   }
   try {
     appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${zeilen.join('\n')}\n`);

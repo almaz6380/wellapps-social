@@ -13,7 +13,7 @@
 // unabhaengig voneinander — deshalb Faelle statt Vertrauen.
 
 import { captionAus, riechtNachBeiblatt } from './vorflug.mjs';
-import { beschreibungBauen, hashtagsFuer, linkZeile } from './beschreibung.mjs';
+import { beschreibungBauen, hashtagsFuer, linkZeile, sprechtextAus } from './beschreibung.mjs';
 
 const faelle = [
   {
@@ -232,6 +232,37 @@ for (const f of bFaelle) {
   const ok = text.includes('wellbooked.at/gruendungspartner') && !text.includes(vorgabe);
   if (ok) console.log('✓ Link: beschreibungBauen nimmt die eigene Zeile statt der Vorgabe');
   else { fehler += 1; console.log(`✗ Link: beschreibungBauen\n   ${JSON.stringify(text)}`); }
+}
+
+// --- Sprechtext (23.09.2026) ---------------------------------------------------
+//
+// Er steht im Beiblatt der Clip-Reels, damit Josef ihn in der TikTok-App
+// einsprechen kann. ⚠ Er darf NIE in der Beschreibung landen — sonst stünde
+// ein Vorlesetext öffentlich unter dem Post. Genau das prüft die Gegenprobe.
+{
+  const wb = { linkInBio: 'wellbooked.at', linkWort: { de: 'Hier buchen' } };
+  const blatt = [
+    'wellbooked-clip-reel-de-s1', '==========================', '',
+    '── CAPTION ZUM KOPIEREN ──────────────────────────────', '',
+    'Dein Telefon bleibt still. Dein Kalender füllt sich trotzdem.', '',
+    '#WELLbooked #Selbstständig', '',
+    '── LINK ──────────────────────────────────────────────', '',
+    'Gründungspartner:in werden: wellbooked.at/gruendungspartner', '',
+    '── SPRECHTEXT (zum Einsprechen, geht NICHT mit raus) ─', '',
+    'Dein Telefon bleibt still. | Und dein Kalender füllt sich trotzdem.', '',
+    '── VOR DEM POSTEN ────────────────────────────────────', '',
+    '• Das Video ist stumm.', '',
+  ].join('\n');
+  const sp = sprechtextAus(blatt);
+  const pruef = (name, ok, ist) => {
+    if (ok) console.log(`✓ Sprechtext: ${name}`);
+    else { fehler += 1; console.log(`✗ Sprechtext: ${name}\n   ${JSON.stringify(ist)}`); }
+  };
+  pruef('wird gefunden', sp === 'Dein Telefon bleibt still. | Und dein Kalender füllt sich trotzdem.', sp);
+  const text = beschreibungBauen({ app: wb, beiblatt: blatt });
+  pruef('⚠ Gegenprobe: steht NICHT in der Beschreibung', !text.includes('|') && !/SPRECHTEXT|Und dein Kalender/.test(text), text);
+  pruef('Linkzeile bleibt die eigene', text.includes('Gründungspartner:in werden: wellbooked.at/gruendungspartner'), text);
+  pruef('ohne Abschnitt → null', sprechtextAus('## Caption\n\nText\n') === null, sprechtextAus('## Caption\n\nText\n'));
 }
 
 console.log(`\n${fehler === 0 ? '✓ Alle Faelle bestanden.' : `✗ ${fehler} Fehler.`}`);

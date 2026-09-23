@@ -153,6 +153,7 @@ html,body{width:${B}px;height:${H}px;overflow:hidden;background:transparent;font
   return {
     datei: wahl.datei,
     saetze: wahl.saetze,
+    sprechtext: wahl.sprechtext ?? null,
     titel: TEXTE.clipSchluss.titel,
     zusatz,
     sekunden: dauer + SCHLUSS_SEK,

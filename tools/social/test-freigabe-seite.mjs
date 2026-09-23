@@ -58,6 +58,9 @@ const LISTE = {
   uebersicht: [
     {
       datei: 'a.jpg', url: 'x', text: 'Text A', istVideo: false,
+      // Sprechtext (23.09.2026): nur zum Einsprechen, eigener Kasten. Am
+      // OFFENEN Beitrag — b ist erledigt und steht eingeklappt.
+      sprechtext: 'Satz eins. | Satz zwei.',
       kanaele: { facebook: { stand: 'wartet' }, instagram: { stand: 'wartet' } },
     },
     {
@@ -147,6 +150,21 @@ pruefe('alter Vermerk → zwei Warnungen', warnungen.length === 2,
 pruefe('Warnung nennt den Kanal',
   warnungen.some((z) => z.includes('Facebook')) && warnungen.some((z) => z.includes('Instagram')),
   warnungen.join(' | '));
+
+// --- 2b. Sprechtext: eigener Kasten, nur wo einer da ist --------------------
+//
+// ⚠ Er darf nicht im Text-Kasten stehen und nicht mit „Text kopieren"
+// mitkommen — sonst landet ein Vorlesetext in der Beschreibung.
+await seite.evaluate(() => sessionStorage.clear());
+await seite.reload({ waitUntil: 'load' });
+await seite.waitForTimeout(600);
+const sprechKaesten = await seite.locator('.sprech').count();
+pruefe('Sprechtext-Kasten genau einmal (nur Beitrag a)', sprechKaesten === 1, String(sprechKaesten));
+const sprechKnoepfe = await seite.getByRole('button', { name: 'Sprechtext kopieren' }).count();
+pruefe('„Sprechtext kopieren" genau einmal', sprechKnoepfe === 1, String(sprechKnoepfe));
+const textKaesten = await seite.locator('.text').allInnerTexts();
+pruefe('⚠ Sprechtext steht in keinem Text-Kasten', !textKaesten.some((t) => t.includes('Satz eins')),
+  textKaesten.join(' | '));
 
 // --- 3. Frischer Vermerk → KEINE Warnung ------------------------------------
 //

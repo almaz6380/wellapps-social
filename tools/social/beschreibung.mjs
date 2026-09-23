@@ -167,6 +167,27 @@ export function linkAus(beiblatt, linkInBio) {
 }
 
 /**
+ * Der Sprechtext aus dem Beiblatt, falls es einen führt — sonst null.
+ *
+ * ⚠ Er ist zum Einsprechen oder Vorlesenlassen in der TikTok-App gedacht
+ * (23.09.2026) und geht NIE mit raus: beschreibungBauen() fasst ihn nicht
+ * an, die Caption endet am nächsten „──"-Abschnitt. Claude unterlegt bei
+ * WELLbooked! keinen Ton (Anordnung der Inhaberin) — Josef spricht selbst.
+ *
+ * Gesucht wird „## Sprechtext" oder „── SPRECHTEXT", danach alles bis zur
+ * nächsten Abschnittsgrenze.
+ */
+export function sprechtextAus(beiblatt) {
+  if (!beiblatt) return null;
+  const start = beiblatt.search(/^[ \t─═—=-]*(?:##\s*Sprechtext|SPRECHTEXT\b)/im);
+  if (start === -1) return null;
+  const rest = beiblatt.slice(start).replace(/^.*\n(?:[-=─═]{3,}\n)?/, '');
+  const ende = rest.search(/^(?:##\s|[─═—]{2,})/m);
+  const text = (ende === -1 ? rest : rest.slice(0, ende)).trim();
+  return text || null;
+}
+
+/**
  * Caption + Link + Hashtags, in dieser Reihenfolge.
  *
  * ⚠ Der Link steht VOR den Hashtags. Netzwerke kuerzen lange Beschreibungen
