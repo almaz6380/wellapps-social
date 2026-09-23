@@ -489,7 +489,10 @@ keinen Winkel; der Ledger wird nur nach einem echten Lauf zurückgeschrieben.
 ## Was offen ist (Stand 08.09.2026)
 
 - **Umzug abschließen** — Schritte 2 bis 6 oben (Schritt 1 ist erledigt).
-- **TikToks Antwort abwarten.** Kommt die Freigabe: Client Key und Secret der
+- **TikToks Antwort abwarten.** ⚠ Stand 23.09.2026: abgelehnt (Icon auf der
+  Website passte nicht, Website war nur eine Login-Seite), behoben (PR #5) und
+  am selben Tag neu eingereicht. Details und die Fallen beim Neu-Einreichen:
+  `veroeffentlichen/README.md`, Teil B. Kommt die Freigabe: Client Key und Secret der
   Produktion in die Secrets, alle fünf Refresh-Token neu holen (Sandbox-Token gelten
   dort nicht). Details: `veroeffentlichen/README.md`, Teil B.
 - **Swaply läuft auf einem Notbehelf-Zweig.** Sein Motor (`scripts/social-daten.mjs`,
