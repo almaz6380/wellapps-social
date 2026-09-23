@@ -1565,6 +1565,24 @@
       "schluessel": "fragen-ids",
       "inhalt": "seed6390",
       "sprache": "de"
+    },
+    {
+      "app": "anigosha",
+      "datum": "2026-09-23",
+      "winkel": "app-schau-reel",
+      "medium": "reel",
+      "schluessel": "bildschirm",
+      "inhalt": "seed88265",
+      "sprache": "de"
+    },
+    {
+      "app": "anigosha",
+      "datum": "2026-09-23",
+      "winkel": "wusstest-du-karte",
+      "medium": "bild",
+      "schluessel": "fragen-ids",
+      "inhalt": "seed57101",
+      "sprache": "de"
     }
   ]
 }
