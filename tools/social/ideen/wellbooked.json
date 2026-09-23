@@ -6,7 +6,7 @@
       "id": "bauchbinde",
       "medium": "reel",
       "format": "ablauf",
-      "status": "vorhanden",
+      "status": "pausiert",
       "haken": "Einzeiler im Hausstil — DM Sans Bold 64 px, weiss auf 50 % Schwarz, Mitte y=1501",
       "schluessel": "aussage",
       "zielgruppe": "b2b",
@@ -14,13 +14,15 @@
         "de"
       ],
       "_offen": "bild-reel.py existiert, aber der Adapter dafuer fehlt noch",
-      "_hinweis": "Reel als Dreischritt SUCHEN - BUCHEN - ENTSPANNEN."
+      "_hinweis": "Reel als Dreischritt SUCHEN - BUCHEN - ENTSPANNEN.",
+      "_vorher": "vorhanden",
+      "_pausiert": "23.09.2026: Erzeugte nie eine Anbieter-Botschaft — make-reel.mjs baute daraus wortgleich den Kundinnen-Slogan „Freie Wellness-Termine in deiner Nähe“ (10 Posts bis 22.09.). Ersetzt durch vorteil, einwand und kalender-clip. Zurück: status auf den Wert in _vorher."
     },
     {
       "id": "zahl-gross",
       "medium": "bild",
       "format": "anzeige",
-      "status": "neu",
+      "status": "pausiert",
       "haken": "Eine Zahl gross (--gross): 0 % Provision auf Folgebuchungen. Zahl GELESEN aus constants.ts, nie aus dem Gedaechtnis",
       "schluessel": "kennzahl",
       "zielgruppe": "b2b",
@@ -29,20 +31,23 @@
         "de"
       ],
       "_offen": "bild-reel.py existiert, aber der Adapter dafuer fehlt noch",
-      "_hinweis": "War als Reel geplant, zeigt aber eine Kennzahl. Der Reel-Generator zeigt bewusst KEINE Zahlen (sie muessten aus constants.ts gelesen werden, sonst veralten sie) — deshalb Bild."
+      "_hinweis": "War als Reel geplant, zeigt aber eine Kennzahl. Der Reel-Generator zeigt bewusst KEINE Zahlen (sie muessten aus constants.ts gelesen werden, sonst veralten sie) — deshalb Bild.",
+      "_vorher": "neu",
+      "_pausiert": "23.09.2026: Ohne Generator (kein Eintrag in FORMATE) — würde mit „unbekanntes Format“ abbrechen. Die Kennzahl steckt jetzt im neuen rechenbeispiel. Zurück: status auf den Wert in _vorher."
     },
     {
       "id": "kalender-clip",
       "medium": "reel",
-      "format": "kategorie-loop",
+      "format": "kalender-demo",
       "status": "vorhanden",
-      "haken": "Echte Kalenderaufnahme aus /kalender-demo — kein Mockup, das echte Produkt. Staerkster B2B-Beweis, den es gibt",
+      "haken": "Echte Aufnahme des Anbieter-Kalenders (/kalender-demo), stumm, mit einem Satz darunter und Gründungspartner-Schluss.",
       "schluessel": "screen",
       "zielgruppe": "b2b",
       "sprachen": [
         "de"
       ],
-      "_hinweis": "Reel als Kategorien-Schleife."
+      "_hinweis": "Seit 23.09.2026 wirklich die Kalenderaufnahme: tools/social/reels-fremd/kalender-reel.mjs. Vorher baute make-reel.mjs für format kategorie-loop dasselbe Reel wie last-minute. Sätze in wellbooked/docs/social/anbieter.json → kalender[], nur geprueft:true.",
+      "_freigegeben": "23.09.2026, Josef: „alle frei“"
     },
     {
       "id": "last-minute",
@@ -61,51 +66,59 @@
       "id": "mythos",
       "medium": "reel",
       "format": "ablauf",
-      "status": "vorhanden",
+      "status": "pausiert",
       "haken": "Verbreitete Annahme ueber Terminbuchung widerlegen. Widerspruch haelt laenger als Zustimmung",
       "schluessel": "aussage",
       "zielgruppe": "b2b",
       "sprachen": [
         "de"
       ],
-      "_hinweis": "Reel als Dreischritt SUCHEN - BUCHEN - ENTSPANNEN."
+      "_hinweis": "Reel als Dreischritt SUCHEN - BUCHEN - ENTSPANNEN.",
+      "_vorher": "vorhanden",
+      "_pausiert": "23.09.2026: Erzeugte nie eine Anbieter-Botschaft — make-reel.mjs baute daraus wortgleich den Kundinnen-Slogan „Freie Wellness-Termine in deiner Nähe“ (10 Posts bis 22.09.). Ersetzt durch vorteil, einwand und kalender-clip. Zurück: status auf den Wert in _vorher."
     },
     {
       "id": "kategorie-karte",
       "medium": "bild",
       "format": "anzeige",
-      "status": "vorhanden",
+      "status": "pausiert",
       "haken": "Eine der 16 Kategorien mit ihrer Behandlungsliste. 16 Winkel aus einer Datei, ohne dass sich etwas wiederholt",
       "schluessel": "kategorie",
       "zielgruppe": "b2c",
       "sprachen": [
         "de"
-      ]
+      ],
+      "_vorher": "vorhanden",
+      "_pausiert": "23.09.2026: B2C vor dem Launch: Kund:innen können sich erst ab PUBLIC_LAUNCH_DATE registrieren (constants.ts), Josef will „überwiegend Anbieter“. Zurück: status auf den Wert in _vorher."
     },
     {
       "id": "rechenbeispiel",
       "medium": "bild",
       "format": "anzeige",
       "status": "vorhanden",
-      "haken": "Starter gegen Pro, mit echten Zahlen. Die haeufigste Frage im Verkaufsgespraech, einmal sauber beantwortet",
+      "haken": "Ein 60-€-Termin: Provision bei der Erstbuchung, 0 € bei jeder weiteren, Bankgebühr ehrlich ausgewiesen — ohne Abopreis.",
       "schluessel": "kennzahl",
       "zielgruppe": "b2b",
       "quelle_pflicht": "src/lib/constants.ts",
       "sprachen": [
         "de"
-      ]
+      ],
+      "_hinweis": "Seit 23.09.2026 ein Karussell aus docs/social/anbieter.mjs. Die alte Fassung nannte den Abopreis (marketing.md verbietet das) und zeigte 10 % neben dem Gründungspartner-Knopf, obwohl Gründungspartner 5 % zahlen.",
+      "_freigegeben": "23.09.2026, Josef: „alle frei“"
     },
     {
       "id": "tirol-wien",
       "medium": "bild",
       "format": "anzeige",
-      "status": "vorhanden",
+      "status": "pausiert",
       "haken": "Regionaler Aufhaenger auf die beiden Marketingschwerpunkte. Lokale Hashtags tragen hier weiter als Reichweitenhashtags",
       "schluessel": "region",
       "zielgruppe": "b2c",
       "sprachen": [
         "de"
-      ]
+      ],
+      "_vorher": "vorhanden",
+      "_pausiert": "23.09.2026: B2C vor dem Launch: Kund:innen können sich erst ab PUBLIC_LAUNCH_DATE registrieren (constants.ts), Josef will „überwiegend Anbieter“. Zurück: status auf den Wert in _vorher."
     },
     {
       "id": "anruf",
@@ -124,26 +137,84 @@
       "id": "karussell-blatt",
       "medium": "bild",
       "format": "anzeige",
-      "status": "neu",
+      "status": "pausiert",
       "haken": "Ein Blatt einer mehrteiligen Serie, Fortsetzung angekuendigt. Zieht Profilbesuche",
       "schluessel": "serie",
       "zielgruppe": "b2b",
       "sprachen": [
         "de"
       ],
-      "_ersetzt_durch": "anruf — die Skizze aus der Zeit, als Karussells noch nicht gingen. Sie hat nie ein Gegenstueck in FORMATE bekommen und wuerde heute mit 'unbekanntes Format' abbrechen; deshalb steht sie weiter auf status neu."
+      "_ersetzt_durch": "anruf — die Skizze aus der Zeit, als Karussells noch nicht gingen. Sie hat nie ein Gegenstueck in FORMATE bekommen und wuerde heute mit 'unbekanntes Format' abbrechen; deshalb steht sie weiter auf status neu.",
+      "_vorher": "neu",
+      "_pausiert": "23.09.2026: Ohne Generator; durch anruf und die Anbieter-Karussells ersetzt. Zurück: status auf den Wert in _vorher."
     },
     {
       "id": "regulierte-bereiche",
       "medium": "bild",
       "format": "anzeige",
-      "status": "vorhanden",
+      "status": "pausiert",
       "haken": "Vertrauenswinkel: Zwei der 16 Bereiche sind regulated:true und verlangen einen Qualifikationsnachweis. Das ist ein Verkaufsargument, kein Kleingedrucktes",
       "schluessel": "aussage",
       "zielgruppe": "b2c",
       "sprachen": [
         "de"
-      ]
+      ],
+      "_vorher": "vorhanden",
+      "_pausiert": "23.09.2026: B2C vor dem Launch: Kund:innen können sich erst ab PUBLIC_LAUNCH_DATE registrieren (constants.ts), Josef will „überwiegend Anbieter“. Zurück: status auf den Wert in _vorher."
+    },
+    {
+      "id": "behandlung",
+      "medium": "bild",
+      "format": "behandlung",
+      "status": "neu",
+      "haken": "Zwei Folien: eine Behandlung, die man vom Namen kennt, aber nicht erklären könnte — was passiert, wie lange, für wen, gut zu wissen. Wird gespeichert.",
+      "schluessel": "behandlung",
+      "zielgruppe": "b2c",
+      "sprachen": [
+        "de"
+      ],
+      "_hinweis": "Texte in wellbooked/docs/social/behandlungen.json (88 Behandlungen, nur nicht regulierte Bereiche). Der Generator zieht nur Einträge mit geprueft:true und bricht ohne sie ab. Status 'neu' hält den Winkel aus echten Läufen, bis die Texte freigegeben sind (23.09.2026)."
+    },
+    {
+      "id": "dies-oder-das",
+      "medium": "bild",
+      "format": "dies-oder-das",
+      "status": "neu",
+      "haken": "Zwei Folien: „Gel oder Acryl?“ — die Frage zuerst, der Unterschied danach. Fragt nach Kommentaren.",
+      "schluessel": "paar",
+      "zielgruppe": "b2c",
+      "sprachen": [
+        "de"
+      ],
+      "_hinweis": "Paare in wellbooked/docs/social/behandlungen.json (paare, 16 Stück). Wie 'behandlung': nur geprueft:true, Status 'neu' bis zur Freigabe (23.09.2026)."
+    },
+    {
+      "id": "vorteil",
+      "medium": "bild",
+      "format": "vorteil",
+      "status": "vorhanden",
+      "haken": "Drei Folien: ein Alltagsproblem von Studios → wie WELLbooked! es löst (echte Funktion) → Gründungspartner:in werden.",
+      "schluessel": "vorteil",
+      "zielgruppe": "b2b",
+      "sprachen": [
+        "de"
+      ],
+      "_hinweis": "Texte in wellbooked/docs/social/anbieter.json → vorteile[] (12), jeder mit Beleg im Code. Nur geprueft:true.",
+      "_freigegeben": "23.09.2026, Josef: „alle frei“"
+    },
+    {
+      "id": "einwand",
+      "medium": "bild",
+      "format": "einwand",
+      "status": "vorhanden",
+      "haken": "Zwei Folien: ein typischer Einwand („Ich hab doch schon Instagram“) → die ehrliche Antwort.",
+      "schluessel": "einwand",
+      "zielgruppe": "b2b",
+      "sprachen": [
+        "de"
+      ],
+      "_hinweis": "Texte in wellbooked/docs/social/anbieter.json → einwaende[] (8). Nur geprueft:true.",
+      "_freigegeben": "23.09.2026, Josef: „alle frei“"
     }
   ]
 }

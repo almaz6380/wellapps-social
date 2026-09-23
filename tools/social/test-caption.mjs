@@ -13,7 +13,7 @@
 // unabhaengig voneinander — deshalb Faelle statt Vertrauen.
 
 import { captionAus, riechtNachBeiblatt } from './vorflug.mjs';
-import { beschreibungBauen, hashtagsFuer } from './beschreibung.mjs';
+import { beschreibungBauen, hashtagsFuer, linkZeile } from './beschreibung.mjs';
 
 const faelle = [
   {
@@ -200,6 +200,38 @@ for (const f of bFaelle) {
   } else {
     console.log(`✓ ${f.name}`);
   }
+}
+
+// --- Eigene Linkzeile aus dem Beiblatt (23.09.2026) --------------------------
+//
+// WELLbooked!s Anbieter-Posts ersetzen „Hier buchen: wellbooked.at" durch die
+// Gründungspartner-Seite. Erlaubt nur auf der EIGENEN Domain — jede
+// Gegenprobe unten ist ein Link, der unter der Marke nichts zu suchen hat.
+{
+  const wb = { linkInBio: 'wellbooked.at', linkWort: { de: 'Hier buchen' } };
+  const vorgabe = 'Hier buchen: wellbooked.at';
+  const linkFaelle = [
+    ['ohne Abschnitt → Vorgabe', '## Caption\n\nText\n', vorgabe],
+    ['## Link auf eigener Domain', '## Caption\n\nText\n\n## Hashtags\n\n#a\n\n## Link\n\nGründungspartner:in werden: wellbooked.at/gruendungspartner\n',
+      'Gründungspartner:in werden: wellbooked.at/gruendungspartner'],
+    ['── LINK ── mit https und www', '── LINK ──\n\nMehr: https://www.wellbooked.at/gruendungspartner',
+      'Mehr: https://www.wellbooked.at/gruendungspartner'],
+    ['Gegenprobe: fremde Domain, eigene im Pfad', '## Link\n\nKlick: evil.com/wellbooked.at', vorgabe],
+    ['Gegenprobe: eigene Domain als Subdomain', '## Link\n\nKlick: wellbooked.at.evil.com', vorgabe],
+    ['Gegenprobe: ähnliche Domain', '## Link\n\nKlick: notwellbooked.at', vorgabe],
+    ['Gegenprobe: eigene UND fremde Adresse', '## Link\n\nwellbooked.at oder evil.com', vorgabe],
+    ['Gegenprobe: gar keine Adresse', '## Link\n\nnur Text', vorgabe],
+  ];
+  for (const [name, beiblatt, soll] of linkFaelle) {
+    const ist = linkZeile(wb, 'de', beiblatt);
+    if (ist === soll) console.log(`✓ Link: ${name}`);
+    else { fehler += 1; console.log(`✗ Link: ${name}\n   ${JSON.stringify(ist)} statt ${JSON.stringify(soll)}`); }
+  }
+  // Und im fertigen Text: die eigene Zeile, nicht zusätzlich die Vorgabe.
+  const text = beschreibungBauen({ app: wb, beiblatt: linkFaelle[1][1] });
+  const ok = text.includes('wellbooked.at/gruendungspartner') && !text.includes(vorgabe);
+  if (ok) console.log('✓ Link: beschreibungBauen nimmt die eigene Zeile statt der Vorgabe');
+  else { fehler += 1; console.log(`✗ Link: beschreibungBauen\n   ${JSON.stringify(text)}`); }
 }
 
 console.log(`\n${fehler === 0 ? '✓ Alle Faelle bestanden.' : `✗ ${fehler} Fehler.`}`);

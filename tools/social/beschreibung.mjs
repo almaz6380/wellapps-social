@@ -121,9 +121,17 @@ export function hashtagsFuer(beiblatt, max = MAX_HASHTAGS) {
  * Leitplanke `store-link` in vorflug.mjs entsprechend lockern. Beides
  * gehoert zusammen, sonst verwirft die Pruefung jeden Beitrag.
  */
-export function linkZeile(app, sprache = 'de') {
+export function linkZeile(app, sprache = 'de', beiblatt = null) {
   const ziel = app.linkInBio;
   if (!ziel) return '';
+  // ⚠ Ein Beiblatt darf die Zeile ersetzen — aber NUR mit einem Ziel auf der
+  // eigenen Domain (23.09.2026). Anlass: WELLbooked!s Posts an Anbieter:innen.
+  // „Hier buchen: wellbooked.at" schickt Studiobetreiber auf die Kundenseite;
+  // richtig ist die Gründungspartner-Seite. Eine fremde Domain würde hier
+  // stillschweigend ignoriert statt übernommen — ein Beiblatt ist Text aus
+  // einem Generator, kein Freibrief für beliebige Links unter der Marke.
+  const eigen = linkAus(beiblatt, ziel);
+  if (eigen) return eigen;
   // ⚠ „Hier laden" passt nicht ueberall. WELLbooked! ist eine
   // Buchungsplattform — dort laedt man nichts, dort bucht man. Deshalb darf
   // jede App in apps.json ihr eigenes Wort fuehren (`linkWort`), und nur
@@ -131,6 +139,31 @@ export function linkZeile(app, sprache = 'de') {
   const vorgabe = sprache === 'de' ? 'Hier laden' : 'Get it here';
   const wort = app.linkWort?.[sprache] ?? app.linkWort?.de ?? vorgabe;
   return `${wort}: ${ziel}`;
+}
+
+/**
+ * Die Linkzeile aus dem Beiblatt, falls es eine eigene führt.
+ *
+ * Gesucht wird „## Link" (Markdown-Beiblätter) oder „── LINK ──" (die
+ * Beiblätter der Reel-Generatoren), danach die erste nicht leere Zeile.
+ * Zurück kommt sie nur, wenn sie die Domain von `linkInBio` enthält —
+ * sonst null, und es bleibt beim Vorgabelink.
+ */
+export function linkAus(beiblatt, linkInBio) {
+  if (!beiblatt || !linkInBio) return null;
+  const start = beiblatt.search(/^[ \t─═—=-]*(?:##\s*Link\s*$|LINK\b)/im);
+  if (start === -1) return null;
+  const rest = beiblatt.slice(start).replace(/^.*\n(?:[-=─═]{3,}\n)?/, '');
+  const zeile = rest.split('\n').map((z) => z.trim()).find(Boolean);
+  if (!zeile) return null;
+  const domain = String(linkInBio).replace(/^https?:\/\//, '').split('/')[0].toLowerCase()
+    .replace(/^www\./, '');
+  // JEDE Adresse in der Zeile muss auf die eigene Domain zeigen — nicht nur
+  // irgendeine. Sonst ginge „evil.com/wellbooked.at" durch, weil die eigene
+  // Domain darin vorkommt.
+  const hosts = [...zeile.matchAll(/(?:https?:\/\/)?((?:[\p{L}\p{N}-]+\.)+[a-z]{2,})(?=[/\s]|$)/giu)]
+    .map((m) => m[1].toLowerCase().replace(/^www\./, ''));
+  return hosts.length && hosts.every((h) => h === domain) ? zeile : null;
 }
 
 /**
@@ -162,7 +195,7 @@ export function beschreibungBauen({ app, beiblatt, sprache = 'de', maxHashtags =
 
   const teile = [caption];
 
-  const link = linkZeile(app, sprache);
+  const link = linkZeile(app, sprache, beiblatt);
   if (link) teile.push(link);
 
   // ⚠ Ueber hashtagsFuer(), nicht noch einmal selbst zusammengesucht: Es ist

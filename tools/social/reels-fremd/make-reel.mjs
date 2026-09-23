@@ -199,6 +199,56 @@ function wellbookedInhalt() {
   };
 }
 
+// --- Sonderweg: der echte Kalender (23.09.2026) ------------------------------
+//
+// Kein Typografie-Reel, sondern ein Bildschirmmitschnitt mit Streifen darüber
+// und darunter — eigene Datei, eigener Ablauf, siehe kalender-reel.mjs.
+if (MARKE === 'wellbooked' && FORMAT === 'kalender-demo') {
+  const { kalenderReel } = await import('./kalender-reel.mjs');
+  const dateiname = NAME ?? `${MARKE}-${FORMAT}-${LANG}-s${SEED}`;
+  const zielOrdner = resolve(OUT);
+  mkdirSync(zielOrdner, { recursive: true });
+  const ziel = join(zielOrdner, `${dateiname}.mp4`);
+  const r = await kalenderReel({ appPfad: APP.pfad, marke: M, wuerfel, ziel, wurzel: WURZEL });
+
+  // ⚠ Eigene Linkzeile (── LINK ──): beschreibung.mjs setzt sie statt
+  // „Hier buchen: wellbooked.at" — der Post richtet sich an Anbieter:innen.
+  writeFileSync(join(zielOrdner, `${dateiname}.txt`), [
+    dateiname,
+    '='.repeat(dateiname.length),
+    '',
+    `Marke: ${M.wortmarke}   Format: ${FORMAT}   Sprache: ${LANG.toUpperCase()}`,
+    `Laenge: ${r.sekunden.toFixed(1)} s   Seed: ${SEED}   Ton: keiner (stumm)   Aufnahme: ${r.datei}`,
+    '',
+    '── CAPTION ZUM KOPIEREN ──────────────────────────────',
+    '',
+    `${r.text}`,
+    '',
+    'So sieht dein Kalender in WELLbooked! aus – eine echte Aufnahme, keine Attrappe. '
+      + 'Arbeitszeiten, Pausen und dein Team an einem Ort, Buchungen kommen direkt hinein.',
+    '',
+    `Als Gründungspartner:in: ${r.gratisMonate} Monate ohne Abo und ohne Provision.`,
+    '',
+    'Wie planst du deine Termine heute – Buch, Handy oder Kopf? 👇',
+    '',
+    '#WELLbooked #Selbstständig #Kosmetikstudio #Massagepraxis #Terminbuchung',
+    '',
+    '── LINK ──────────────────────────────────────────────',
+    '',
+    `Gründungspartner:in werden: ${r.ziel}`,
+    '',
+    '── VOR DEM POSTEN ────────────────────────────────────',
+    '',
+    '• Das Video ist stumm und bleibt es — bei WELLbooked! ist Stille Vorgabe.',
+    '',
+    '- Medienherkunft: bildschirmaufnahme (echte Kalender-Komponenten, Demo-Daten — kein KI-Bild)',
+    '',
+  ].join('\n'));
+  console.log(`✓ ${dateiname}.mp4  ${r.sekunden.toFixed(1)} s  ${B}×${H}  stumm  (${r.datei})`);
+  console.log(`✓ ${dateiname}.txt`);
+  process.exit(0);
+}
+
 const inhalt = MARKE === 'swaply' ? await swaplyInhalt() : wellbookedInhalt();
 
 // --- Szenen -----------------------------------------------------------------

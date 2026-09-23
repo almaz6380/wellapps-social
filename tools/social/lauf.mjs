@@ -298,7 +298,7 @@ async function kartenlauf() {
       // Getrennt, aus demselben Grund wie im Tageslauf oben: die Regel
       // „Marke mit Ausrufezeichen" nimmt das Feld `hashtags` aus.
       hashtags: hashtagsFuer(beiblatt).map((t) => `#${t}`).join(' '),
-      applink: linkZeile(app, post.sprache),
+      applink: linkZeile(app, post.sprache, beiblatt),
       medienherkunft: 'typografie',
     },
   });
@@ -555,7 +555,7 @@ async function tageslauf() {
         texte: {
           caption,
           hashtags,
-          applink: linkZeile(app, post.sprache),
+          applink: linkZeile(app, post.sprache, beiblatt),
           tonquelle: post.medium === 'reel'
             ? (k === 'mahjong' ? 'synth' : k === 'wellbooked' ? 'stille' : 'eigen')
             : undefined,
