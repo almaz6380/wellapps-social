@@ -603,6 +603,16 @@ nicht noch einmal tun.
     Fassung ein Leerlauf, bei abweichender kommt die fehlende Bauart dazu. In der
     Cloud-Sitzung liegt ein Chromium unter `/opt/pw-browsers/chromium`
     (`CHROMIUM_PFAD`), 150 MB nachzuladen ist dort unnötig.
+13. **Parallele Tagesläufe nahmen einander den Ledger weg (22.09.2026).** Sieben
+    Läufe, binnen Sekunden gestartet, alle rot mit `! [rejected] (fetch first)` —
+    obwohl jeder seine Beiträge schon versendet hatte. Nur der erste bekam seinen
+    Ledger auf main, die anderen verloren ihre Zeilen, und die Rotation hätte deren
+    Winkel bald wieder gezogen. Seit 23.09. spielt der Schritt „Ledger
+    zurueckschreiben" seine Änderung auf den **neuesten** Stand von main ein
+    (`ledger-einspielen.mjs`: was der Lauf entfernt hat, fliegt raus; was er
+    hinzugefügt hat, kommt dazu; fremde Zeilen bleiben) und versucht es bis zu
+    fünfmal. ⚠ Kein `git pull --rebase` — zwei Läufe hängen an dieselbe Stelle an,
+    das ist für git jedes Mal ein Konflikt.
 
 ## Der Stand der Kanäle, gemessen (05.–07.09.2026)
 
