@@ -84,6 +84,33 @@ function passtDasPasswort(eingabe, erwartet) {
 }
 
 /**
+ * Wer ist das? `voll`, `pruefer` oder niemand.
+ *
+ * ⚠ DER PRUEFZUGANG (23.09.2026). TikTok hat die App-Pruefung abgelehnt,
+ * unter anderem, weil die eingetragene Website nur ein Passwortfeld zeigt:
+ * „If it is a login page, you must provide a test account and password in the
+ * Apply Reason field." Das echte Passwort dort einzutragen hiesse, einem
+ * Fremden den Knopf zu geben, der Beitraege auf Josefs Konten oeffentlich
+ * stellt.
+ *
+ * Deshalb ein zweites Passwort (`FREIGABE_PRUEFER_PASSWORT`). Es zeigt die
+ * Seite vollstaendig — Beitraege, TikTok-Dialog, Archiv —, aber es startet
+ * NIE einen Workflow. Die Sperre sitzt nicht an den einzelnen Aktionen,
+ * sondern an der einzigen Stelle, an der ueberhaupt etwas gestartet wird
+ * (`starten` im Handler). Eine Aktion, die spaeter dazukommt, ist damit
+ * automatisch gesperrt, statt automatisch offen.
+ *
+ * ⚠ Das volle Passwort gewinnt. Stuende in Vercel versehentlich zweimal
+ * derselbe Wert, waere Josef sonst im Pruefmodus und wunderte sich, warum
+ * seine Knoepfe nichts tun.
+ */
+function rolleFuer(eingabe) {
+  if (passtDasPasswort(eingabe, process.env.FREIGABE_PASSWORT)) return 'voll';
+  if (passtDasPasswort(eingabe, process.env.FREIGABE_PRUEFER_PASSWORT)) return 'pruefer';
+  return null;
+}
+
+/**
  * Zaehlt dieser Kanal-Eintrag als „wirklich draussen"?
  *
  * Facebook und Instagram posten wir selbst — dort ist unser eigener Vermerk
@@ -121,7 +148,8 @@ export default async function handler(req, res) {
 
   const { passwort, aktion, datum, app, datei, privacy, erlaubt, werbung, variante } = req.body ?? {};
 
-  if (!passtDasPasswort(passwort, process.env.FREIGABE_PASSWORT)) {
+  const rolle = rolleFuer(passwort);
+  if (!rolle) {
     // Kurz bremsen: Ohne das liesse sich ein kurzes Passwort in Minuten
     // durchprobieren. Mit einer halben Sekunde je Versuch dauert dasselbe
     // Jahre, und ein Mensch, der sich vertippt, merkt nichts davon.
@@ -144,7 +172,7 @@ export default async function handler(req, res) {
       const listen = (await Promise.all(
         APPS.map((a) => merklisteHolen(basis.replace(/\/$/, ''), tag, a)),
       )).filter(Boolean);
-      res.status(200).json({ datum: tag, listen });
+      res.status(200).json({ datum: tag, listen, pruefmodus: rolle === 'pruefer' });
       return;
     }
 
@@ -234,11 +262,28 @@ export default async function handler(req, res) {
 
     const token = process.env.GITHUB_TOKEN;
 
+    // ⚠ Die EINZIGE Stelle, an der ein Lauf entsteht. Im Pruefmodus laeuft
+    // jede Pruefung darueber genauso wie sonst — falsche Sichtbarkeit, fremder
+    // Dateiname, zu langer Text werden abgewiesen —, nur der Start selbst
+    // unterbleibt. Der Pruefer sieht also dieselben Antworten wie Josef, bis
+    // auf den letzten Schritt.
+    const pruefer = rolle === 'pruefer';
+    const starten = pruefer
+      ? async () => {}
+      : (workflow, inputs) => laufStarten(token, workflow, inputs);
+    const ohneToken = () => {
+      if (token || pruefer) return false;
+      res.status(500).json({ fehler: 'GITHUB_TOKEN ist in Vercel nicht gesetzt.' });
+      return true;
+    };
+    // Jede Erfolgsantwort traegt den Modus mit, damit die Seite „nichts
+    // gesendet" sagen kann statt „laeuft".
+    const fertig = (daten) => res.status(200).json(pruefer
+      ? { ...daten, gestartet: false, pruefmodus: true }
+      : daten);
+
     if (aktion === 'veroeffentlichen') {
-      if (!token) {
-        res.status(500).json({ fehler: 'GITHUB_TOKEN ist in Vercel nicht gesetzt.' });
-        return;
-      }
+      if (ohneToken()) return;
       // ⚠ Nur bekannte App-Schluessel weiterreichen (siehe oben).
       const nurApp = APPS.includes(app) ? app : '';
       // `datei` ist optional: Mit ihr wird genau EIN Beitrag freigegeben (so
@@ -249,9 +294,9 @@ export default async function handler(req, res) {
         res.status(400).json({ fehler: 'Unerwarteter Dateiname.' });
         return;
       }
-      await laufStarten(token, WORKFLOW,
+      await starten(WORKFLOW,
         { modus: 'veroeffentlichen', datum: tag, apps: nurApp, datei: nurDatei });
-      res.status(200).json({ gestartet: true, datum: tag, app: nurApp || 'alle', datei: nurDatei });
+      fertig({ gestartet: true, datum: tag, app: nurApp || 'alle', datei: nurDatei });
       return;
     }
 
@@ -259,10 +304,7 @@ export default async function handler(req, res) {
     // nichts und nimmt nichts zurueck — es verhindert nur, dass der Beitrag
     // noch irgendwo hingeht.
     if (aktion === 'ablehnen') {
-      if (!token) {
-        res.status(500).json({ fehler: 'GITHUB_TOKEN ist in Vercel nicht gesetzt.' });
-        return;
-      }
+      if (ohneToken()) return;
       if (!APPS.includes(app)) {
         res.status(400).json({ fehler: 'Unbekannte App.' });
         return;
@@ -271,8 +313,8 @@ export default async function handler(req, res) {
         res.status(400).json({ fehler: 'Unerwarteter Dateiname.' });
         return;
       }
-      await laufStarten(token, WORKFLOW_ABLEHNEN, { app, datei, datum: tag });
-      res.status(200).json({ gestartet: true, datum: tag, app, datei });
+      await starten(WORKFLOW_ABLEHNEN, { app, datei, datum: tag });
+      fertig({ gestartet: true, datum: tag, app, datei });
       return;
     }
 
@@ -282,10 +324,7 @@ export default async function handler(req, res) {
     // ab, laedt TikTok in den Posteingang und merkt Facebook und Instagram
     // vor. Veroeffentlicht wird weiterhin nur auf Knopfdruck.
     if (aktion === 'neu') {
-      if (!token) {
-        res.status(500).json({ fehler: 'GITHUB_TOKEN ist in Vercel nicht gesetzt.' });
-        return;
-      }
+      if (ohneToken()) return;
       if (!APPS.includes(app)) {
         res.status(400).json({ fehler: 'Unbekannte App.' });
         return;
@@ -303,10 +342,10 @@ export default async function handler(req, res) {
       // weg, sobald der Zweig zusammengefuehrt ist — dieselbe Stelle steht
       // auch im Tageslauf-Workflow.
       const zweige = app === 'swaply' ? 'swaply=claude/swaply-icon-farben' : '';
-      await laufStarten(token, WORKFLOW_TAGESLAUF, {
+      await starten(WORKFLOW_TAGESLAUF, {
         apps: app, modus: 'echt', datum: tag, variante: String(n), zweige,
       });
-      res.status(200).json({ gestartet: true, datum: tag, app, variante: n });
+      fertig({ gestartet: true, datum: tag, app, variante: n });
       return;
     }
 
@@ -314,10 +353,7 @@ export default async function handler(req, res) {
     // den Daten der App gezogen. Er wird gezeichnet und in die Merkliste von
     // heute gehaengt; oeffentlich wird er erst mit dem gewoehnlichen Knopf.
     if (aktion === 'karte') {
-      if (!token) {
-        res.status(500).json({ fehler: 'GITHUB_TOKEN ist in Vercel nicht gesetzt.' });
-        return;
-      }
+      if (ohneToken()) return;
       // ⚠ Nur Anigosha. Das Format steckt in anigosha/tools/post-bild.mjs; die
       // vier anderen Apps haben es noch nicht. Hier abfangen statt den Lauf
       // zehn Minuten spaeter scheitern zu lassen.
@@ -365,12 +401,12 @@ export default async function handler(req, res) {
       // ⚠ Haken und Marke gehen beim Reel NICHT mit. Die Reel-Vorlage kennt
       // sie nicht; mitzuschicken hiesse, sie stillschweigend zu verlieren —
       // und der Mensch sucht sie dann im fertigen Video.
-      await laufStarten(token, WORKFLOW_KARTE, {
+      await starten(WORKFLOW_KARTE, {
         app, medium, text: txt, cta,
         haken: medium === 'reel' ? '' : haken,
         marke: medium === 'reel' ? '' : marke,
       });
-      res.status(200).json({ gestartet: true, app, medium, zeichen: txt.length });
+      fertig({ gestartet: true, app, medium, zeichen: txt.length });
       return;
     }
 
@@ -378,10 +414,7 @@ export default async function handler(req, res) {
     // nichts zu waehlen — der Beitrag entsteht aus Datei und Text, so wie er
     // auf der Seite steht.
     if (aktion === 'facebook') {
-      if (!token) {
-        res.status(500).json({ fehler: 'GITHUB_TOKEN ist in Vercel nicht gesetzt.' });
-        return;
-      }
+      if (ohneToken()) return;
       if (!APPS.includes(app)) {
         res.status(400).json({ fehler: 'Unbekannte App.' });
         return;
@@ -390,8 +423,8 @@ export default async function handler(req, res) {
         res.status(400).json({ fehler: 'Unerwarteter Dateiname.' });
         return;
       }
-      await laufStarten(token, WORKFLOW_FACEBOOK, { app, datei, datum: tag });
-      res.status(200).json({ gestartet: true, datum: tag, app, datei });
+      await starten(WORKFLOW_FACEBOOK, { app, datei, datum: tag });
+      fertig({ gestartet: true, datum: tag, app, datei });
       return;
     }
 
@@ -399,10 +432,7 @@ export default async function handler(req, res) {
     // hat. ⚠ Ohne `privacy` wird nichts gestartet — TikTok verlangt eine
     // bewusste Wahl, und eine Voreinstellung hier waere genau der Verstoss.
     if (aktion === 'tiktok') {
-      if (!token) {
-        res.status(500).json({ fehler: 'GITHUB_TOKEN ist in Vercel nicht gesetzt.' });
-        return;
-      }
+      if (ohneToken()) return;
       if (!APPS.includes(app)) {
         res.status(400).json({ fehler: 'Unbekannte App.' });
         return;
@@ -427,12 +457,12 @@ export default async function handler(req, res) {
       const nurBekannt = (liste, erlaubteWerte) => (Array.isArray(liste) ? liste : [])
         .filter((x) => erlaubteWerte.includes(x)).join(',');
 
-      await laufStarten(token, WORKFLOW_TIKTOK, {
+      await starten(WORKFLOW_TIKTOK, {
         app, datei, privacy, datum: tag,
         erlaubt: nurBekannt(erlaubt, ERLAUBT),
         werbung: nurBekannt(werbung, WERBUNG),
       });
-      res.status(200).json({ gestartet: true, datum: tag, app, datei });
+      fertig({ gestartet: true, datum: tag, app, datei });
       return;
     }
 

@@ -233,6 +233,55 @@ pruefe('alle drei Beitraege stehen trotzdem in der Liste',
   ['Beitrag mit Bild', 'Bild ist schon weg', 'Ein Reel'].every((s) => archivText.includes(s)),
   archivText.slice(0, 120));
 
+// --- Der Pruefmodus (23.09.2026) ---------------------------------------------
+//
+// TikToks Pruefer bekommt ein eigenes Passwort. Der Server startet damit
+// keinen Lauf und sagt `pruefmodus: true`. Die Seite muss das SAGEN — nicht
+// „Läuft" anzeigen und eine Minute spaeter „hat nichts geändert".
+{
+  const pruef = await browser.newPage();
+  await pruef.route('**/api/freigabe', async (route) => {
+    const körper = JSON.parse(route.request().postData() ?? '{}');
+    if (körper.aktion === 'liste') {
+      return route.fulfill({ json: { listen: [LISTE], datum: DATUM, pruefmodus: true } });
+    }
+    return route.fulfill({ json: { gestartet: false, pruefmodus: true } });
+  });
+  await pruef.goto(ORT, { waitUntil: 'load' });
+
+  // Vor der Anmeldung: Logo, Favicon und der englische Absatz fuer den Pruefer.
+  const kopf = await pruef.evaluate(() => ({
+    icons: [...document.querySelectorAll('link[rel~=icon]')].map((l) => l.getAttribute('href')),
+    logo: document.querySelector('.seitenkopf img')?.getAttribute('src'),
+    titel: document.title,
+    worum: !document.querySelector('#worum').hidden,
+    band: !document.querySelector('#pruefband').hidden,
+  }));
+  pruefe('Favicon ist eingetragen', kopf.icons.includes('/favicon.ico'), kopf.icons.join(', '));
+  pruefe('Logo steht im Kopf', kopf.logo === '/icon-192.png', String(kopf.logo));
+  pruefe('Titel nennt WELLapps Social', kopf.titel.includes('WELLapps Social'), kopf.titel);
+  pruefe('Erklaerung vor der Anmeldung sichtbar', kopf.worum, String(kopf.worum));
+  pruefe('kein Pruefband vor der Anmeldung', !kopf.band, String(kopf.band));
+
+  await pruef.fill('#pw', 'pruef');
+  await pruef.click('#rein');
+  await pruef.waitForTimeout(600);
+  pruefe('Pruefband nach der Anmeldung sichtbar',
+    await pruef.locator('#pruefband').isVisible(), 'unsichtbar');
+
+  const knopf = pruef.getByRole('button', { name: 'Auf Facebook veröffentlichen' });
+  await knopf.click();
+  await pruef.getByRole('button', { name: /Wirklich/ }).click();
+  await pruef.waitForTimeout(400);
+  const zeile = (await pruef.locator('body').innerText())
+    .split('\n').find((z) => /Review mode|Läuft|Fehler:/.test(z) && !z.includes('Review mode.')) ?? '(keine)';
+  pruefe('Knopf sagt „nichts gesendet" statt „Läuft"',
+    zeile.includes('nothing was sent') && !zeile.includes('Läuft'), zeile);
+  const vermerk = await pruef.evaluate((d) => sessionStorage.getItem(`freigabe.versuch.facebook.${d}.a.jpg`), DATUM);
+  pruefe('im Pruefmodus kein Versuchsvermerk', vermerk === null, String(vermerk));
+  await pruef.close();
+}
+
 await browser.close();
 server.close();
 

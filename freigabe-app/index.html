@@ -4,7 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
-<title>Freigabe</title>
+<title>WELLapps Social · Freigabe</title>
+<!--
+  ⚠ Dasselbe Bild wie das App-Icon bei TikTok (23.09.2026). TikTok hat die
+  App-Pruefung abgelehnt: „The app icon submitted in the Basic info does not
+  match the icon displayed on the website. Please ensure the same icon is used
+  consistently across both the TikTok, the website and Browser tab (favicon)."
+  Vorher hatte die Seite weder Favicon noch Logo. Alle Groessen sind aus
+  tools/social/kanal/fertig/tiktok/wellapps-social-1024.png verkleinert —
+  wer das Icon bei TikTok aendert, muss diese Dateien mit aendern.
+-->
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/icon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <style>
   /* Handy zuerst — die Seite wird fast nur dort benutzt. */
   :root {
@@ -19,6 +32,13 @@
     max-width: 640px; margin-inline: auto;
   }
   h1 { font-size: 22px; margin: 4px 0 2px; }
+  .seitenkopf { display: flex; align-items: center; gap: 12px; }
+  .seitenkopf img { width: 48px; height: 48px; border-radius: 12px; flex: none; }
+  .seitenkopf h1 { margin: 0; }
+  /* Pruefmodus: nicht zu uebersehen, damit niemand ihn fuer den echten haelt. */
+  .pruefband { background: #3a2f0b; border: 1px solid #b8922a; color: #ffe7a3;
+    border-radius: 12px; padding: 10px 12px; font-size: 14px; margin: 12px 0; }
+  .pruefband b { color: #fff3cc; }
   .leise { color: var(--leise); font-size: 14px; }
   .karte { background: var(--karte); border: 1px solid var(--rand); border-radius: 16px; padding: 14px; margin: 14px 0; }
   .app-kopf { display: flex; align-items: baseline; gap: 8px; margin: 26px 0 4px; }
@@ -91,8 +111,33 @@
 </head>
 <body>
 
-<h1>Freigabe</h1>
+<div class="seitenkopf">
+  <img src="/icon-192.png" alt="" width="48" height="48">
+  <div>
+    <h1>WELLapps Social</h1>
+    <p class="leise" style="margin:0">Freigabe</p>
+  </div>
+</div>
 <p class="leise" id="untertitel">Die Entwürfe des Tages, aus allen fünf Apps.</p>
+
+<!--
+  ⚠ Englisch, und das ist Absicht: Diesen Absatz liest der TikTok-Pruefer,
+  bevor er das Pruefpasswort eintippt. Josef braucht ihn nicht.
+-->
+<p class="leise" id="worum" lang="en">
+  WELLapps Social is the internal publishing tool for our own five mobile apps
+  (Anigosha, Mahjong Royale, WELLbooked!, FullRep, Swaply). Every post is
+  reviewed here by the account owner before it goes to TikTok, Facebook or
+  Instagram — nothing is published without a person confirming it.
+</p>
+
+<!-- Pruefmodus, nur nach Anmeldung mit dem Pruefpasswort sichtbar -->
+<div id="pruefband" class="pruefband" lang="en" hidden>
+  <b>Review mode.</b> You see the real tool with the real posts. All buttons
+  work up to the last step, but nothing is sent to TikTok, Facebook or
+  Instagram.
+  <span lang="de">· Prüfmodus: Es wird nichts gesendet.</span>
+</div>
 
 <!-- Anmeldung -->
 <section id="tor" class="karte">
@@ -187,6 +232,16 @@ const el = (t, k, txt) => { const d = document.createElement(t); if (k) d.classN
 
 let passwort = '';
 
+// ⚠ Pruefmodus (23.09.2026). Der Server startet im Pruefmodus keinen Lauf
+// und sagt das mit `pruefmodus: true`. Die Seite wirft dann einen Fehler,
+// statt „Läuft" anzuzeigen — sonst stuende auf dem Knopf eine Behauptung, und
+// nach einer Minute kaeme die Warnung „hat nichts geändert" dazu. Der Fehler
+// hat seinen eigenen Text, deshalb fehlerText() an jeder Fangstelle.
+class Pruefmodus extends Error {
+  constructor() { super('Review mode — nothing was sent'); this.pruefmodus = true; }
+}
+const fehlerText = (e, vorsatz) => (e?.pruefmodus ? e.message : `${vorsatz} ${e.message}`);
+
 async function ruf(aktion, extra = {}) {
   const antwort = await fetch('/api/freigabe', {
     method: 'POST',
@@ -195,6 +250,8 @@ async function ruf(aktion, extra = {}) {
   });
   const daten = await antwort.json().catch(() => ({ fehler: `HTTP ${antwort.status}` }));
   if (!antwort.ok) throw new Error(daten.fehler || `HTTP ${antwort.status}`);
+  if (daten.pruefmodus) $('#pruefband').hidden = false;
+  if (daten.pruefmodus && daten.gestartet === false) throw new Pruefmodus();
   return daten;
 }
 
@@ -416,7 +473,7 @@ function postKarte(post, liste) {
         setTimeout(laden, VERSUCH_MS);
       } catch (e) {
         fb.disabled = false;
-        fb.textContent = `Fehler: ${e.message}`;
+        fb.textContent = fehlerText(e, 'Fehler:');
       }
     };
     knoepfe.append(fb);
@@ -461,7 +518,7 @@ function postKarte(post, liste) {
         setTimeout(laden, VERSUCH_MS);
       } catch (e) {
         ig.disabled = false;
-        ig.textContent = `Fehler: ${e.message}`;
+        ig.textContent = fehlerText(e, 'Fehler:');
       }
     };
     knoepfe.append(ig);
@@ -512,7 +569,7 @@ function postKarte(post, liste) {
         ab.textContent = 'Abgelehnt — Ersatz wird erzeugt (ca. 10 min)';
       } catch (e) {
         ab.disabled = false;
-        ab.textContent = `Fehler: ${e.message}`;
+        ab.textContent = fehlerText(e, 'Fehler:');
       }
     };
     knoepfe.append(ab);
@@ -613,7 +670,7 @@ function tiktokBlock(post, liste) {
       setTimeout(laden, 60000);
     } catch (e) {
       knopf.disabled = false; knopf.textContent = 'Auf TikTok posten';
-      alert(`Ging nicht: ${e.message}`);
+      alert(fehlerText(e, 'Ging nicht:'));
     }
   };
   box.append(knopf);
@@ -703,7 +760,7 @@ async function laden() {
     ab.onclick = () => { localStorage.removeItem(SCHLUESSEL); location.reload(); };
     ziel.append(ab);
   } catch (e) {
-    ziel.replaceChildren(el('p', 'leise', `Ging nicht: ${e.message}`));
+    ziel.replaceChildren(el('p', 'leise', fehlerText(e, 'Ging nicht:')));
   }
 }
 
@@ -806,7 +863,7 @@ async function archivLaden(tage = 30) {
     zurueck.onclick = laden;
     ziel.append(zurueck);
   } catch (e) {
-    ziel.replaceChildren(el('p', 'leise', `Ging nicht: ${e.message}`));
+    ziel.replaceChildren(el('p', 'leise', fehlerText(e, 'Ging nicht:')));
   }
 }
 
@@ -815,6 +872,7 @@ async function anmelden(eingabe) {
   await ruf('liste', { datum: $('#datum').value });   // Probe: stimmt das Passwort?
   localStorage.setItem(SCHLUESSEL, eingabe);
   $('#tor').hidden = true;
+  $('#worum').hidden = true;
   $('#inhalt').hidden = false;
   laden();
 }
@@ -870,7 +928,7 @@ $('#k-bauen').onclick = async () => {
     // Der Knopf bleibt gesperrt, damit nicht aus Versehen dieselbe Karte
     // zweimal entsteht; ein Neuladen der Seite gibt ihn frei.
   } catch (e) {
-    stand.textContent = `Ging nicht: ${e.message}`;
+    stand.textContent = fehlerText(e, 'Ging nicht:');
     knopf.disabled = false;
   }
 };

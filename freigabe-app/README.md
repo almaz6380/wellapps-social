@@ -86,7 +86,7 @@ Framework Preset: **Other**. Build Command und Output Directory leer lassen.
 Projektname z. B. `wellapps-freigabe` → die Adresse ist dann
 `wellapps-freigabe.vercel.app`.
 
-**2. Drei Umgebungsvariablen** (Project Settings → Environment Variables,
+**2. Drei Umgebungsvariablen** (dazu eine optionale) (Project Settings → Environment Variables,
 alle drei für Production):
 
 | Name | Wert |
@@ -94,6 +94,29 @@ alle drei für Production):
 | `FREIGABE_PASSWORT` | frei wählbar, mindestens 12 Zeichen |
 | `GITHUB_TOKEN` | siehe unten |
 | `BLOB_BASIS` | die Adresse des Blob-Speichers, ohne Schrägstrich am Ende |
+| `FREIGABE_PRUEFER_PASSWORT` | *optional* — der Zugang für TikToks App-Prüfung, siehe unten |
+
+**Der Prüfzugang (seit 23.09.2026).** TikTok hat die App-Prüfung abgelehnt,
+unter anderem, weil die eingetragene Website nur ein Passwortfeld zeigt. Ist sie
+eine Login-Seite, verlangt TikTok Testzugang und Passwort im Feld „Apply
+Reason". Das echte Passwort gehört dort nicht hin: Mit ihm stellt man Beiträge
+auf den eigenen Konten öffentlich.
+
+Mit `FREIGABE_PRUEFER_PASSWORT` sieht man die Seite vollständig (Beiträge,
+TikTok-Dialog, Archiv), und jeder Knopf läuft bis zum letzten Schritt. Die
+Serverfunktion startet aber **nie** einen Workflow, und die Seite zeigt oben
+„Review mode". Gesperrt ist die einzige Stelle, an der überhaupt ein Lauf
+entsteht, nicht jede Aktion einzeln. Geprüft wird das von
+`tools/social/test-freigabe-pruefer.mjs`, der jede Aktion durchspielt.
+
+⚠ Ein anderer Wert als `FREIGABE_PASSWORT`. Ist die Variable leer oder fehlt
+sie, gibt es keinen Prüfzugang. Nach TikToks Entscheidung kann sie wieder weg.
+
+⚠ **Icon und Favicon** (`favicon.ico`, `icon-*.png`, `apple-touch-icon.png`)
+sind verkleinerte Fassungen von
+`tools/social/kanal/fertig/tiktok/wellapps-social-1024.png`, also genau dem
+App-Icon bei TikTok. TikTok verlangt dasselbe Icon in der App, auf der Website
+und im Browser-Tab. Wer es an einer Stelle ändert, ändert es an allen dreien.
 
 `BLOB_BASIS` findest du so: Vercel → Storage → **social-bilder** → irgendeine
 Datei öffnen → aus der Adresse alles bis `.com` nehmen, also
