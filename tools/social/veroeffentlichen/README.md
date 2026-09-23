@@ -324,10 +324,13 @@ und es gibt einen Prüfzugang (`FREIGABE_PRUEFER_PASSWORT`, siehe
 1. **„Return to Draft" leert das App-Icon.** Das Formular meldet danach
    „This form has 1 error". Das Icon muss neu hochgeladen werden, und zwar
    dieselbe Datei wie auf der Website.
-2. **Das Feld „Apply Reason" gibt es im Formular nicht.** Es erscheint erst als
-   Fenster nach „Submit for review" und fasst etwa 120 Zeichen. Eingetragen:
-   *„Icon now matches site+favicon. Test login: password … (review mode,
-   sends nothing)"*.
+2. **Ein Feld „Apply Reason" gibt es NICHT, weder im Formular noch als
+   Fenster nach „Submit for review".** Hier stand zuerst, es erscheine nach dem
+   Absenden. Das stimmte nicht: Am 23.09. ging die Einreichung deshalb ohne
+   Prüfpasswort raus. ⚠ Die Test-Anmeldung gehört in den Erklärtext
+   („Explain how each product and scope works"), den liest der Prüfer sicher.
+   Der gekürzte Text mit Zeile `TEST LOGIN: … password: …` passt mit einem
+   16-stelligen Passwort in 944 von 1000 Zeichen.
 3. **Bei einer Überarbeitung will TikTok die Änderung im Erklärtext.** Angehängt:
    *„Revision: website now shows the same icon + favicon."* (Stand danach:
    997 von 1000 Zeichen).
