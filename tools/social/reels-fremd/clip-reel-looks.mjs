@@ -353,7 +353,11 @@ async function tonMischen({ stimme, musik, gesamt, ziel, tmp }) {
  */
 export async function lookRendern({
   quelle, look, satz1, satz2, einspielungen, zusatz, ziel, datei, menschen, ton = null, etikett = null,
+  ende = 'pendel',
 }) {
+  if (!['pendel', 'halten'].includes(ende)) {
+    throw new Error(`lookRendern: \`ende\` muss 'pendel' oder 'halten' sein (war ${ende}).`);
+  }
   if (typeof menschen !== 'boolean') {
     throw new Error(`lookRendern: \`menschen\` muss true oder false sein (war ${menschen}) — `
       + 'davon hängt das AI-Plättchen ab.');
@@ -392,8 +396,15 @@ export async function lookRendern({
     // Ist die Szene länger als der Clip, läuft er vor und zurück weiter
     // (Pendel) — die Clips sind ruhig genug, dass man das nicht sieht, und
     // ein stehendes Bild unter laufender Stimme sähe nach Fehler aus.
+    // Ausnahme `ende: 'halten'`: Clips mit einem Ereignis am Schluss (im
+    // Feierabend-Clip geht die Lampe aus) bleiben auf dem letzten Bild stehen —
+    // rückwärts ginge die Lampe wieder an. Der Kamera-Zoom der Seite läuft
+    // weiter, das Bild steht also nicht still.
     const noetig = Math.ceil((szene + schluss) * FPS);
     const pendel = [...bilder];
+    if (ende === 'halten') {
+      while (pendel.length < noetig) pendel.push(bilder[bilder.length - 1]);
+    }
     for (let rueck = true; pendel.length < noetig; rueck = !rueck) {
       pendel.push(...(rueck ? [...bilder].reverse() : bilder).slice(1));
     }

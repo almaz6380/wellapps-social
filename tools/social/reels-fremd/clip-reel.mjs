@@ -95,6 +95,9 @@ export async function clipReel({ appPfad, wuerfel, ziel }) {
     datei: ziel,
     menschen: wahl.menschen,
     ton,
+    // `clips[].ende` in anbieter.json: 'halten' für Clips mit Ereignis am
+    // Schluss (Lampe geht aus), sonst Pendel.
+    ende: wahl.ende ?? 'pendel',
   });
 
   // ffmpeg kann mit 0 enden und trotzdem nur einen leeren Container
