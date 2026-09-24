@@ -1619,6 +1619,96 @@
       "schluessel": "fragen-ids",
       "inhalt": "seed57101",
       "sprache": "de"
+    },
+    {
+      "app": "anigosha",
+      "datum": "2026-09-24",
+      "winkel": "ladder",
+      "medium": "reel",
+      "schluessel": "fragen-ids",
+      "inhalt": "seed74264",
+      "sprache": "de"
+    },
+    {
+      "app": "anigosha",
+      "datum": "2026-09-24",
+      "winkel": "frage-karte",
+      "medium": "bild",
+      "schluessel": "fragen-ids",
+      "inhalt": "seed86600",
+      "sprache": "de"
+    },
+    {
+      "app": "mahjong",
+      "datum": "2026-09-24",
+      "winkel": "paar",
+      "medium": "reel",
+      "schluessel": "level",
+      "inhalt": "seed34292",
+      "sprache": "en"
+    },
+    {
+      "app": "mahjong",
+      "datum": "2026-09-24",
+      "winkel": "paar-standbild",
+      "medium": "bild",
+      "schluessel": "level",
+      "inhalt": "seed69751",
+      "sprache": "en"
+    },
+    {
+      "app": "wellbooked",
+      "datum": "2026-09-24",
+      "winkel": "kalender-clip",
+      "medium": "reel",
+      "schluessel": "screen",
+      "inhalt": "seed67401",
+      "sprache": "de"
+    },
+    {
+      "app": "wellbooked",
+      "datum": "2026-09-24",
+      "winkel": "vorteil",
+      "medium": "bild",
+      "schluessel": "vorteil",
+      "inhalt": "seed49744",
+      "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-24",
+      "winkel": "wissens-karte",
+      "medium": "bild",
+      "schluessel": "wissensthema",
+      "inhalt": "seed13136",
+      "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-24",
+      "winkel": "peptid",
+      "medium": "bild",
+      "schluessel": "peptid",
+      "inhalt": "seed35887",
+      "sprache": "de"
+    },
+    {
+      "app": "swaply",
+      "datum": "2026-09-24",
+      "winkel": "app-schau-reel",
+      "medium": "reel",
+      "schluessel": "bildschirm",
+      "inhalt": "seed25611",
+      "sprache": "de"
+    },
+    {
+      "app": "swaply",
+      "datum": "2026-09-24",
+      "winkel": "ausloeser",
+      "medium": "bild",
+      "schluessel": "kategorie",
+      "inhalt": "seed17608",
+      "sprache": "de"
     }
   ]
 }
