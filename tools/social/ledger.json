@@ -1709,6 +1709,24 @@
       "schluessel": "kategorie",
       "inhalt": "seed17608",
       "sprache": "de"
+    },
+    {
+      "app": "mahjong",
+      "datum": "2026-09-24",
+      "winkel": "paar",
+      "medium": "reel",
+      "schluessel": "level",
+      "inhalt": "seed76952",
+      "sprache": "en"
+    },
+    {
+      "app": "mahjong",
+      "datum": "2026-09-24",
+      "winkel": "paar-standbild",
+      "medium": "bild",
+      "schluessel": "level",
+      "inhalt": "seed9611",
+      "sprache": "en"
     }
   ]
 }
