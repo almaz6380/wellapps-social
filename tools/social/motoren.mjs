@@ -113,6 +113,17 @@ export function figurArgs(app, post) {
   return ['--figur', app.figur];
 }
 
+/**
+ * Formate, deren Generator in reels-fremd/ liegt (24.09.2026), Schlüssel
+ * `<app>:<format>`. Die Endung ist die Hauptdatei; beim Karussell die erste
+ * Folie (`-1.jpg`), die übrigen findet folien.mjs über die Nummern.
+ */
+export const NEUE_FORMATE = {
+  'anigosha:richtig-falsch': { skript: 'anigosha-richtig-falsch.mjs', endung: '.mp4' },
+  'fullrep:uebung-bewegt': { skript: 'fullrep-uebung-bewegt.mjs', endung: '.mp4' },
+  'swaply:kein-drama': { skript: 'swaply-rueckfall-karussell.mjs', endung: '-1.jpg' },
+};
+
 export function aufruf({ appSchluessel, app, post, wuerfel, out }) {
   const p = app.pfad;
   const n = (...a) => ({ cmd: 'node', args: a, cwd: p });
@@ -148,6 +159,29 @@ export function aufruf({ appSchluessel, app, post, wuerfel, out }) {
         cwd: ANIGOSHA,
       }],
       endung: '.mp4',
+    };
+  }
+
+  // Neue Formate vom 24.09.2026 (Josef: „neuen post für alle plattformen mit
+  // neuen ideen/styles" → „Ja"). Alle drei Generatoren liegen in diesem Repo
+  // (reels-fremd/) und lesen ihre Inhalte nur aus dem App-Repo — gleiche
+  // Begruendung wie bei der App-Schau oben. Aufruf und Ausgabe sind gleich:
+  // `--app --seed --name --out`, heraus kommen <name>.mp4 bzw. <name>-N.jpg
+  // (Karussell) und <name>.txt.
+  const neu = NEUE_FORMATE[`${appSchluessel}:${post.format}`];
+  if (neu) {
+    return {
+      schritte: [{
+        cmd: 'node',
+        args: [`tools/social/reels-fremd/${neu.skript}`, '--app', p,
+          '--seed', String(post.seed), '--name', post.dateiname,
+          // Kein --store: apps.json kennt keinen Store-Satz, und ein leerer
+          // Wert ueberschriebe den Vorgabesatz der Generatoren mit nichts.
+          // ⚠ ABSOLUT — dieselbe Falle wie bei der App-Schau oben.
+          '--out', isAbsolute(out) ? out : join(app.pfad, out)],
+        cwd: ANIGOSHA,
+      }],
+      endung: neu.endung,
     };
   }
 

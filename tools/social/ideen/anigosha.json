@@ -150,6 +150,17 @@
         "en"
       ],
       "wieWinkel": "app-schau"
+    },
+    {
+      "id": "richtig-falsch",
+      "medium": "reel",
+      "format": "richtig-falsch",
+      "status": "vorhanden",
+      "haken": "Richtig oder falsch? Drei Behauptungen aus drei Serien (Frage + richtige ODER eine der drei falschen Antworten), Countdown, großes ✓/✗, Auflösung mit „Wusstest du?\". Nutzt erstmals die falschen Antworten. Rein typografisch. Josef am 24.09.2026: „Ja\".",
+      "schluessel": "richtig-falsch",
+      "sprachen": [
+        "de"
+      ]
     }
   ]
 }

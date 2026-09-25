@@ -107,6 +107,17 @@
         "es"
       ],
       "wieWinkel": "app-schau"
+    },
+    {
+      "id": "kein-drama",
+      "medium": "bild",
+      "format": "kein-drama",
+      "status": "vorhanden",
+      "haken": "Karussell im Notiz-Look, 8 Folien: „Kein Drama. Was war der Auslöser?\" und die sechs Tipps der App je Auslöser (intervention.slipReasons + afterByReason), Wortlaut 1:1. Josef am 24.09.2026: „Ja\".",
+      "schluessel": "kein-drama",
+      "sprachen": [
+        "de"
+      ]
     }
   ]
 }

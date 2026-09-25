@@ -26,9 +26,10 @@
 // ⚠ Geprueft wird die ECHTE `figurArgs` aus motoren.mjs, nicht eine
 // abgeschriebene Zweitfassung.
 
-import { figurArgs, aufruf, OHNE_FIGUR } from './motoren.mjs';
+import { figurArgs, aufruf, OHNE_FIGUR, NEUE_FORMATE } from './motoren.mjs';
 import { existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { ladeApps } from './waehlen.mjs';
 
@@ -162,6 +163,28 @@ const reel = (format) => ({ ...bild(format), medium: 'reel' });
   }).schritte[0].args.map(String);
   pruefe('Swaply: --figur kommt am Generator an',
     s.join(' ').includes('--figur begleiter.png'), s.join(' '));
+}
+
+// --- 6b. Die neuen Formate aus reels-fremd/ (24.09.2026) --------------------
+//
+// Sie haben keine Figur-Option: ein --figur wuerde still verschluckt. Und
+// --out muss ABSOLUT sein, weil das Skript in wellapps-social laeuft, nicht
+// im App-Repo — relativ landete die Datei dort, wo posten.mjs nie sucht.
+{
+  const apps = ladeApps();
+  const HIER = dirname(fileURLToPath(import.meta.url));
+  for (const [schluessel, { skript, endung }] of Object.entries(NEUE_FORMATE)) {
+    const [k, format] = schluessel.split(':');
+    const post = { ...bild(format), medium: endung === '.mp4' ? 'reel' : 'bild' };
+    const r = aufruf({ appSchluessel: k, app: { ...apps[k], figur: 'x.png' }, post, wuerfel: () => 0.5, out: 'out/social/x' });
+    const a = r.schritte[0].args.map(String);
+    const out = a[a.indexOf('--out') + 1];
+    pruefe(`${schluessel}: eigenes Skript, keine Figur, --out absolut, Endung ${endung}`,
+      a[0] === `tools/social/reels-fremd/${skript}` && !a.includes('--figur')
+        && out.startsWith('/') && r.endung === endung
+        && existsSync(join(HIER, 'reels-fremd', skript)),
+      a.join(' '));
+  }
 }
 
 // --- 7. Was eingetragen ist, muss auch dort liegen ---------------------------

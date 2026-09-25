@@ -299,6 +299,17 @@
         "en"
       ],
       "wieWinkel": "app-schau"
+    },
+    {
+      "id": "uebung-bewegt",
+      "medium": "reel",
+      "format": "uebung-bewegt",
+      "status": "vorhanden",
+      "haken": "Übung in Bewegung: eine der lizenzierten 3D-Übungsanimationen (Vital Animations, public/exercise-demos-anim/) groß im Bild, dazu Muskelgruppe, Gerät und Beschreibung aus der App. Kein KI-Bild, keine echte Person. Josef am 24.09.2026: „Ja\".",
+      "schluessel": "uebung-bewegt",
+      "sprachen": [
+        "de"
+      ]
     }
   ],
   "_wasserzeichen": "Nur FullRep, nur Bild-Winkel. Je Eintrag eine Datei aus mypeak/store-assets/social/fotos/wasserzeichen/ und der BESCHNITT, der dort geprueft wurde — waehlen.mjs wuerfelt einen aus, motoren.mjs reicht ihn als --wz/--wz-fit durch. ⚠ `fit` ist keine Geschmacksfrage: Die Bilder sind 1408x768 quer, die Karte 1080x1350 hoch; `cover` schneidet 56 % der Breite weg. Eine stehende Figur uebersteht das, eine liegende (Bankdruecken) oder quer sitzende (Rudern) nicht — die brauchen `contain`. Der Befund je Bild steht in HERKUNFT.md neben den Dateien, gemessen am gerenderten JPEG. ⚠ --wz schaltet die KI-Kennzeichnung automatisch mit; die Bilder zeigen KI-erzeugte Menschen.",
