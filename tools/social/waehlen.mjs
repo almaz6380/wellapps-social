@@ -141,7 +141,12 @@ export function aktivesFestival(heute) {
 }
 
 function winkelErlaubt(w, heute) {
-  if (w.nur_im_fenster) return aktivesFestival(heute) !== null;
+  // `fest` bindet einen Winkel an EIN Fest (das Mondfest-Reel sagt „Moon
+  // Festival" im Bild — waehrend Sakura waere das falsch).
+  if (w.nur_im_fenster) {
+    const f = aktivesFestival(heute);
+    return f !== null && (!w.fest || f.id === w.fest);
+  }
   return true;
 }
 

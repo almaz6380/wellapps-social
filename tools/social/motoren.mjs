@@ -262,14 +262,20 @@ export function aufruf({ appSchluessel, app, post, wuerfel, out }) {
     if (post.medium === 'reel') {
       // Zwei Schritte: erst spielen und aufnehmen, dann daraus das Reel bauen.
       // Der Aufnahmeschritt braucht den laufenden `vite preview`.
-      const clip = `out/reels/mahjong-solitaire-lvl${level}-en.mp4`;
+      // Mondfest (Josef, 24./25.09.2026): das ECHTE Fest-Brett (--fest), ganz
+      // abgeraeumt — 40 bestellt, der Ring hat 30 Paare, ≈ 19 s. Lang genug
+      // fuer alle vier Einblendungen (Junge, Opa, Tempel, Steine).
+      const fest = post.format === 'mondfest';
+      const clip = fest ? 'out/reels/mahjong-fest-en.mp4' : `out/reels/mahjong-solitaire-lvl${level}-en.mp4`;
       const bau = ['scripts/reel/make-reel.mjs', '--clip', clip, '--format', post.format,
         '--name', post.dateiname, '--out', out];
       if (post.format === 'fakt') bau.push('--fakt', String(post.seed % 34));
       if (post.winkel === 'figur-des-tages') bau.push('--figur', post.figur ?? 'dragon');
       return {
         schritte: [
-          n('scripts/reel/record-solitaire.mjs', '--level', String(level), '--paare', '16'),
+          fest
+            ? n('scripts/reel/record-solitaire.mjs', '--fest', '--paare', '40')
+            : n('scripts/reel/record-solitaire.mjs', '--level', String(level), '--paare', '16'),
           n(...bau),
         ],
         endung: '.mp4',

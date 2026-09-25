@@ -100,15 +100,16 @@
     {
       "id": "festival",
       "medium": "reel",
-      "format": "clear",
-      "status": "neu",
-      "haken": "Laeuft nur im Zeitfenster von Laterne (10.2.-24.2.), Sakura (20.3.-10.4.), Drache (28.5.-10.6.) oder Mond (15.9.-1.10.). Aktualitaet ohne Aufwand",
+      "format": "mondfest",
+      "status": "vorhanden",
+      "haken": "Mondfest-Brett (Ring, 30 Paare) im Nacht-Look, echt aufgenommen (record-solitaire --fest), mit den gemalten Einblendungen Junge/Opa/Tempel/Steine. Nur im Mondfest-Fenster (15.9.-1.10.). Josef am 24./25.09.2026: „Ja\" / „neu bauen\". Laterne/Sakura/Drache brauchen eigene Formate.",
       "schluessel": "festival",
       "saisonal": true,
       "nur_im_fenster": true,
       "sprachen": [
         "en"
-      ]
+      ],
+      "fest": "mond"
     },
     {
       "id": "yaku-nennen",
