@@ -1817,6 +1817,33 @@
       "schluessel": "kein-drama",
       "inhalt": "seed47287",
       "sprache": "de"
+    },
+    {
+      "app": "anigosha",
+      "datum": "2026-09-25",
+      "winkel": "richtig-falsch",
+      "medium": "reel",
+      "schluessel": "richtig-falsch",
+      "inhalt": "seed98701",
+      "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-25",
+      "winkel": "uebung-bewegt",
+      "medium": "reel",
+      "schluessel": "uebung-bewegt",
+      "inhalt": "seed58536",
+      "sprache": "de"
+    },
+    {
+      "app": "swaply",
+      "datum": "2026-09-25",
+      "winkel": "kein-drama",
+      "medium": "bild",
+      "schluessel": "kein-drama",
+      "inhalt": "seed42904",
+      "sprache": "de"
     }
   ]
 }
