@@ -1844,6 +1844,15 @@
       "schluessel": "kein-drama",
       "inhalt": "seed42904",
       "sprache": "de"
+    },
+    {
+      "app": "anigosha",
+      "datum": "2026-09-25",
+      "winkel": "richtig-falsch",
+      "medium": "reel",
+      "schluessel": "richtig-falsch",
+      "inhalt": "seed95372",
+      "sprache": "de"
     }
   ]
 }
