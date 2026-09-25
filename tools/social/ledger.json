@@ -1862,6 +1862,15 @@
       "schluessel": "richtig-falsch",
       "inhalt": "seed50311",
       "sprache": "de"
+    },
+    {
+      "app": "mahjong",
+      "datum": "2026-09-25",
+      "winkel": "festival",
+      "medium": "reel",
+      "schluessel": "festival",
+      "inhalt": "seed31529",
+      "sprache": "en"
     }
   ]
 }
