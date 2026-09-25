@@ -1871,6 +1871,15 @@
       "schluessel": "festival",
       "inhalt": "seed31529",
       "sprache": "en"
+    },
+    {
+      "app": "mahjong",
+      "datum": "2026-09-25",
+      "winkel": "festival",
+      "medium": "reel",
+      "schluessel": "festival",
+      "inhalt": "seed11262",
+      "sprache": "en"
     }
   ]
 }
