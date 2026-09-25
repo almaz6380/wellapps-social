@@ -1727,6 +1727,96 @@
       "schluessel": "level",
       "inhalt": "seed9611",
       "sprache": "en"
+    },
+    {
+      "app": "anigosha",
+      "datum": "2026-09-25",
+      "winkel": "richtig-falsch",
+      "medium": "reel",
+      "schluessel": "richtig-falsch",
+      "inhalt": "seed67185",
+      "sprache": "de"
+    },
+    {
+      "app": "anigosha",
+      "datum": "2026-09-25",
+      "winkel": "app-schau",
+      "medium": "bild",
+      "schluessel": "bildschirm",
+      "inhalt": "seed3812",
+      "sprache": "de"
+    },
+    {
+      "app": "mahjong",
+      "datum": "2026-09-25",
+      "winkel": "figur-des-tages",
+      "medium": "reel",
+      "schluessel": "figur",
+      "inhalt": "seed66230",
+      "sprache": "en"
+    },
+    {
+      "app": "mahjong",
+      "datum": "2026-09-25",
+      "winkel": "figur-galerie",
+      "medium": "bild",
+      "schluessel": "figur-vierer",
+      "inhalt": "seed87657",
+      "sprache": "en"
+    },
+    {
+      "app": "wellbooked",
+      "datum": "2026-09-25",
+      "winkel": "entlastung",
+      "medium": "reel",
+      "schluessel": "entlastung",
+      "inhalt": "seed11090",
+      "sprache": "de"
+    },
+    {
+      "app": "wellbooked",
+      "datum": "2026-09-25",
+      "winkel": "vorteil",
+      "medium": "bild",
+      "schluessel": "vorteil",
+      "inhalt": "seed78741",
+      "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-25",
+      "winkel": "uebung-bewegt",
+      "medium": "reel",
+      "schluessel": "uebung-bewegt",
+      "inhalt": "seed55548",
+      "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-25",
+      "winkel": "app-schau",
+      "medium": "bild",
+      "schluessel": "bildschirm",
+      "inhalt": "seed6860",
+      "sprache": "de"
+    },
+    {
+      "app": "swaply",
+      "datum": "2026-09-25",
+      "winkel": "tausch-loop",
+      "medium": "reel",
+      "schluessel": "kategorie",
+      "inhalt": "seed15166",
+      "sprache": "de"
+    },
+    {
+      "app": "swaply",
+      "datum": "2026-09-25",
+      "winkel": "kein-drama",
+      "medium": "bild",
+      "schluessel": "kein-drama",
+      "inhalt": "seed47287",
+      "sprache": "de"
     }
   ]
 }
