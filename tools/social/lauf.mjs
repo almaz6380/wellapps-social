@@ -105,6 +105,18 @@ function vorflugProbe() {
       app: 'anigosha', post: { sprache: 'de', medium: 'bild' },
       texte: { caption: 'Nur echte Fans schaffen 3/3', medienherkunft: 'ki-bild' } },
 
+    { name: 'Anigosha mit KI-Figur, die nicht die eigene ist',
+      // Die Ausnahme vom 25.09.2026 gilt NUR fuer den eigenen Jungen — eine
+      // KI-Figur ohne „eigene Figur" in der Herkunft bleibt verboten.
+      app: 'anigosha', post: { sprache: 'de', medium: 'reel' },
+      texte: { caption: 'Nur echte Fans schaffen 3/3', medienherkunft: 'ki-menschen (Anime-Held)',
+        wasserzeichen: true } },
+
+    { name: 'Anigosha mit dem eigenen Jungen, aber ohne AI-Plaettchen',
+      app: 'anigosha', post: { sprache: 'de', medium: 'reel' },
+      texte: { caption: 'Richtig oder falsch?',
+        medienherkunft: 'ki-menschen (eigene Figur „Junge" aus dem Anigosha-Werbespot)' } },
+
     { name: 'WELLbooked!-Kategoriebild ohne Wasserzeichen',
       // ⚠ Dieser Fall fehlte — und genau deshalb ist der Fehler durchgerutscht.
       // Die Probe deckte nur FullRep ab, waehrend WELLbookeds Kategoriebilder
@@ -174,6 +186,13 @@ function vorflugProbe() {
       app: 'anigosha', post: { sprache: 'de', medium: 'reel' },
       texte: { caption: 'Nur echte One-Piece-Fans schaffen 3/3. Gratis im App Store und bei Google Play.',
         medienherkunft: 'typografie' } },
+
+    { name: 'Anigosha mit dem eigenen Jungen und AI-Plaettchen',
+      // Josef, 25.09.2026: „immer mit dem Jungen".
+      app: 'anigosha', post: { sprache: 'de', medium: 'reel' },
+      texte: { caption: 'Richtig oder falsch? Gratis im App Store und bei Google Play.',
+        medienherkunft: 'ki-menschen (eigene Figur „Junge" aus dem Anigosha-Werbespot, Wasserzeichen gesetzt)',
+        wasserzeichen: true } },
 
     { name: 'Genau fuenf Hashtags und der App-Link gehen durch',
       app: 'anigosha', post: { sprache: 'de', medium: 'bild' },

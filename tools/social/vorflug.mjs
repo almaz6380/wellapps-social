@@ -184,11 +184,19 @@ export function pruefe({ appSchluessel, app, post, texte }) {
   }
 
   // --- Anigosha ------------------------------------------------------------
+  // Ausnahme (Josef, 25.09.2026: „immer mit dem Jungen"): die EIGENE Figur
+  // aus dem Anigosha-Werbespot. Das Verbot gilt Bildern ERKENNBARER
+  // Anime-Figuren; der Junge ist keine (anigosha/store-assets/social/figuren/
+  // HERKUNFT.md). Er ist ein KI-Mensch — die Regel `ki-wasserzeichen` oben
+  // verlangt deshalb weiter das AI-Plaettchen.
+  const eigeneFigur = /^ki-menschen\b/.test(texte.medienherkunft ?? '')
+    && /eigene Figur/.test(texte.medienherkunft);
   if (r.nur_typografie && post.medium && texte.medienherkunft &&
-      texte.medienherkunft !== 'typografie') {
+      texte.medienherkunft !== 'typografie' && !eigeneFigur) {
     funde.push(befund(true, 'nur-typografie',
-      `Medienherkunft "${texte.medienherkunft}" — erlaubt ist ausschliesslich Typografie ` +
-      'auf dem Markenverlauf. Figurenbilder gefaehrden das ganze Entwicklerkonto.'));
+      `Medienherkunft "${texte.medienherkunft}" — erlaubt ist Typografie auf dem ` +
+      'Markenverlauf, dazu nur die eigene Figur (den Jungen). Bilder erkennbarer ' +
+      'Anime-Figuren gefaehrden das ganze Entwicklerkonto.'));
   }
 
   // --- Mahjong -------------------------------------------------------------

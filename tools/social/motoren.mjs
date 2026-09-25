@@ -119,7 +119,9 @@ export function figurArgs(app, post) {
  * Folie (`-1.jpg`), die übrigen findet folien.mjs über die Nummern.
  */
 export const NEUE_FORMATE = {
-  'anigosha:richtig-falsch': { skript: 'anigosha-richtig-falsch.mjs', endung: '.mp4' },
+  // figur: true → `--figur <app.figur>` (Josef, 25.09.2026: „immer mit dem
+  // Jungen"). Nur wenn apps.json eine Figur fuehrt, sonst faehrt nichts mit.
+  'anigosha:richtig-falsch': { skript: 'anigosha-richtig-falsch.mjs', endung: '.mp4', figur: true },
   'fullrep:uebung-bewegt': { skript: 'fullrep-uebung-bewegt.mjs', endung: '.mp4' },
   'swaply:kein-drama': { skript: 'swaply-rueckfall-karussell.mjs', endung: '-1.jpg' },
 };
@@ -178,7 +180,8 @@ export function aufruf({ appSchluessel, app, post, wuerfel, out }) {
           // Kein --store: apps.json kennt keinen Store-Satz, und ein leerer
           // Wert ueberschriebe den Vorgabesatz der Generatoren mit nichts.
           // ⚠ ABSOLUT — dieselbe Falle wie bei der App-Schau oben.
-          '--out', isAbsolute(out) ? out : join(app.pfad, out)],
+          '--out', isAbsolute(out) ? out : join(app.pfad, out),
+          ...(neu.figur && app.figur ? ['--figur', app.figur] : [])],
         cwd: ANIGOSHA,
       }],
       endung: neu.endung,

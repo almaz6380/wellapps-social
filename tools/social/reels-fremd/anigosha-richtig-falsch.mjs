@@ -17,6 +17,9 @@
 //
 // ⚠ NUR TYPOGRAFIE (apps.json → regeln.nur_typografie): keine Bilder von
 // Anime-Figuren, auch keine KI-erzeugten. Serientitel als Text sind erlaubt.
+// EINZIGE Ausnahme: der eigene Junge aus dem Anigosha-Werbespot (--figur,
+// Josef 25.09.2026: „immer mit dem Jungen") — mit AI-Plaettchen, siehe
+// vorflug.mjs bei `nur_typografie`.
 //
 // Jedes Bild ist eine reine Funktion des Frame-Index (window.setFrame(n)),
 // dieselbe Regel wie in allen Reel-Generatoren: kein setTimeout, keine
@@ -90,7 +93,7 @@ export function waehleRunden(fragen, seed, sprache = 'de') {
   });
 }
 
-function seiteHtml({ runden, storeSatz, logo, schrift }) {
+function seiteHtml({ runden, storeSatz, logo, schrift, figur = null }) {
   const daten = JSON.stringify({ runden, storeSatz, fps: FPS, HOOK, RUNDE, CD_START, CD_DAUER, OUTRO });
   return `<!doctype html><html><head><meta charset="utf-8"><style>
 @font-face{font-family:Outfit;src:url(data:font/woff2;base64,${schrift}) format('woff2');font-weight:100 900}
@@ -132,7 +135,21 @@ html,body{width:${B}px;height:${H}px;overflow:hidden;font-family:Outfit,sans-ser
 .outro .t{font-size:96px;font-weight:900;line-height:1.02}
 .outro .u{font-size:44px;font-weight:600;opacity:.88;line-height:1.3}
 .outro .s{font-size:38px;font-weight:700;padding:22px 40px;border-radius:999px;background:#ede9fe;color:#2e1065}
-</style></head><body>
+/* --- Der Junge (Josef, 25.09.2026: „anigosha posts mit dem jungen charakter") ---
+   Dieselbe freigestellte Figur wie auf den Bildkarten (anigosha/store-assets/
+   social/figuren/junge.png), eigene Figur aus dem Werbespot, keine bestehende
+   Anime-Figur. Nur im Einstieg und im Abspann: In den Runden stuende er im
+   Text oder unter TikToks Beschreibung. Unten angeschnitten, damit er gross
+   genug ist; Hook und Abspann ruecken dafuer nach oben. */
+.figur{position:absolute;left:50%;bottom:-200px;width:420px;height:1060px;margin-left:-210px;z-index:3;
+  background-size:contain;background-repeat:no-repeat;background-position:bottom center;opacity:0}
+body.mitFigur .hook{padding-bottom:760px}
+body.mitFigur .outro{justify-content:flex-start;padding-top:300px}
+/* AI-Plaettchen: Er ist ein KI-erzeugter Mensch. Sichtbar, solange er es ist. */
+.ki{position:absolute;right:48px;bottom:60px;width:56px;height:56px;border-radius:50%;z-index:4;opacity:0;
+  display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;letter-spacing:.04em;
+  background:rgba(10,6,22,.62);border:2px solid rgba(237,233,254,.45);color:#ede9fe}
+</style></head><body class="${figur ? 'mitFigur' : ''}">
 <div class="glow" id="g1" style="left:-300px;top:-200px;background:#7c3aed"></div>
 <div class="glow" id="g2" style="right:-350px;bottom:-250px;background:#f472b6"></div>
 <div class="kopf" id="kopf"><img class="logo" src="${logo}"><span class="marke">ANIGOSHA</span></div>
@@ -150,6 +167,7 @@ html,body{width:${B}px;height:${H}px;overflow:hidden;font-family:Outfit,sans-ser
 <div class="outro ebene" id="outro"><div class="t">Wie viele hattest du?</div>
   <div class="u">Schreib's in die Kommentare 👇<br>804 Fragen · 12 Serien · Duelle</div>
   <div class="s" id="store"></div></div>
+${figur ? `<div class="figur" id="figur" style="background-image:url(data:image/png;base64,${figur})"></div><div class="ki" id="ki">AI</div>` : ''}
 <script>
 const D = ${daten};
 const $ = (id) => document.getElementById(id);
@@ -172,6 +190,14 @@ window.setFrame = (n) => {
   const op = aus((t - ende) / .5);
   $('outro').style.opacity = String(op);
   $('outro').style.transform = 'translateY(' + ((1 - op) * 40) + 'px)';
+  // Der Junge: springt im Einstieg von unten herein und im Abspann noch einmal.
+  if ($('figur')) {
+    const rein = t < D.HOOK ? feder((t - .15) / .6) : feder((t - ende - .1) / .6);
+    const da = t < D.HOOK ? aus((t - .15) / .3) * (1 - hraus) : aus((t - ende - .1) / .3);
+    $('figur').style.opacity = String(da);
+    $('figur').style.transform = 'translateY(' + ((1 - rein) * 360 + Math.sin(t * 2.2) * 8) + 'px)';
+    $('ki').style.opacity = String(da);
+  }
   // Runde
   const r = Math.floor((t - D.HOOK) / D.RUNDE);
   const im = t >= D.HOOK && r < D.runden.length;
@@ -236,12 +262,19 @@ function klaenge(runden) {
   return e;
 }
 
-export async function richtigFalschReel({ appPfad, seed, datei, storeSatz = 'Gratis im App Store und bei Google Play' }) {
+export async function richtigFalschReel({ appPfad, seed, datei, storeSatz = 'Gratis im App Store und bei Google Play', figur = null }) {
   // fragen.json = { erzeugt, anzahl, fragen: [...] } (parse-questions.mjs im Anigosha-Repo)
   const { fragen } = JSON.parse(readFileSync(join(appPfad, 'tools', 'reels', 'data', 'fragen.json'), 'utf8'));
   const runden = waehleRunden(fragen, seed);
   const schrift = readFileSync(join(WURZEL, 'tools', 'reels', 'assets', 'outfit.woff2')).toString('base64');
   const logo = `data:image/svg+xml;base64,${readFileSync(join(appPfad, 'public', 'favicon.svg')).toString('base64')}`;
+  // Die Figur liegt im App-Repo, genau wie bei den Bildkarten (post-bild.mjs).
+  let figurB64 = null;
+  if (figur) {
+    const pfad = join(appPfad, 'store-assets', 'social', 'figuren', figur);
+    if (!existsSync(pfad)) throw new Error(`Figur nicht gefunden: ${pfad}`);
+    figurB64 = readFileSync(pfad).toString('base64');
+  }
 
   const tmp = join(tmpdir(), `anigosha-rof-${process.pid}`);
   mkdirSync(tmp, { recursive: true });
@@ -251,7 +284,7 @@ export async function richtigFalschReel({ appPfad, seed, datei, storeSatz = 'Gra
     const browser = await chromium.launch(process.env.CHROMIUM_PFAD ? { executablePath: process.env.CHROMIUM_PFAD } : {});
     try {
       const seite = await browser.newPage({ viewport: { width: B, height: H } });
-      await seite.setContent(seiteHtml({ runden, storeSatz, logo, schrift }), { waitUntil: 'load' });
+      await seite.setContent(seiteHtml({ runden, storeSatz, logo, schrift, figur: figurB64 }), { waitUntil: 'load' });
       await seite.waitForFunction('window.__bereit === true', null, { timeout: 20000 });
       const senke = videoSenke({ fps: FPS, ziel: datei, tonDatei: ton });
       for (let n = 0; n < gesamt; n++) {
@@ -270,12 +303,12 @@ export async function richtigFalschReel({ appPfad, seed, datei, storeSatz = 'Gra
     rmSync(tmp, { recursive: true, force: true });
   }
   if (statSync(datei).size < 100_000) throw new Error(`Reel ${datei} ist zu klein — ffmpeg hat kein Video geschrieben.`);
-  return { runden, sekunden: DAUER };
+  return { runden, sekunden: DAUER, figur: !!figurB64 };
 }
 
 // --- Aufruf (Tageslauf: motoren.mjs) -----------------------------------------
 //
-//   --app <repo> --seed N --name <dateiname> --out <ordner> [--store <satz>]
+//   --app <repo> --seed N --name <dateiname> --out <ordner> [--store <satz>] [--figur junge.png]
 //
 // Schreibt <ordner>/<dateiname>.mp4 und <ordner>/<dateiname>.txt (Beiblatt).
 // ⚠ --out ist ein ORDNER und muss absolut sein — motoren.mjs übergibt ihn so.
@@ -290,7 +323,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   mkdirSync(ordner, { recursive: true });
   const datei = join(ordner, `${name}.mp4`);
   const storeSatz = arg('store', 'Gratis im App Store und bei Google Play');
-  const r = await richtigFalschReel({ appPfad: app, seed, datei, storeSatz });
+  const r = await richtigFalschReel({ appPfad: app, seed, datei, storeSatz, figur: arg('figur', null) });
   const serien = [...new Set(r.runden.map((x) => x.serie))];
   const tag = (s) => '#' + s.toLowerCase().normalize('NFD').replace(/[^a-z0-9]/g, '');
   writeFileSync(join(ordner, `${name}.txt`), [
@@ -312,9 +345,12 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     '── VOR DEM POSTEN ────────────────────────────────────',
     '',
     '- Tonquelle: eigen (Musikbett und Klänge aus dem Anigosha-Reel-Baukasten)',
-    // ⚠ Genau „typografie" — Anigosha hat `nur_typografie`, vorflug.mjs lehnt
-    // jede andere Angabe ab (auch „typografie (…)").
-    '- Medienherkunft: typografie',
+    // ⚠ Ohne Figur genau „typografie" — Anigosha hat `nur_typografie`. Mit dem
+    // Jungen ist es ein KI-erzeugter Mensch: Dann steht das hier, und
+    // „Wasserzeichen gesetzt" laesst lauf.mjs das AI-Plaettchen bestaetigen.
+    r.figur
+      ? '- Medienherkunft: ki-menschen (eigene Figur „Junge" aus dem Anigosha-Werbespot, Wasserzeichen gesetzt)'
+      : '- Medienherkunft: typografie',
     '',
   ].join('\n'));
   console.log(`✓ ${datei}  ${r.sekunden.toFixed(1)} s`);

@@ -179,12 +179,27 @@ const reel = (format) => ({ ...bild(format), medium: 'reel' });
     const r = aufruf({ appSchluessel: k, app: { ...apps[k], figur: 'x.png' }, post, wuerfel: () => 0.5, out: 'out/social/x' });
     const a = r.schritte[0].args.map(String);
     const out = a[a.indexOf('--out') + 1];
-    pruefe(`${schluessel}: eigenes Skript, keine Figur, --out absolut, Endung ${endung}`,
-      a[0] === `tools/social/reels-fremd/${skript}` && !a.includes('--figur')
+    const figurSoll = !!NEUE_FORMATE[schluessel].figur;
+    const figurIst = a.includes('--figur') && a[a.indexOf('--figur') + 1] === 'x.png';
+    pruefe(`${schluessel}: eigenes Skript, ${figurSoll ? 'MIT' : 'ohne'} Figur, --out absolut, Endung ${endung}`,
+      a[0] === `tools/social/reels-fremd/${skript}` && figurIst === figurSoll
+        && (figurSoll || !a.includes('--figur'))
         && out.startsWith('/') && r.endung === endung
         && existsSync(join(HIER, 'reels-fremd', skript)),
       a.join(' '));
   }
+
+  // Josef, 25.09.2026: „immer mit dem Jungen" — aber nur, wenn apps.json die
+  // Figur fuehrt. Ohne Eintrag darf auch hier nichts mitfahren (Fall 1 oben).
+  const ohne = { ...apps.anigosha };
+  delete ohne.figur;
+  const a = aufruf({ appSchluessel: 'anigosha', app: ohne, post: reel('richtig-falsch'),
+    wuerfel: () => 0.5, out: '/tmp/o' }).schritte[0].args.map(String);
+  pruefe('Richtig-oder-falsch ohne Figur in apps.json: kein --figur', !a.includes('--figur'), a.join(' '));
+  const echt = aufruf({ appSchluessel: 'anigosha', app: apps.anigosha, post: reel('richtig-falsch'),
+    wuerfel: () => 0.5, out: '/tmp/o' }).schritte[0].args.map(String);
+  pruefe('⚠ Richtig-oder-falsch mit der echten apps.json: der Junge faehrt mit',
+    echt.join(' ').includes('--figur junge.png'), echt.join(' '));
 }
 
 // --- 7. Was eingetragen ist, muss auch dort liegen ---------------------------
