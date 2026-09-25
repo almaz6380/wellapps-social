@@ -1880,6 +1880,24 @@
       "schluessel": "festival",
       "inhalt": "seed11262",
       "sprache": "en"
+    },
+    {
+      "app": "mahjong",
+      "datum": "2026-09-25",
+      "winkel": "blumen-falle",
+      "medium": "reel",
+      "schluessel": "level",
+      "inhalt": "seed16152",
+      "sprache": "en"
+    },
+    {
+      "app": "mahjong",
+      "datum": "2026-09-25",
+      "winkel": "figur-galerie",
+      "medium": "bild",
+      "schluessel": "figur-vierer",
+      "inhalt": "seed47604",
+      "sprache": "en"
     }
   ]
 }
