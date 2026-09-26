@@ -26,9 +26,9 @@ on:
   workflow_dispatch:
     inputs:
       modus:
-        description: 'zeigen = ansehen · veroeffentlichen = posten (oeffentlich!) · nachtragen = nur Anzeige reparieren'
+        description: 'zeigen = ansehen · veroeffentlichen = posten (oeffentlich!) · nachtragen = nur Anzeige reparieren · loeschen = einen Beitrag loeschen (mit loeschen_id)'
         type: choice
-        options: [zeigen, veroeffentlichen, nachtragen]
+        options: [zeigen, veroeffentlichen, nachtragen, loeschen]
         default: zeigen
       apps:
         description: 'Nur diese Apps (anigosha,mahjong,wellbooked,fullrep,swaply) — leer = alle'
@@ -50,6 +50,10 @@ on:
         description: 'Nur fuer `nachtragen`: zeigen, was nachgetragen wuerde'
         type: boolean
         default: false
+      loeschen_id:
+        description: 'Nur fuer `loeschen`: die Instagram-Beitragsnummer (UNWIDERRUFLICH). Braucht genau eine App und die Datei'
+        type: string
+        required: false
 
 jobs:
   freigeben:
@@ -83,6 +87,7 @@ jobs:
           DATEI: ${{ inputs.datei }}
           TAGE: ${{ inputs.tage }}
           TROCKEN: ${{ inputs.trocken && '1' || '' }}
+          LOESCHEN: ${{ inputs.loeschen_id }}
         # ⚠ `nachtragen` geht in ein eigenes Skript: Es ruft Instagram gar
         # nicht an, es gleicht nur `kanaele` an `eintraege` an. In
         # freigeben.mjs waere es ein dritter Zweig durch eine Schleife, die
@@ -90,6 +95,8 @@ jobs:
         run: |
           if [ "$MODUS" = "nachtragen" ]; then
             node tools/social/instagram-nachtragen.mjs
+          elif [ "$MODUS" = "loeschen" ]; then
+            node tools/social/instagram-loeschen.mjs
           else
             node tools/social/freigeben.mjs
           fi

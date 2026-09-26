@@ -157,3 +157,21 @@ export async function veroeffentlichen({ kontoId, token, containerId, trocken })
   }
   return { id: daten.id };
 }
+
+/**
+ * Einen Instagram-Beitrag loeschen (26.09.2026, FullRep-Reel mit falschem Clip).
+ *
+ * `DELETE /<IG_MEDIA_ID>` — laut Meta-Doku („Instagram API with Facebook
+ * Login", Referenz IG Media) fuer Beitraege, Reels und ganze Karussells.
+ * ⚠ Unwiderruflich; nur mit ausdruecklich genannter Nummer aufrufen
+ * (instagram-loeschen.mjs prueft sie gegen die Merkliste).
+ */
+export async function beitragLoeschen({ id, token }) {
+  if (!/^\d+$/.test(String(id))) throw new Error(`Keine Beitragsnummer: ${id}`);
+  const antwort = await fetch(`${GRAPH}/${id}?access_token=${encodeURIComponent(token)}`, { method: 'DELETE' });
+  const daten = await antwort.json().catch(() => ({}));
+  if (!antwort.ok || daten.success !== true) {
+    throw new Error(`Loeschen von ${id} fehlgeschlagen: HTTP ${antwort.status} ${JSON.stringify(daten.error ?? daten).slice(0, 300)}`);
+  }
+  return true;
+}
