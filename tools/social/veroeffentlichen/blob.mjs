@@ -43,7 +43,7 @@
 import { createReadStream } from 'node:fs';
 import { basename } from 'node:path';
 
-import { put, del, list } from '@vercel/blob';
+import { put, del, list, get, BlobPreconditionFailedError } from '@vercel/blob';
 
 /**
  * Laedt eine Datei oeffentlich hoch und gibt ihre Adresse zurueck.
@@ -108,7 +108,7 @@ export async function hochladen({ datei, token, praefix, trocken }) {
  * Je App eine eigene Datei, weil posten.mjs je App einmal laeuft; eine
  * gemeinsame wuerde sich beim zweiten Aufruf selbst ueberschreiben.
  */
-export async function merklisteAblegen({ datum, appSchluessel, eintraege, uebersicht, tiktok, token, name }) {
+export async function merklisteAblegen({ datum, appSchluessel, eintraege, uebersicht, tiktok, token, name, ifMatch }) {
   const pfad = `social/${datum}/freigabe-${appSchluessel}.json`;
   // ⚠ `eintraege` ist der Vertrag mit freigeben.mjs und bleibt unangetastet:
   // Dort steht, was Instagram noch offen hat, und dort wird vermerkt, was
@@ -120,12 +120,16 @@ export async function merklisteAblegen({ datum, appSchluessel, eintraege, uebers
   if (uebersicht) inhalt.uebersicht = uebersicht;
   // Kontoauskunft fuer die TikTok-Oberflaeche der Freigabe-Seite.
   if (tiktok) inhalt.tiktok = tiktok;
+  // ⚠ `ifMatch` (26.09.2026): nur schreiben, wenn die Datei seit dem Lesen
+  // unveraendert ist. Sonst wirft `put` BlobPreconditionFailedError, und
+  // merklisteAendern liest neu. Ohne das gewann, wer zuletzt schrieb.
   const { url } = await put(pfad, JSON.stringify(inhalt, null, 2), {
     access: 'public',
     token,
     allowOverwrite: true,
     addRandomSuffix: false,
     contentType: 'application/json',
+    ...(ifMatch ? { ifMatch } : {}),
   });
   return { url, pfad };
 }
@@ -160,15 +164,23 @@ export async function merklisteAendern({
   lesen = async () => (await merklistenLesen({ datum, token })).find((l) => l.app === appSchluessel),
   ablegen = (l) => merklisteAblegen({
     datum, appSchluessel, name: l.name, eintraege: l.eintraege,
-    uebersicht: l.uebersicht, tiktok: l.tiktok, token,
+    uebersicht: l.uebersicht, tiktok: l.tiktok, token, ifMatch: l._etag,
   }),
-  versuche = 3, pauseMs = 1500,
+  versuche = 4, pauseMs = 1500,
 }) {
   for (let versuch = 1; versuch <= versuche; versuch++) {
     const frisch = await lesen();
     if (!frisch) throw new Error(`Keine Merkliste fuer ${appSchluessel} am ${datum}.`);
     aendern(frisch);
-    await ablegen(frisch);
+    try {
+      await ablegen(frisch);
+    } catch (e) {
+      // Jemand hat seit unserem Lesen geschrieben (ETag passt nicht mehr):
+      // nichts ist verloren, einfach frisch lesen und noch einmal.
+      if (!istVorbedingungsFehler(e)) throw e;
+      if (versuch < versuche) await new Promise((r) => setTimeout(r, pauseMs * versuch));
+      continue;
+    }
     const nachher = await lesen();
     if (nachher && drin(nachher)) return { liste: nachher, versuche: versuch };
     if (versuch < versuche) await new Promise((r) => setTimeout(r, pauseMs * versuch));
@@ -177,18 +189,44 @@ export async function merklisteAendern({
     + 'nicht drin — ein anderer Lauf schreibt dauernd dazwischen.');
 }
 
+export function istVorbedingungsFehler(e) {
+  return e instanceof BlobPreconditionFailedError || e?.name === 'BlobPreconditionFailedError'
+    || /precondition/i.test(String(e?.message));
+}
+
 /** Alle Merklisten eines Tages, je App eine. */
 export async function merklistenLesen({ datum, token }) {
   const { blobs } = await list({ prefix: `social/${datum}/freigabe-`, token });
   const raus = [];
   for (const b of blobs) {
     if (!b.pathname.endsWith('.json')) continue;
-    // ⚠ Ohne Cache-Umgehung liefert der CDN die Fassung von vor dem letzten
-    // Schreiben — und ein eben veroeffentlichter Beitrag saehe wieder offen
-    // aus. Das waere ein doppelter Beitrag.
-    const antwort = await fetch(`${b.url}?frisch=${Date.now()}`, { cache: 'no-store' });
-    if (!antwort.ok) continue;
-    raus.push({ ...(await antwort.json()), pfad: b.pathname });
+    // ⚠ DIREKT AUS DEM SPEICHER, am CDN vorbei (`useCache: false`, 26.09.2026).
+    //
+    // Bis dahin stand hier `fetch(url?frisch=<Zeit>, no-store)` — in der
+    // Annahme, der Parameter umgehe den Cache. Er tut es nicht: Am 26.09.
+    // gemessen `x-vercel-cache: HIT, age: 56` trotz jedes Mal neuem Parameter.
+    // Ein Lauf konnte also eine bis zu eine Minute alte Merkliste lesen — ein
+    // eben veroeffentlichter Beitrag saehe wieder offen aus (doppelter
+    // Beitrag), und beim Zurueckschreiben gingen fremde Vermerke verloren.
+    //
+    // `_etag` gehoert zum gelesenen Stand und geht als `ifMatch` ins Schreiben
+    // (merklisteAendern). merklisteAblegen schreibt nur benannte Felder, das
+    // `_etag` landet also nie in der Datei.
+    let liste = null;
+    try {
+      const r = await get(b.url, { access: 'public', useCache: false, token });
+      if (r?.statusCode === 200 && r.stream) {
+        liste = { ...JSON.parse(await new Response(r.stream).text()), _etag: r.blob?.etag };
+      }
+    } catch (e) {
+      console.log(`   (Merkliste ${b.pathname}: direktes Lesen fehlgeschlagen — ${e.message}; lese ueber das CDN)`);
+    }
+    if (!liste) {
+      const antwort = await fetch(`${b.url}?frisch=${Date.now()}`, { cache: 'no-store' });
+      if (!antwort.ok) continue;
+      liste = await antwort.json();
+    }
+    raus.push({ ...liste, pfad: b.pathname });
   }
   return raus;
 }

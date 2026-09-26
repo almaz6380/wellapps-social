@@ -14,7 +14,8 @@
 // Geprueft wird die ECHTE `merklisteAendern` aus blob.mjs gegen einen Speicher
 // im Arbeitsspeicher, der Lesen und Schreiben absichtlich verschraenkt.
 
-import { merklisteAendern } from './veroeffentlichen/blob.mjs';
+import { merklisteAendern, istVorbedingungsFehler } from './veroeffentlichen/blob.mjs';
+import { BlobPreconditionFailedError } from '@vercel/blob';
 
 let gut = 0;
 const schlecht = [];
@@ -123,7 +124,7 @@ console.log('\n4. Jemand schreibt JEDES Mal dazwischen');
   const immerStoeren = async (l) => { await s.ablegen(l); s.set(startListe()); };
   let fehler = null;
   try {
-    await merklisteAendern({ datum: 'd', appSchluessel: 'mahjong', aendern: fbAendern, drin: fbDrin, lesen: s.lesen, ablegen: immerStoeren, pauseMs: 0 });
+    await merklisteAendern({ datum: 'd', appSchluessel: 'mahjong', aendern: fbAendern, drin: fbDrin, lesen: s.lesen, ablegen: immerStoeren, versuche: 3, pauseMs: 0 });
   } catch (e) { fehler = e; }
   pruefe('nach drei Versuchen ein Fehler — kein stilles „erledigt"', fehler && /3 Versuchen/.test(fehler.message), String(fehler?.message));
 }
@@ -143,6 +144,38 @@ console.log('\n5. Ablehnen der anderen Karte, waehrend Facebook das Reel vermerk
   pruefe('die Ablehnung bleibt stehen', ablehnenDrin(s.get()), JSON.stringify(s.get().uebersicht[1]));
   pruefe('der Instagram-Eintrag der abgelehnten Karte bleibt weg', !s.get().eintraege.some((e) => e.datei === 'k.jpg'), JSON.stringify(s.get().eintraege));
   pruefe('und Facebook ist vermerkt', fbDrin(s.get()), JSON.stringify(s.get().uebersicht[0].kanaele));
+}
+
+// --- 6. Der Speicher lehnt ab (ifMatch) — neu lesen statt ueberschreiben ------
+//
+// Seit dem 26.09. schreibt merklisteAblegen mit `ifMatch`: Hat jemand die Datei
+// seit dem Lesen geaendert, wirft `put` BlobPreconditionFailedError. Das ist
+// kein Fehler des Laufs, sondern das Signal, frisch zu lesen.
+console.log('\n6. Vorbedingung verletzt — frisch lesen, erneut schreiben');
+{
+  const s = speicher(startListe());
+  let abgelehnt = 0;
+  const ablegenMitSperre = async (l) => {
+    if (abgelehnt === 0) {
+      abgelehnt += 1;
+      // Instagram hat inzwischen geschrieben; unser Stand ist alt.
+      const ig = s.get(); igAendern(ig); s.set(ig);
+      throw new BlobPreconditionFailedError();
+    }
+    await s.ablegen(l);
+  };
+  const r = await merklisteAendern({ datum: 'd', appSchluessel: 'mahjong', aendern: fbAendern, drin: fbDrin, lesen: s.lesen, ablegen: ablegenMitSperre, pauseMs: 0 });
+  pruefe('die Ablehnung fuehrt zu einem zweiten Versuch', r.versuche === 2 && abgelehnt === 1, `versuche=${r.versuche}`);
+  pruefe('Facebook steht danach', fbDrin(s.get()), JSON.stringify(s.get().uebersicht[0].kanaele));
+  pruefe('Instagram, das dazwischen schrieb, auch', igDrin(s.get()), JSON.stringify(s.get().uebersicht[0].kanaele));
+  pruefe('der Fehler wird als Vorbedingung erkannt', istVorbedingungsFehler(new BlobPreconditionFailedError()) && !istVorbedingungsFehler(new Error('Netz weg')), 'istVorbedingungsFehler');
+
+  let anderer = null;
+  try {
+    await merklisteAendern({ datum: 'd', appSchluessel: 'mahjong', aendern: fbAendern, drin: fbDrin, lesen: s.lesen,
+      ablegen: async () => { throw new Error('Netz weg'); }, pauseMs: 0 });
+  } catch (e) { anderer = e; }
+  pruefe('andere Fehler werden NICHT verschluckt', anderer?.message === 'Netz weg', String(anderer?.message));
 }
 
 console.log(`\n${gut} von ${gut + schlecht.length} Proben gruen.`);
