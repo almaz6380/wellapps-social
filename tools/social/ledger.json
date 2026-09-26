@@ -1898,6 +1898,96 @@
       "schluessel": "figur-vierer",
       "inhalt": "seed47604",
       "sprache": "en"
+    },
+    {
+      "app": "anigosha",
+      "datum": "2026-09-26",
+      "winkel": "fandom",
+      "medium": "reel",
+      "schluessel": "kategorie",
+      "inhalt": "seed48685",
+      "sprache": "de"
+    },
+    {
+      "app": "anigosha",
+      "datum": "2026-09-26",
+      "winkel": "wusstest-du-karte",
+      "medium": "bild",
+      "schluessel": "fragen-ids",
+      "inhalt": "seed54863",
+      "sprache": "de"
+    },
+    {
+      "app": "mahjong",
+      "datum": "2026-09-26",
+      "winkel": "fakt",
+      "medium": "reel",
+      "schluessel": "fakt-index",
+      "inhalt": "seed4316",
+      "sprache": "en"
+    },
+    {
+      "app": "mahjong",
+      "datum": "2026-09-26",
+      "winkel": "clear",
+      "medium": "reel",
+      "schluessel": "level",
+      "inhalt": "seed10204",
+      "sprache": "en"
+    },
+    {
+      "app": "wellbooked",
+      "datum": "2026-09-26",
+      "winkel": "entlastung",
+      "medium": "reel",
+      "schluessel": "entlastung",
+      "inhalt": "seed73739",
+      "sprache": "de"
+    },
+    {
+      "app": "wellbooked",
+      "datum": "2026-09-26",
+      "winkel": "vorteil",
+      "medium": "bild",
+      "schluessel": "vorteil",
+      "inhalt": "seed90134",
+      "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-26",
+      "winkel": "app-schau-reel",
+      "medium": "reel",
+      "schluessel": "bildschirm",
+      "inhalt": "seed12733",
+      "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-26",
+      "winkel": "naehrstoff",
+      "medium": "bild",
+      "schluessel": "wissensthema",
+      "inhalt": "seed85793",
+      "sprache": "de"
+    },
+    {
+      "app": "swaply",
+      "datum": "2026-09-26",
+      "winkel": "notfall-loop",
+      "medium": "reel",
+      "schluessel": "kategorie",
+      "inhalt": "seed95761",
+      "sprache": "de"
+    },
+    {
+      "app": "swaply",
+      "datum": "2026-09-26",
+      "winkel": "regel",
+      "medium": "bild",
+      "schluessel": "regel",
+      "inhalt": "seed97552",
+      "sprache": "de"
     }
   ]
 }
