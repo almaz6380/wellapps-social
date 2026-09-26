@@ -2033,6 +2033,24 @@
       "schluessel": "nikotin-loop",
       "inhalt": "seed46478",
       "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-26",
+      "winkel": "uebung-bewegt",
+      "medium": "reel",
+      "schluessel": "uebung-bewegt",
+      "inhalt": "seed20835",
+      "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-26",
+      "winkel": "wissens-karte",
+      "medium": "bild",
+      "schluessel": "wissensthema",
+      "inhalt": "seed20555",
+      "sprache": "de"
     }
   ]
 }
