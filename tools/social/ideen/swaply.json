@@ -118,6 +118,20 @@
       "sprachen": [
         "de"
       ]
+    },
+    {
+      "id": "nikotin-loop",
+      "medium": "reel",
+      "format": "notfall-loop",
+      "status": "vorhanden",
+      "bereich": "nicotine",
+      "haken": "Notfall-Reel für Nikotin & Vaping mit dem Begleiter, der eine Zigarette zerbricht (kein Rauch, kein Rauchen – Reichweite). Josef am 26.09.2026: „swaply bild von rauchendem mann einblenden\" → Variante „zerbricht\".",
+      "schluessel": "nikotin-loop",
+      "sprachen": [
+        "de",
+        "en",
+        "es"
+      ]
     }
   ]
 }

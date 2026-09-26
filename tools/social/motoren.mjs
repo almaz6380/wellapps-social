@@ -304,6 +304,8 @@ export function aufruf({ appSchluessel, app, post, wuerfel, out }) {
         cmd: 'node',
         args: ['tools/social/reels-fremd/make-reel.mjs', '--marke', appSchluessel,
           '--format', post.format ?? post.winkel, '--lang', post.sprache,
+          // Swaply: fester Bereich (z. B. `nicotine`) aus ideen/swaply.json.
+          ...(appSchluessel === 'swaply' && post.bereich ? ['--kategorie', post.bereich] : []),
           '--seed', String(post.seed), '--name', post.dateiname,
           // ⚠ ABSOLUTER Zielpfad. `out` kommt fuer diese beiden Apps relativ
           // herein (sie haengen ihn sonst an ihre eigene Wurzel, siehe

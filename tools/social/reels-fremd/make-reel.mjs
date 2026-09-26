@@ -59,6 +59,9 @@ const LANG = arg('lang', 'de');
 const SEED = Number(arg('seed', 1));
 const NAME = arg('name', null);
 const OUT = arg('out', join(WURZEL, 'out', 'social'));
+// Nur Swaply: eine bestimmte Kategorie statt einer gewuerfelten (ideen/swaply.json
+// → `bereich`, z. B. `nicotine`). Leer = wie bisher gewuerfelt.
+const KATEGORIE = arg('kategorie', null);
 
 const B = 1080;
 const H = 1920;
@@ -142,7 +145,9 @@ async function swaplyInhalt() {
   // src/i18n/<sprache>.ts — dieselbe Quelle, aus der die App ihre Texte nimmt.
   // Eine Kopie hier waere am Tag der naechsten Textaenderung falsch.
   const modul = await import(join(APP.pfad, 'scripts', 'social-daten.mjs'));
-  const alle = modul.kategorien(LANG);
+  const alleKategorien = modul.kategorien(LANG);
+  const alle = KATEGORIE ? alleKategorien.filter((k) => k.id === KATEGORIE) : alleKategorien;
+  if (!alle.length) throw new Error(`Swaply-Kategorie „${KATEGORIE}" gibt es nicht.`);
   const mitNotfall = alle.filter((k) => k.notfall?.schritte?.length);
 
   if (FORMAT === 'notfall-loop') {
@@ -153,6 +158,7 @@ async function swaplyInhalt() {
       karten: (k.notfall?.schritte ?? []).slice(0, 4).map((s, i) => ({ zahl: String(i + 1), text: s })),
       fuss: k.label,
       caption: `${k.label} — ${k.notfall?.titel ?? ''}`.trim(),
+      einblendung: einblendungFuer(k.id),
     };
   }
 
@@ -166,7 +172,22 @@ async function swaplyInhalt() {
     karten: ersatz.map((e) => ({ zahl: '→', text: e })),
     fuss: k.label,
     caption: `${k.label}: ${k.alteRoutine ?? ''}`.trim(),
+    einblendung: einblendungFuer(k.id),
   };
+}
+
+// --- Einblendung je Kategorie (Josef, 26.09.2026) -----------------------------
+// „swaply bild von rauchendem mann einblenden" → bewusst die Variante „Mann
+// zerbricht eine Zigarette": KEIN Rauch, kein Rauchen. TikTok nimmt Videos, die
+// Tabakkonsum zeigen, aus dem Fuer-dich-Feed; Instagram drosselt sie.
+//
+// Nur fuer die passende Kategorie: Eine Zigarette ueber einem Alkohol- oder
+// Zucker-Reel waere falsch. Die Bilder liegen hier (swaply ist fuer diesen
+// Arbeitsplatz nur lesbar): einblendungen/swaply-<kategorie>.jpg, Herkunft
+// in einblendungen/HERKUNFT.md. Der Begleiter ist ein KI-Mensch → AI-Plaettchen.
+function einblendungFuer(id) {
+  const datei = join(HIER, 'einblendungen', `swaply-${id}.jpg`);
+  return existsSync(datei) ? `data:image/jpeg;base64,${readFileSync(datei).toString('base64')}` : null;
 }
 
 function wellbookedInhalt() {
@@ -340,6 +361,7 @@ const inhalt = MARKE === 'swaply' ? await swaplyInhalt() : wellbookedInhalt();
 // wird.
 const SZENEN = [
   { art: 'kopf', sek: 2.5 },
+  ...(inhalt.einblendung ? [{ art: 'bild', sek: 2.2 }] : []),
   ...(inhalt.vorher ? [{ art: 'vorher', sek: 2 }] : []),
   ...inhalt.karten.map(() => ({ art: 'karte', sek: 2 })),
   { art: 'schluss', sek: 3 },
@@ -384,6 +406,11 @@ body{font-family:Outfit,sans-serif;color:${TINTE}}
    animiert; die Einblendung der ganzen Szene genuegt. */
 .badges{display:flex;flex-direction:column;align-items:center;gap:24px;margin-top:48px}
 .badges img{height:108px;width:auto;display:block}
+.bild{padding:0}
+.bild img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.ki{position:absolute;right:48px;bottom:60px;width:64px;height:64px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:25px;font-weight:800;
+  letter-spacing:.04em;color:#fff;background:rgba(6,23,28,.6);border:2px solid rgba(255,255,255,.55)}
 </style></head><body><div class="buehne" id="b"></div><script>
 const D = ${daten};
 const b = document.getElementById('b');
@@ -400,6 +427,10 @@ const bloecke = D.szenen.map((s) => {
   if (s.art === 'kopf') {
     d.innerHTML = '<div class="kopfzeile"></div>';
     d.querySelector('.kopfzeile').textContent = D.inhalt.kopf;
+  } else if (s.art === 'bild') {
+    d.className = 'karte bild';
+    d.innerHTML = '<img><div class="ki">AI</div>';
+    d.querySelector('img').src = D.inhalt.einblendung;
   } else if (s.art === 'vorher') {
     d.innerHTML = '<div class="vorherWort"></div><div class="vorherText"></div>';
     d.querySelector('.vorherWort').textContent =
@@ -447,11 +478,19 @@ window.setFrame = (n) => {
       o = Math.min(1, rel / rand, (laenge - rel) / rand);
     }
     k.style.opacity = String(Math.max(0, o));
+    // Das Bild faehrt langsam heran — ein stehendes Bild wird weggewischt.
+    if (D.szenen[i].art === 'bild') {
+      const p = Math.min(1, Math.max(0, (n - von) / (bis - von)));
+      k.querySelector('img').style.transform = 'scale(' + (1.0 + 0.06 * p) + ')';
+    }
   });
   // Die Fusszeile blendet erst nach der Kopfszene ein — sonst konkurriert sie
   // mit der Ueberschrift um den Blick.
   const abFrame = grenzen[0][1];
-  fuss.style.opacity = n > abFrame ? '1' : '0';
+  // ⚠ Und NICHT waehrend der Bildszene: Dort stuende sie auf den Schuhen der
+  // Figur (am gerenderten Reel gesehen, 26.09.2026).
+  const imBild = D.szenen.some((s, i) => s.art === 'bild' && n >= grenzen[i][0] - 9 && n < grenzen[i][1] + 9);
+  fuss.style.opacity = n > abFrame && !imBild ? '1' : '0';
 };
 
 document.fonts.ready.then(() => { window.setFrame(0); window.__bereit = true; });
@@ -491,6 +530,10 @@ function beiblatt(dateiname, sekunden) {
     '• Das Video ist stumm. In der App einen Trending-Sound drueberlegen —',
     '  bei WELLbooked! NICHT: dort ist Stille Vorgabe.',
     '• Erste Zeile der Caption ist der Hook.',
+    ...(inhalt.einblendung ? [
+      // ⚠ Liest der Tageslauf fuer die Leitplanke (KI-Menschen → AI-Plaettchen).
+      '- Medienherkunft: ki-menschen (Swaply-Begleiter, KI-Bild, Wasserzeichen gesetzt)',
+    ] : []),
     '',
   ].join('\n');
 }
