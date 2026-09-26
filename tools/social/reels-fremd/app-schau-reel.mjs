@@ -183,6 +183,11 @@ function baueHtml() {
     ? `data:image/svg+xml;base64,${b64(daten.logo)}` : null;
   const hg = daten.hintergrund && existsSync(daten.hintergrund)
     ? `data:image/jpeg;base64,${b64(daten.hintergrund)}` : null;
+  // ⚠ AI-Plaettchen nur, wenn der Hintergrund einen FOTOREALISTISCHEN Menschen
+  // zeigt — und das muss die App ausdruecklich melden (Josef, 26.09.2026: „ki
+  // wasserzeichen nur wenn realistische personen sichtbar sind"). Anigoshas
+  // Werbespot-Bild ist Anime, also ohne.
+  const kiMarke = Boolean(hg && daten.hintergrundRealistisch === true);
 
   return `<!doctype html><meta charset="utf-8"><style>
 @font-face{font-family:'Schlag';src:url(data:font/woff2;base64,${b64(sch.schlagzeile)}) format('woff2');font-weight:100 900}
@@ -233,7 +238,7 @@ p.text{font-size:40px;line-height:1.34;color:${o.tinteLeise};margin-top:26px;
   font-size:34px;font-weight:700;color:${o.akzent}}
 .fuss{flex:0 0 auto;margin-top:26px;font-size:30px;color:${o.tinteLeise};
   display:flex;justify-content:space-between;align-items:center}
-${hg ? `.kiMarke{position:absolute;right:40px;bottom:36px;z-index:5;
+${kiMarke ? `.kiMarke{position:absolute;right:40px;bottom:36px;z-index:5;
   background:rgba(10,6,22,.62);border:1px solid rgba(237,233,254,.3);
   border-radius:11px;padding:8px 14px;font-size:24px;font-weight:700;
   letter-spacing:.1em;color:rgba(237,233,254,.85)}` : ''}
@@ -251,7 +256,7 @@ ${hg ? '<div class="hgBild"></div><div class="hgSchleier"></div>' : ''}
   <div class="punkte" id="pk">${daten.punkte.map((x) => `<span>${esc(x)}</span>`).join('')}</div>
   <div class="fuss" id="fuss"><span>${esc(daten.fuss)}</span></div>
 </div>
-${hg ? '<div class="kiMarke" id="ki"><b>AI</b></div>' : ''}
+${kiMarke ? '<div class="kiMarke" id="ki"><b>AI</b></div>' : ''}
 <script>
 const START = ${JSON.stringify(START)};
 const GESAMT = ${GESAMT};
@@ -382,7 +387,9 @@ Reel zur gleichnamigen Karte: ${basis.replace('-app-schau', '-app-schau')} · Se
 Bildschirme: ${daten.schirme.map((f) => f.split('/').pop()).join(', ')}
 Ton: ${ton ? 'Musikbett bett.aac bei -20 dB' : 'STUMM'}
 Medienherkunft: Screenshots der eigenen App${daten.hintergrund
-  ? ' + Einzelbild aus dem eigenen Werbespot (KI-erzeugt, als AI gekennzeichnet)' : ''}
+  ? (daten.hintergrundRealistisch === true
+    ? ' + Einzelbild aus dem eigenen Werbespot (realistisch, KI-erzeugt, als AI gekennzeichnet)'
+    : ' + Einzelbild aus dem eigenen Werbespot (Anime/Illustration, kein Plättchen)') : ''}
 `);
 
 console.log(`\n✓ ${ziel}`);

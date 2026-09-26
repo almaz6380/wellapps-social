@@ -18,8 +18,8 @@
 // ⚠ NUR TYPOGRAFIE (apps.json → regeln.nur_typografie): keine Bilder von
 // Anime-Figuren, auch keine KI-erzeugten. Serientitel als Text sind erlaubt.
 // EINZIGE Ausnahme: der eigene Junge aus dem Anigosha-Werbespot (--figur,
-// Josef 25.09.2026: „immer mit dem Jungen") — mit AI-Plaettchen, siehe
-// vorflug.mjs bei `nur_typografie`.
+// Josef 25.09.2026: „immer mit dem Jungen") — OHNE AI-Plaettchen: Er ist eine
+// Anime-Figur, kein realistischer Mensch (Josef, 26.09.2026). Siehe vorflug.mjs.
 //
 // Jedes Bild ist eine reine Funktion des Frame-Index (window.setFrame(n)),
 // dieselbe Regel wie in allen Reel-Generatoren: kein setTimeout, keine
@@ -145,10 +145,8 @@ html,body{width:${B}px;height:${H}px;overflow:hidden;font-family:Outfit,sans-ser
   background-size:contain;background-repeat:no-repeat;background-position:bottom center;opacity:0}
 body.mitFigur .hook{padding-bottom:760px}
 body.mitFigur .outro{justify-content:flex-start;padding-top:300px}
-/* AI-Plaettchen: Er ist ein KI-erzeugter Mensch. Sichtbar, solange er es ist. */
-.ki{position:absolute;right:48px;bottom:60px;width:56px;height:56px;border-radius:50%;z-index:4;opacity:0;
-  display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;letter-spacing:.04em;
-  background:rgba(10,6,22,.62);border:2px solid rgba(237,233,254,.45);color:#ede9fe}
+/* KEIN AI-Plaettchen: Der Junge ist Anime, kein realistischer Mensch
+   (Josef, 26.09.2026: „ki wasserzeichen nur wenn realistische personen sichtbar sind"). */
 </style></head><body class="${figur ? 'mitFigur' : ''}">
 <div class="glow" id="g1" style="left:-300px;top:-200px;background:#7c3aed"></div>
 <div class="glow" id="g2" style="right:-350px;bottom:-250px;background:#f472b6"></div>
@@ -167,7 +165,7 @@ body.mitFigur .outro{justify-content:flex-start;padding-top:300px}
 <div class="outro ebene" id="outro"><div class="t">Wie viele hattest du?</div>
   <div class="u">Schreib's in die Kommentare 👇<br>804 Fragen · 12 Serien · Duelle</div>
   <div class="s" id="store"></div></div>
-${figur ? `<div class="figur" id="figur" style="background-image:url(data:image/png;base64,${figur})"></div><div class="ki" id="ki">AI</div>` : ''}
+${figur ? `<div class="figur" id="figur" style="background-image:url(data:image/png;base64,${figur})"></div>` : ''}
 <script>
 const D = ${daten};
 const $ = (id) => document.getElementById(id);
@@ -196,7 +194,6 @@ window.setFrame = (n) => {
     const da = t < D.HOOK ? aus((t - .15) / .3) * (1 - hraus) : aus((t - ende - .1) / .3);
     $('figur').style.opacity = String(da);
     $('figur').style.transform = 'translateY(' + ((1 - rein) * 360 + Math.sin(t * 2.2) * 8) + 'px)';
-    $('ki').style.opacity = String(da);
   }
   // Runde
   const r = Math.floor((t - D.HOOK) / D.RUNDE);
@@ -346,10 +343,10 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     '',
     '- Tonquelle: eigen (Musikbett und Klänge aus dem Anigosha-Reel-Baukasten)',
     // ⚠ Ohne Figur genau „typografie" — Anigosha hat `nur_typografie`. Mit dem
-    // Jungen ist es ein KI-erzeugter Mensch: Dann steht das hier, und
-    // „Wasserzeichen gesetzt" laesst lauf.mjs das AI-Plaettchen bestaetigen.
+    // Jungen `ki-figur`: eine Anime-Figur, KEIN Plaettchen (vorflug.mjs prueft
+    // beide Richtungen).
     r.figur
-      ? '- Medienherkunft: ki-menschen (eigene Figur „Junge" aus dem Anigosha-Werbespot, Wasserzeichen gesetzt)'
+      ? '- Medienherkunft: ki-figur (eigene Anime-Figur „Junge" aus dem Anigosha-Werbespot, kein Plättchen)'
       : '- Medienherkunft: typografie',
     '',
   ].join('\n'));

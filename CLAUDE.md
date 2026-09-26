@@ -648,6 +648,17 @@ nicht noch einmal tun.
   (eigene KI-Stimme + KI-Musik, Zustimmung der Inhaberin vom 23.09.2026, `ton_erlaubt_formate`
   in `apps.json`; das Beiblatt meldet `- Tonquelle: eigen`). FullRep und Swaply: keine
   Diagnosen, keine Therapieversprechen.
+- **AI-Plättchen NUR bei fotorealistischen KI-Menschen** (Josef, 26.09.2026: „ki
+  wasserzeichen nur wenn realistische personen sichtbar sind!!! Nicht bei anigosha
+  wenn nur der animejunge zu sehen ist"). Kein Plättchen bei Anime (Anigosha-Junge,
+  Spot-Bild), Comic (Swaply-Begleiter), gemalten Figuren (Mahjong Opa/Junge/Tempel),
+  3D-Puppen (FullRep-Übung) und echten Fotos. Mit Plättchen: WELLbooked!-Clips und
+  Kategoriebilder, FullRep-Trainingsbilder, Swaplys Raucherfoto. Das Beiblatt meldet
+  `ki-menschen (…)` (Plättchen Pflicht), `ki-figur (…)` (Plättchen verboten) oder
+  `ki-bild (…)` (keine Menschen); `vorflug.mjs` prüft beide Richtungen.
+- **„Echte Person" heißt Foto, nicht Figur.** Wünscht Josef eine echte Person, wird
+  sie fotorealistisch erzeugt (`flux-pro/v1.1-ultra`, `raw: true`) — nicht aus einer
+  Comic-Vorlage abgeleitet (Swaply-Raucher, 26.09.2026).
 - Videos wandern nicht ins Repo (`out/` ist gitignored); eingecheckt werden Ledger,
   Ideen und Kanal-Assets. Die Motoren sind deterministisch — der Ledger ist ein Bauplan.
 - KEIN echter Lauf, kein Deploy, kein Löschen ohne ausdrückliches „ja" von Josef.

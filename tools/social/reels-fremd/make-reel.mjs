@@ -160,6 +160,8 @@ async function swaplyInhalt() {
       caption: `${k.label} — ${k.notfall?.titel ?? ''}`.trim(),
       einblendung: einblendungFuer(k.id),
       einblendungEnde: einblendungFuer(k.id, '-ende'),
+      einblendungKi: EINBLENDUNG_REALISTISCH.has(k.id),
+      einblendungEndeKi: EINBLENDUNG_REALISTISCH.has(`${k.id}-ende`),
     };
   }
 
@@ -175,6 +177,8 @@ async function swaplyInhalt() {
     caption: `${k.label}: ${k.alteRoutine ?? ''}`.trim(),
     einblendung: einblendungFuer(k.id),
     einblendungEnde: einblendungFuer(k.id, '-ende'),
+    einblendungKi: EINBLENDUNG_REALISTISCH.has(k.id),
+    einblendungEndeKi: EINBLENDUNG_REALISTISCH.has(`${k.id}-ende`),
   };
 }
 
@@ -186,7 +190,13 @@ async function swaplyInhalt() {
 // Nur fuer die passende Kategorie: Eine Zigarette ueber einem Alkohol- oder
 // Zucker-Reel waere falsch. Die Bilder liegen hier (swaply ist fuer diesen
 // Arbeitsplatz nur lesbar): einblendungen/swaply-<kategorie>.jpg, Herkunft
-// in einblendungen/HERKUNFT.md. Der Begleiter ist ein KI-Mensch → AI-Plaettchen.
+// in einblendungen/HERKUNFT.md.
+//
+// ⚠ AI-Plaettchen NUR auf fotorealistischen KI-Menschen (Josef, 26.09.2026:
+// „ki wasserzeichen nur wenn realistische personen sichtbar sind"). Welche
+// Bilder das sind, steht in EINBLENDUNG_REALISTISCH — je Datei, weil ein Reel
+// Comic und Foto mischen koennte. Nicht eingetragen = kein Plaettchen.
+const EINBLENDUNG_REALISTISCH = new Set(['nicotine']);
 //
 // Zweites Bild `swaply-<kategorie>-ende.jpg` (optional) steht vor dem Schluss —
 // bei Nikotin (Josef, 26.09.2026: „du darfst … ein bild von einem raucher
@@ -438,7 +448,8 @@ const bloecke = D.szenen.map((s) => {
     d.querySelector('.kopfzeile').textContent = D.inhalt.kopf;
   } else if (s.art === 'bild' || s.art === 'bild-ende') {
     d.className = 'karte bild';
-    d.innerHTML = '<img><div class="ki">AI</div>';
+    const ki = s.art === 'bild' ? D.inhalt.einblendungKi : D.inhalt.einblendungEndeKi;
+    d.innerHTML = ki ? '<img><div class="ki">AI</div>' : '<img>';
     d.querySelector('img').src = s.art === 'bild' ? D.inhalt.einblendung : D.inhalt.einblendungEnde;
   } else if (s.art === 'vorher') {
     d.innerHTML = '<div class="vorherWort"></div><div class="vorherText"></div>';
@@ -539,9 +550,12 @@ function beiblatt(dateiname, sekunden) {
     '• Das Video ist stumm. In der App einen Trending-Sound drueberlegen —',
     '  bei WELLbooked! NICHT: dort ist Stille Vorgabe.',
     '• Erste Zeile der Caption ist der Hook.',
-    ...(inhalt.einblendung ? [
-      // ⚠ Liest der Tageslauf fuer die Leitplanke (KI-Menschen → AI-Plaettchen).
-      '- Medienherkunft: ki-menschen (Swaply-Begleiter, KI-Bild, Wasserzeichen gesetzt)',
+    // ⚠ Liest der Tageslauf fuer die Leitplanke (vorflug.mjs): „ki-menschen"
+    // verlangt das Plaettchen, „ki-figur" verbietet es.
+    ...((inhalt.einblendung && inhalt.einblendungKi) || (inhalt.einblendungEnde && inhalt.einblendungEndeKi) ? [
+      '- Medienherkunft: ki-menschen (realistisches KI-Foto, Wasserzeichen gesetzt)',
+    ] : inhalt.einblendung || inhalt.einblendungEnde ? [
+      '- Medienherkunft: ki-figur (Swaply-Begleiter, Comic, kein Plättchen)',
     ] : []),
     '',
   ].join('\n');

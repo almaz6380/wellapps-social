@@ -177,20 +177,35 @@ export function pruefe({ appSchluessel, app, post, texte }) {
   //
   // ⚠ Gilt fuer KI-erzeugte MENSCHEN. Ein echtes Foto zu kennzeichnen waere
   // genauso falsch wie ein KI-Bild nicht zu kennzeichnen.
+  //
+  // ⚠ NUR FOTOREALISTISCHE Menschen (Josef, 26.09.2026: „ki wasserzeichen nur
+  // wenn realistische personen sichtbar sind!!! Nicht bei anigosha wenn nur der
+  // animejunge zu sehen ist"). Anime, Comic, gemalte Figuren und 3D-Puppen
+  // tragen KEIN Plaettchen. Die Herkunftsklassen im Beiblatt:
+  //   ki-menschen (…)  fotorealistischer KI-Mensch → Plaettchen PFLICHT
+  //   ki-figur (…)     Anime/Comic/gemalt/Puppe     → Plaettchen VERBOTEN
+  //   ki-bild (…)      KI-Bild ohne Menschen        → kein Plaettchen
+  // Die Regel prueft beide Richtungen: Ein Plaettchen zu viel ist genauso ein
+  // Fehler wie eines zu wenig — es behauptet etwas, das nicht stimmt.
   if (texte.medienherkunft?.startsWith('ki-menschen') && texte.wasserzeichen !== true) {
     funde.push(befund(true, 'ki-wasserzeichen',
-      'KI-erzeugte Menschen im Bild, aber kein AI-Wasserzeichen. Es gehoert '
+      'Fotorealistische KI-Menschen im Bild, aber kein AI-Wasserzeichen. Es gehoert '
       + 'unten rechts in die Ecke — sonst setzt die Plattform ihr eigenes Label darueber.'));
+  }
+  if (/^ki-(figur|bild)\b/.test(texte.medienherkunft ?? '') && texte.wasserzeichen === true) {
+    funde.push(befund(true, 'ki-wasserzeichen-zuviel',
+      'AI-Plaettchen auf einer nicht-realistischen Figur (Anime, Comic, gemalt) oder einem '
+      + 'Bild ohne Menschen. Josefs Regel vom 26.09.2026: nur bei realistischen Personen.'));
   }
 
   // --- Anigosha ------------------------------------------------------------
   // Ausnahme (Josef, 25.09.2026: „immer mit dem Jungen"): die EIGENE Figur
   // aus dem Anigosha-Werbespot. Das Verbot gilt Bildern ERKENNBARER
   // Anime-Figuren; der Junge ist keine (anigosha/store-assets/social/figuren/
-  // HERKUNFT.md). Er ist ein KI-Mensch — die Regel `ki-wasserzeichen` oben
-  // verlangt deshalb weiter das AI-Plaettchen.
-  const eigeneFigur = /^ki-menschen\b/.test(texte.medienherkunft ?? '')
-    && /eigene Figur/.test(texte.medienherkunft);
+  // HERKUNFT.md). Er ist eine Anime-Figur, KEIN realistischer Mensch — also
+  // `ki-figur` und ohne AI-Plaettchen (Josef, 26.09.2026).
+  const eigeneFigur = /^ki-figur\b/.test(texte.medienherkunft ?? '')
+    && /eigene (Anime-)?Figur/.test(texte.medienherkunft);
   if (r.nur_typografie && post.medium && texte.medienherkunft &&
       texte.medienherkunft !== 'typografie' && !eigeneFigur) {
     funde.push(befund(true, 'nur-typografie',

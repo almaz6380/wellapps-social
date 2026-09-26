@@ -112,7 +112,20 @@ function vorflugProbe() {
       texte: { caption: 'Nur echte Fans schaffen 3/3', medienherkunft: 'ki-menschen (Anime-Held)',
         wasserzeichen: true } },
 
-    { name: 'Anigosha mit dem eigenen Jungen, aber ohne AI-Plaettchen',
+    { name: 'Anigosha-Junge MIT AI-Plaettchen (er ist Anime, kein realer Mensch)',
+      // Josef, 26.09.2026: „Nicht bei anigosha wenn nur der animejunge zu sehen ist."
+      app: 'anigosha', post: { sprache: 'de', medium: 'reel' },
+      texte: { caption: 'Richtig oder falsch?',
+        medienherkunft: 'ki-figur (eigene Anime-Figur „Junge" aus dem Anigosha-Werbespot)',
+        wasserzeichen: true } },
+
+    { name: 'Gemalte Figur mit AI-Plaettchen',
+      app: 'mahjong', post: { sprache: 'en', medium: 'reel' },
+      texte: { caption: 'Every single tile. Gone.', tonquelle: 'eigen',
+        medienherkunft: 'ki-figur (gemalte Einblendungen Junge/Opa/Tempel)', wasserzeichen: true } },
+
+    { name: 'Anigosha mit dem eigenen Jungen als „ki-menschen" ohne Plaettchen',
+      // Falsch eingeordnet: realistisch ohne Kennzeichnung bleibt rot.
       app: 'anigosha', post: { sprache: 'de', medium: 'reel' },
       texte: { caption: 'Richtig oder falsch?',
         medienherkunft: 'ki-menschen (eigene Figur „Junge" aus dem Anigosha-Werbespot)' } },
@@ -187,12 +200,22 @@ function vorflugProbe() {
       texte: { caption: 'Nur echte One-Piece-Fans schaffen 3/3. Gratis im App Store und bei Google Play.',
         medienherkunft: 'typografie' } },
 
-    { name: 'Anigosha mit dem eigenen Jungen und AI-Plaettchen',
-      // Josef, 25.09.2026: „immer mit dem Jungen".
+    { name: 'Anigosha mit dem eigenen Jungen, OHNE AI-Plaettchen',
+      // Josef, 25.09.2026: „immer mit dem Jungen" — und 26.09.2026: kein
+      // Plaettchen, er ist eine Anime-Figur.
       app: 'anigosha', post: { sprache: 'de', medium: 'reel' },
       texte: { caption: 'Richtig oder falsch? Gratis im App Store und bei Google Play.',
-        medienherkunft: 'ki-menschen (eigene Figur „Junge" aus dem Anigosha-Werbespot, Wasserzeichen gesetzt)',
-        wasserzeichen: true } },
+        medienherkunft: 'ki-figur (eigene Anime-Figur „Junge" aus dem Anigosha-Werbespot, kein Plättchen)' } },
+
+    { name: 'Swaply: Comic-Begleiter ohne Plaettchen',
+      app: 'swaply', post: { sprache: 'de', medium: 'reel' },
+      texte: { caption: 'Wenn der Impuls kommt: Routine tauschen.',
+        medienherkunft: 'ki-figur (Swaply-Begleiter, Comic, kein Plättchen)' } },
+
+    { name: 'Swaply: realistisches Raucherfoto MIT Plaettchen',
+      app: 'swaply', post: { sprache: 'de', medium: 'reel' },
+      texte: { caption: 'Wenn der Impuls kommt: Routine tauschen.',
+        medienherkunft: 'ki-menschen (realistisches KI-Foto, Wasserzeichen gesetzt)', wasserzeichen: true } },
 
     { name: 'Genau fuenf Hashtags und der App-Link gehen durch',
       app: 'anigosha', post: { sprache: 'de', medium: 'bild' },
