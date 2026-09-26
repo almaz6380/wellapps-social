@@ -2006,6 +2006,24 @@
       "schluessel": "nikotin-loop",
       "inhalt": "seed51815",
       "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-26",
+      "winkel": "quick-fakt",
+      "medium": "reel",
+      "schluessel": "wissensthema",
+      "inhalt": "seed24927",
+      "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-26",
+      "winkel": "studien-fakt",
+      "medium": "bild",
+      "schluessel": "studie",
+      "inhalt": "seed37987",
+      "sprache": "de"
     }
   ]
 }
