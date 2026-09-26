@@ -159,6 +159,7 @@ async function swaplyInhalt() {
       fuss: k.label,
       caption: `${k.label} — ${k.notfall?.titel ?? ''}`.trim(),
       einblendung: einblendungFuer(k.id),
+      einblendungEnde: einblendungFuer(k.id, '-ende'),
     };
   }
 
@@ -173,6 +174,7 @@ async function swaplyInhalt() {
     fuss: k.label,
     caption: `${k.label}: ${k.alteRoutine ?? ''}`.trim(),
     einblendung: einblendungFuer(k.id),
+    einblendungEnde: einblendungFuer(k.id, '-ende'),
   };
 }
 
@@ -185,8 +187,14 @@ async function swaplyInhalt() {
 // Zucker-Reel waere falsch. Die Bilder liegen hier (swaply ist fuer diesen
 // Arbeitsplatz nur lesbar): einblendungen/swaply-<kategorie>.jpg, Herkunft
 // in einblendungen/HERKUNFT.md. Der Begleiter ist ein KI-Mensch → AI-Plaettchen.
-function einblendungFuer(id) {
-  const datei = join(HIER, 'einblendungen', `swaply-${id}.jpg`);
+//
+// Zweites Bild `swaply-<kategorie>-ende.jpg` (optional) steht vor dem Schluss —
+// bei Nikotin (Josef, 26.09.2026: „du darfst … ein bild von einem raucher
+// erstellen"): erst der Raucher, dann die Schritte, am Ende die zerbrochene
+// Zigarette. Das Reichweitenrisiko (TikTok nimmt Tabakkonsum aus dem
+// Fuer-dich-Feed) hat Josef ausdruecklich in Kauf genommen.
+function einblendungFuer(id, zusatz = '') {
+  const datei = join(HIER, 'einblendungen', `swaply-${id}${zusatz}.jpg`);
   return existsSync(datei) ? `data:image/jpeg;base64,${readFileSync(datei).toString('base64')}` : null;
 }
 
@@ -364,6 +372,7 @@ const SZENEN = [
   ...(inhalt.einblendung ? [{ art: 'bild', sek: 2.2 }] : []),
   ...(inhalt.vorher ? [{ art: 'vorher', sek: 2 }] : []),
   ...inhalt.karten.map(() => ({ art: 'karte', sek: 2 })),
+  ...(inhalt.einblendungEnde ? [{ art: 'bild-ende', sek: 2.2 }] : []),
   { art: 'schluss', sek: 3 },
 ];
 
@@ -427,10 +436,10 @@ const bloecke = D.szenen.map((s) => {
   if (s.art === 'kopf') {
     d.innerHTML = '<div class="kopfzeile"></div>';
     d.querySelector('.kopfzeile').textContent = D.inhalt.kopf;
-  } else if (s.art === 'bild') {
+  } else if (s.art === 'bild' || s.art === 'bild-ende') {
     d.className = 'karte bild';
     d.innerHTML = '<img><div class="ki">AI</div>';
-    d.querySelector('img').src = D.inhalt.einblendung;
+    d.querySelector('img').src = s.art === 'bild' ? D.inhalt.einblendung : D.inhalt.einblendungEnde;
   } else if (s.art === 'vorher') {
     d.innerHTML = '<div class="vorherWort"></div><div class="vorherText"></div>';
     d.querySelector('.vorherWort').textContent =
@@ -479,7 +488,7 @@ window.setFrame = (n) => {
     }
     k.style.opacity = String(Math.max(0, o));
     // Das Bild faehrt langsam heran — ein stehendes Bild wird weggewischt.
-    if (D.szenen[i].art === 'bild') {
+    if (D.szenen[i].art.startsWith('bild')) {
       const p = Math.min(1, Math.max(0, (n - von) / (bis - von)));
       k.querySelector('img').style.transform = 'scale(' + (1.0 + 0.06 * p) + ')';
     }
@@ -489,7 +498,7 @@ window.setFrame = (n) => {
   const abFrame = grenzen[0][1];
   // ⚠ Und NICHT waehrend der Bildszene: Dort stuende sie auf den Schuhen der
   // Figur (am gerenderten Reel gesehen, 26.09.2026).
-  const imBild = D.szenen.some((s, i) => s.art === 'bild' && n >= grenzen[i][0] - 9 && n < grenzen[i][1] + 9);
+  const imBild = D.szenen.some((s, i) => s.art.startsWith('bild') && n >= grenzen[i][0] - 9 && n < grenzen[i][1] + 9);
   fuss.style.opacity = n > abFrame && !imBild ? '1' : '0';
 };
 
