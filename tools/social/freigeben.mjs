@@ -25,7 +25,7 @@
 // weg. Statt vier Minuten neu zu rendern, liest dieses Werkzeug die Merkliste,
 // die posten.mjs im selben Speicher abgelegt hat.
 
-import { merklistenLesen, merklisteAblegen, aufraeumen, nochGebraucht } from './veroeffentlichen/blob.mjs';
+import { merklistenLesen, merklisteAendern, aufraeumen, nochGebraucht } from './veroeffentlichen/blob.mjs';
 import {
   containerAnlegen, karussellAnlegen, aufBereitWarten, veroeffentlichen, KARUSSELL_MIN,
 } from './veroeffentlichen/instagram.mjs';
@@ -75,6 +75,9 @@ for (const liste of listen) {
   console.log(`━━ ${liste.app}`);
   const z = zugaenge(liste.app);
   let geaendert = false;
+  // Was dieser Lauf veroeffentlicht hat — beim Zurueckschreiben auf die FRISCH
+  // gelesene Liste angewendet (siehe unten und merklisteAendern in blob.mjs).
+  const erfolge = [];
 
   for (const [i, e] of liste.eintraege.entries()) {
     const nummer = `${i + 1}/${liste.eintraege.length}`;
@@ -159,6 +162,7 @@ for (const liste of listen) {
         };
       }
 
+      erfolge.push({ datei: e.datei, wann: e.veroeffentlicht, beitragId: r.id });
       geaendert = true;
       veroeffentlicht += 1;
       console.log(`        ✓ veroeffentlicht — Beitrag ${r.id}`);
@@ -194,12 +198,37 @@ for (const liste of listen) {
   // Anzeige der Freigabe-Seite. Wer sie hier weglaesst, loescht sie beim
   // ersten Veroeffentlichen: Die Seite waere danach leer, und zwar genau fuer
   // die Tage, an denen etwas passiert ist.
+  //
+  // ⚠ Und NUR die eigenen Erfolge, auf die FRISCH gelesene Liste (26.09.2026).
+  // Ein Reel braucht bei Instagram 30 s und mehr bis „fertig" — in der Zeit
+  // hat die Facebook-Freigabe oder ein Ablehnen dieselbe Datei geschrieben.
+  // Die ganze Liste vom Anfang zurueckzuschreiben loeschte deren Vermerke; der
+  // verlorene Facebook-Vermerk haette beim naechsten Tippen einen doppelten
+  // Facebook-Beitrag erzeugt. Details bei merklisteAendern in blob.mjs.
   if (geaendert) {
-    await merklisteAblegen({
-      datum: DATUM, appSchluessel: liste.app, name: liste.name,
-      eintraege: liste.eintraege, uebersicht: liste.uebersicht,
-      tiktok: liste.tiktok, token: z.blobToken,
+    const { versuche } = await merklisteAendern({
+      datum: DATUM, appSchluessel: liste.app, token: z.blobToken,
+      aendern: (l) => {
+        for (const f of erfolge) {
+          const eintrag = (l.eintraege ?? []).find((x) => x.datei === f.datei);
+          if (eintrag) { eintrag.veroeffentlicht = f.wann; eintrag.beitragId = f.beitragId; }
+          const spur = (l.uebersicht ?? []).find((p) => p.datei === f.datei);
+          if (spur) {
+            spur.kanaele = {
+              ...(spur.kanaele ?? {}),
+              instagram: instagramKanal({ wann: f.wann, beitragId: f.beitragId }),
+            };
+          }
+        }
+      },
+      // Aeltere Merklisten haben keine `uebersicht` — dann zaehlt `eintraege`.
+      drin: (l) => erfolge.every((f) => {
+        const spur = (l.uebersicht ?? []).find((p) => p.datei === f.datei);
+        if (spur) return spur.kanaele?.instagram?.stand === 'veroeffentlicht';
+        return (l.eintraege ?? []).find((x) => x.datei === f.datei)?.veroeffentlicht === f.wann;
+      }),
     });
+    if (versuche > 1) console.log(`   (Merkliste im ${versuche}. Versuch geschrieben — es schrieb jemand dazwischen)`);
   }
   console.log();
 }

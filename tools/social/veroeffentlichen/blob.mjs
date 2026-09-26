@@ -130,6 +130,53 @@ export async function merklisteAblegen({ datum, appSchluessel, eintraege, uebers
   return { url, pfad };
 }
 
+/**
+ * Eine Merkliste AENDERN statt ueberschreiben (26.09.2026).
+ *
+ * ⚠ Warum es das gibt. `freigeben.mjs` (Instagram), `facebook-posten.mjs` und
+ * `ablehnen.mjs` lasen die Merkliste am Anfang und schrieben sie am Ende
+ * VOLLSTAENDIG zurueck. Laufen zwei parallel — und die Freigabe-Seite startet
+ * Instagram und Facebook genau so, wenn man beide Knoepfe kurz nacheinander
+ * tippt —, gewinnt, wer zuletzt schreibt. Am 26.09. zwischen 18:47 und 18:49
+ * dreimal gemessen: Instagram las 3 s vor Facebooks Eintrag, schrieb 33 s
+ * danach zurueck, und der Facebook-Vermerk war weg. Die Seite zeigte „wartet",
+ * und weil genau dieser Vermerk die einzige Sperre gegen einen zweiten
+ * Facebook-Beitrag ist, haette der naechste Tipper doppelt gepostet. Josefs
+ * Ablehnung einer FullRep-Karte ging im selben Durchgang verloren.
+ *
+ * Jetzt: unmittelbar vor dem Schreiben FRISCH lesen, nur die eigene Aenderung
+ * darauf anwenden, schreiben — und NACHLESEN. Fehlt die eigene Aenderung, hat
+ * jemand im Fenster dazwischen geschrieben; dann dasselbe noch einmal (bis zu
+ * drei Versuche). Das Fenster schrumpft von „Laufzeit des Werkzeugs" (bis 40 s)
+ * auf Lesen+Schreiben (~1 s), und selbst ein Treffer darin wird bemerkt.
+ *
+ * `aendern(liste)` MUSS idempotent sein (Felder setzen, nichts anhaengen) — es
+ * laeuft beim Wiederholen ein zweites Mal. `drin(liste)` sagt, ob die eigene
+ * Aenderung in einer gelesenen Fassung steht. `lesen`/`ablegen` sind fuer den
+ * Test einspritzbar (test-merkliste-parallel.mjs).
+ */
+export async function merklisteAendern({
+  datum, appSchluessel, token, aendern, drin,
+  lesen = async () => (await merklistenLesen({ datum, token })).find((l) => l.app === appSchluessel),
+  ablegen = (l) => merklisteAblegen({
+    datum, appSchluessel, name: l.name, eintraege: l.eintraege,
+    uebersicht: l.uebersicht, tiktok: l.tiktok, token,
+  }),
+  versuche = 3, pauseMs = 1500,
+}) {
+  for (let versuch = 1; versuch <= versuche; versuch++) {
+    const frisch = await lesen();
+    if (!frisch) throw new Error(`Keine Merkliste fuer ${appSchluessel} am ${datum}.`);
+    aendern(frisch);
+    await ablegen(frisch);
+    const nachher = await lesen();
+    if (nachher && drin(nachher)) return { liste: nachher, versuche: versuch };
+    if (versuch < versuche) await new Promise((r) => setTimeout(r, pauseMs * versuch));
+  }
+  throw new Error(`Merkliste ${appSchluessel}/${datum}: eigene Aenderung nach ${versuche} Versuchen `
+    + 'nicht drin — ein anderer Lauf schreibt dauernd dazwischen.');
+}
+
 /** Alle Merklisten eines Tages, je App eine. */
 export async function merklistenLesen({ datum, token }) {
   const { blobs } = await list({ prefix: `social/${datum}/freigabe-`, token });

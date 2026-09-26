@@ -54,7 +54,7 @@
 // ⚠ Und deshalb loest der MENGENLAUF erst recht keinen Ersatz aus: Fuenf Apps
 // mal acht Tage waeren vierzig Tageslaeufe.
 
-import { merklistenLesen, merklisteAblegen, aufraeumen } from './veroeffentlichen/blob.mjs';
+import { merklistenLesen, merklisteAendern, aufraeumen } from './veroeffentlichen/blob.mjs';
 import { zugaenge } from './veroeffentlichen/geheimnisse.mjs';
 import { auswaehlen, anwenden, tageRueckwaerts } from './ablehnen-auswahl.mjs';
 
@@ -153,10 +153,21 @@ for (const tag of tage) {
     // ⚠ ERST schreiben, DANN loeschen. Andersherum waeren bei einem Abbruch
     // dazwischen die Dateien weg und die Merkliste zeigte sie weiter als offen
     // an — ein Zustand, aus dem niemand mehr herausfindet.
-    await merklisteAblegen({
-      datum: tag, appSchluessel: liste.app, name: liste.name,
-      eintraege: liste.eintraege, uebersicht: liste.uebersicht,
-      tiktok: liste.tiktok, token: z.blobToken,
+    //
+    // ⚠ Auf die FRISCH gelesene Liste (26.09.2026): Eine gleichzeitig laufende
+    // Instagram-Freigabe schrieb ihre alte Fassung zurueck und loeschte damit
+    // Josefs Ablehnung einer FullRep-Karte. Umgekehrt haette dieser Lauf ihren
+    // Vermerk loeschen koennen. Details bei merklisteAendern in blob.mjs.
+    // Der Stempel ist derselbe wie oben in `anwenden` — idempotent.
+    const namen = new Set(nehmen.map((p) => p.datei));
+    const stempel = nehmen[0]?.abgelehnt;
+    await merklisteAendern({
+      datum: tag, appSchluessel: liste.app, token: z.blobToken,
+      aendern: (l) => {
+        const posts = (l.uebersicht ?? []).filter((p) => namen.has(p.datei) && !p.abgelehnt);
+        anwenden({ liste: l, posts, jetzt: stempel });
+      },
+      drin: (l) => (l.uebersicht ?? []).filter((p) => namen.has(p.datei)).every((p) => p.abgelehnt),
     });
 
     console.log(`✓ ${tag} · ${liste.app}: ${nehmen.length} abgelehnt`

@@ -32,13 +32,18 @@ import { writeFileSync, unlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { merklistenLesen, merklisteAblegen, aufraeumen, nochGebraucht } from './veroeffentlichen/blob.mjs';
+import { merklistenLesen, merklisteAendern, aufraeumen, nochGebraucht } from './veroeffentlichen/blob.mjs';
 import { entwurfAnlegen, mehrbildAnlegen } from './veroeffentlichen/facebook.mjs';
 import { zugaenge } from './veroeffentlichen/geheimnisse.mjs';
 
 const APP = (process.env.APP || '').trim();
 const DATUM = (process.env.DATUM || new Date().toISOString().slice(0, 10)).trim();
 const DATEI = (process.env.DATEI || '').trim();
+// Reparatur (26.09.2026): nur den Vermerk nachtragen, NICHTS posten. Fuer
+// Beitraege, die draussen sind, deren Vermerk aber verloren ging (siehe
+// merklisteAendern in blob.mjs). Wert = die Facebook-Beitragsnummer aus dem
+// Protokoll des Laufs, der wirklich gepostet hat.
+const NUR_VERMERKEN = (process.env.NUR_VERMERKEN || '').trim();
 
 if (!APP || !DATEI) {
   console.error('APP und DATEI muessen gesetzt sein.');
@@ -79,6 +84,32 @@ if (post.kanaele?.facebook?.stand === 'veroeffentlicht') {
 }
 
 const z = zugaenge(APP);
+
+/** Den Facebook-Vermerk setzen — auf der FRISCH gelesenen Liste, nicht auf `liste`. */
+async function vermerken(kanal) {
+  const { liste: frisch, versuche } = await merklisteAendern({
+    datum: DATUM, appSchluessel: APP, token: z.blobToken,
+    aendern: (l) => {
+      const p = (l.uebersicht ?? []).find((x) => x.datei === DATEI);
+      if (!p) throw new Error(`„${DATEI}" fehlt in der frischen Merkliste.`);
+      p.kanaele = { ...(p.kanaele ?? {}), facebook: kanal };
+    },
+    drin: (l) => (l.uebersicht ?? []).find((x) => x.datei === DATEI)
+      ?.kanaele?.facebook?.id === kanal.id,
+  });
+  console.log(`   Merkliste aktualisiert${versuche > 1 ? ` (im ${versuche}. Versuch — es schrieb jemand dazwischen)` : ''}.`);
+  return frisch;
+}
+
+if (NUR_VERMERKEN) {
+  console.log(`Facebook · ${liste.name} · ${DATEI}`);
+  console.log(`   NUR VERMERKEN — es wird nichts gepostet. Beitrag ${NUR_VERMERKEN}`);
+  await vermerken({
+    stand: 'veroeffentlicht', id: NUR_VERMERKEN, wann: new Date().toISOString(), nachgetragen: true,
+  });
+  process.exit(0);
+}
+
 console.log(`Facebook · ${liste.name} · ${DATEI}`);
 console.log(`   ${post.text.length} Zeichen Text`);
 
@@ -123,22 +154,18 @@ try {
   // Freigabe-Seite weiter offen aus, und der naechste Tipper macht einen
   // zweiten daraus.
   //
-  // Zurueckgeschrieben wird die GANZE Merkliste dieser App: Sie liegt als eine
-  // Datei im Blob. `liste` ist eben frisch gelesen worden, `post` ist ein
-  // Verweis hinein — die Aenderung ist also schon drin.
-  post.kanaele = post.kanaele ?? {};
-  post.kanaele.facebook = {
+  // ⚠ Auf der FRISCH gelesenen Liste (merklisteAendern), nicht auf `liste`
+  // vom Anfang: Bis hierher sind 10 bis 20 s vergangen, in denen die
+  // Instagram-Freigabe oder ein Ablehnen dieselbe Datei geschrieben haben
+  // kann. Die GANZE alte Liste zurueckzuschreiben loeschte deren Vermerke —
+  // und umgekehrt (26.09.2026, siehe blob.mjs).
+  const frisch = await vermerken({
     stand: 'veroeffentlicht', id: r.id ?? null, wann: new Date().toISOString(),
-  };
-  await merklisteAblegen({
-    datum: DATUM, appSchluessel: APP, name: liste.name,
-    eintraege: liste.eintraege, uebersicht: liste.uebersicht,
-    tiktok: liste.tiktok, token: z.blobToken,
   });
-  console.log('   Merkliste aktualisiert.');
 
-  // Aufraeumen nur, wenn kein anderer Kanal die Datei noch braucht.
-  if (nochGebraucht({ liste, datei: DATEI })) {
+  // Aufraeumen nur, wenn kein anderer Kanal die Datei noch braucht — gefragt
+  // gegen die frische Liste.
+  if (nochGebraucht({ liste: frisch, datei: DATEI })) {
     console.log('   Datei bleibt liegen — ein anderer Kanal ist noch offen.');
   } else {
     // ⚠ `urls` mitgeben. Ohne sie loescht das Aufraeumen nur Folie 1 und laesst

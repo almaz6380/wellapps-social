@@ -25,6 +25,10 @@ on:
         description: 'Welcher Tag (JJJJ-MM-TT), leer = heute'
         type: string
         required: false
+      beitrag_id:
+        description: 'NUR REPARATUR: Facebook-Beitragsnummer eines schon geposteten Beitrags. Gesetzt = nichts posten, nur den Vermerk nachtragen'
+        type: string
+        required: false
 
 jobs:
   posten:
@@ -54,4 +58,5 @@ jobs:
           APP: ${{ inputs.app }}
           DATEI: ${{ inputs.datei }}
           DATUM: ${{ inputs.datum }}
+          NUR_VERMERKEN: ${{ inputs.beitrag_id }}
         run: node tools/social/facebook-posten.mjs
