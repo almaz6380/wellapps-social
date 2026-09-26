@@ -2024,6 +2024,15 @@
       "schluessel": "studie",
       "inhalt": "seed37987",
       "sprache": "de"
+    },
+    {
+      "app": "swaply",
+      "datum": "2026-09-26",
+      "winkel": "nikotin-loop",
+      "medium": "reel",
+      "schluessel": "nikotin-loop",
+      "inhalt": "seed46478",
+      "sprache": "de"
     }
   ]
 }
