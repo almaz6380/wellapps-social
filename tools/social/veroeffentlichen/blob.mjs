@@ -40,10 +40,14 @@
 // geloescht (`del()` ist gratis). Der Freibetrag gilt geteilt ueber alle
 // Vercel-Dienste des Kontos — bei diesen Groessen ohne Belang.
 
+import { createHash } from 'node:crypto';
 import { createReadStream } from 'node:fs';
 import { basename } from 'node:path';
 
-import { put, del, list, get, BlobPreconditionFailedError } from '@vercel/blob';
+import { put, del, list, BlobPreconditionFailedError } from '@vercel/blob';
+
+/** MD5 als Hex — derselbe Wert, den das Blob-CDN als ETag ausliefert (gemessen 26.09.2026). */
+export const md5 = (text) => createHash('md5').update(text).digest('hex');
 
 /**
  * Laedt eine Datei oeffentlich hoch und gibt ihre Adresse zurueck.
@@ -123,7 +127,8 @@ export async function merklisteAblegen({ datum, appSchluessel, eintraege, uebers
   // ⚠ `ifMatch` (26.09.2026): nur schreiben, wenn die Datei seit dem Lesen
   // unveraendert ist. Sonst wirft `put` BlobPreconditionFailedError, und
   // merklisteAendern liest neu. Ohne das gewann, wer zuletzt schrieb.
-  const { url } = await put(pfad, JSON.stringify(inhalt, null, 2), {
+  const text = JSON.stringify(inhalt, null, 2);
+  const { url } = await put(pfad, text, {
     access: 'public',
     token,
     allowOverwrite: true,
@@ -131,7 +136,8 @@ export async function merklisteAblegen({ datum, appSchluessel, eintraege, uebers
     contentType: 'application/json',
     ...(ifMatch ? { ifMatch } : {}),
   });
-  return { url, pfad };
+  // `md5` = woran merklisteAendern die eigene Fassung beim Nachlesen erkennt.
+  return { url, pfad, md5: md5(text) };
 }
 
 /**
@@ -165,32 +171,45 @@ export async function merklisteAendern({
   ablegen = (l) => merklisteAblegen({
     datum, appSchluessel, name: l.name, eintraege: l.eintraege,
     uebersicht: l.uebersicht, tiktok: l.tiktok, token,
-    // ⚠ KEIN `ifMatch: l._etag` (26.09.2026, gemessen): `_etag` stammt vom
-    // CDN und ist dort der MD5 des Inhalts. Die Speicher-API fuehrt einen
-    // ANDEREN ETag — mit dem CDN-Wert lehnte `put` jeden Schreibversuch als
-    // „Vorbedingung verletzt" ab, obwohl niemand dazwischen schrieb (Ablehnen-
-    // Lauf 36259433347: 4 von 4 abgelehnt, Liste unveraendert). Und `get`
-    // umgeht das CDN nur bei PRIVATEN Blobs (`useCache: false` wirkt bei
-    // `access: 'public'` nicht, siehe @vercel/blob get()). Bis der API-ETag
-    // samt passendem Inhalt verlaesslich zu lesen ist: Nachlesen wie gehabt.
+    // ⚠ KEIN `ifMatch` (26.09.2026, gemessen): Der ETag, den man von einer
+    // OEFFENTLICHEN Merkliste lesen kann, stammt vom CDN (MD5 des Inhalts);
+    // die Speicher-API fuehrt einen anderen. Mit dem CDN-Wert lehnte `put`
+    // jeden Schreibversuch als „Vorbedingung verletzt" ab, obwohl niemand
+    // dazwischen schrieb (Ablehnen-Lauf 36259433347: 4 von 4 abgelehnt).
+    // `get(..., { useCache: false })` hilft nicht — es wirkt nur bei privaten
+    // Blobs.
   }),
-  versuche = 4, pauseMs = 1500,
+  versuche = 3, pauseMs = 1500,
+  // ⚠ Das CDN zeigt nach dem Schreiben noch bis zu einer Minute den ALTEN
+  // Stand (26.09.: 15 s lang in allen Nachlesungen, Lauf 36259599833 —
+  // geschrieben war richtig, gemeldet wurde rot). Deshalb wird so lange
+  // nachgelesen, und waehrenddessen NICHT neu geschrieben.
+  nachlesen = 22, nachlesenTakt = 3000,
 }) {
   for (let versuch = 1; versuch <= versuche; versuch++) {
     const frisch = await lesen();
     if (!frisch) throw new Error(`Keine Merkliste fuer ${appSchluessel} am ${datum}.`);
     aendern(frisch);
+    let geschrieben;
     try {
-      await ablegen(frisch);
+      geschrieben = (await ablegen(frisch))?.md5;
     } catch (e) {
-      // Jemand hat seit unserem Lesen geschrieben (ETag passt nicht mehr):
-      // nichts ist verloren, einfach frisch lesen und noch einmal.
       if (!istVorbedingungsFehler(e)) throw e;
       if (versuch < versuche) await new Promise((r) => setTimeout(r, pauseMs * versuch));
       continue;
     }
-    const nachher = await lesen();
-    if (nachher && drin(nachher)) return { liste: nachher, versuche: versuch };
+    // Nachlesen, bis entweder die EIGENE Fassung (gleicher MD5) oder eine mit
+    // der eigenen Aenderung darin zu sehen ist. Alles andere kann ein alter
+    // CDN-Stand sein — oder ein Lauf, der danach geschrieben hat. Unterscheiden
+    // laesst sich das erst, wenn das CDN sicher nachgezogen hat; erst DANN
+    // wird neu angewendet und geschrieben.
+    for (let blick = 0; blick < nachlesen; blick++) {
+      const nachher = await lesen();
+      if (nachher && ((geschrieben && nachher._md5 === geschrieben) || drin(nachher))) {
+        return { liste: nachher, versuche: versuch };
+      }
+      if (blick < nachlesen - 1) await new Promise((r) => setTimeout(r, nachlesenTakt));
+    }
     if (versuch < versuche) await new Promise((r) => setTimeout(r, pauseMs * versuch));
   }
   throw new Error(`Merkliste ${appSchluessel}/${datum}: eigene Aenderung nach ${versuche} Versuchen `
@@ -208,32 +227,18 @@ export async function merklistenLesen({ datum, token }) {
   const raus = [];
   for (const b of blobs) {
     if (!b.pathname.endsWith('.json')) continue;
-    // ⚠ DIREKT AUS DEM SPEICHER, am CDN vorbei (`useCache: false`, 26.09.2026).
-    //
-    // Bis dahin stand hier `fetch(url?frisch=<Zeit>, no-store)` — in der
-    // Annahme, der Parameter umgehe den Cache. Er tut es nicht: Am 26.09.
-    // gemessen `x-vercel-cache: HIT, age: 56` trotz jedes Mal neuem Parameter.
-    // Ein Lauf konnte also eine bis zu eine Minute alte Merkliste lesen — ein
-    // eben veroeffentlichter Beitrag saehe wieder offen aus (doppelter
-    // Beitrag), und beim Zurueckschreiben gingen fremde Vermerke verloren.
-    //
-    // `_etag` gehoert zum gelesenen Stand und geht als `ifMatch` ins Schreiben
-    // (merklisteAendern). merklisteAblegen schreibt nur benannte Felder, das
-    // `_etag` landet also nie in der Datei.
-    let liste = null;
-    try {
-      const r = await get(b.url, { access: 'public', useCache: false, token });
-      if (r?.statusCode === 200 && r.stream) {
-        liste = { ...JSON.parse(await new Response(r.stream).text()), _etag: r.blob?.etag };
-      }
-    } catch (e) {
-      console.log(`   (Merkliste ${b.pathname}: direktes Lesen fehlgeschlagen — ${e.message}; lese ueber das CDN)`);
-    }
-    if (!liste) {
-      const antwort = await fetch(`${b.url}?frisch=${Date.now()}`, { cache: 'no-store' });
-      if (!antwort.ok) continue;
-      liste = await antwort.json();
-    }
+    // ⚠ Gelesen wird ueber das CDN — einen anderen Weg gibt es fuer oeffentliche
+    // Blobs nicht (26.09.2026 geprueft): `?frisch=<Zeit>` aendert nichts
+    // (`x-vercel-cache: HIT, age: 56`), `?cache=0` gibt 400, und
+    // `get(..., { useCache: false })` umgeht den Cache nur bei privaten Blobs.
+    // Ein Stand kann also bis zu einer Minute alt sein. merklisteAendern
+    // rechnet damit: `_md5` (= der ETag des CDN) sagt ihm, ob es beim
+    // Nachlesen die eigene Fassung sieht. Das Feld wird nie mitgeschrieben —
+    // merklisteAblegen schreibt nur benannte Felder.
+    const antwort = await fetch(`${b.url}?frisch=${Date.now()}`, { cache: 'no-store' });
+    if (!antwort.ok) continue;
+    const text = await antwort.text();
+    const liste = { ...JSON.parse(text), _md5: md5(text) };
     raus.push({ ...liste, pfad: b.pathname });
   }
   return raus;

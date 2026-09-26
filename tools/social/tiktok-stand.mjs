@@ -39,7 +39,7 @@
 // deuten, aus einem geposteten Beitrag wieder einen offenen — und jemand
 // postete ihn ein zweites Mal.
 
-import { merklistenLesen, merklisteAblegen } from './veroeffentlichen/blob.mjs';
+import { merklistenLesen, merklisteAendern } from './veroeffentlichen/blob.mjs';
 import { frischerToken, standHolen } from './veroeffentlichen/tiktok.mjs';
 import { deutung, darfErsetzen } from './veroeffentlichen/tiktok-deutung.mjs';
 import { zugaenge } from './veroeffentlichen/geheimnisse.mjs';
@@ -180,11 +180,23 @@ for (const datum of tage()) {
     }
 
     if (dieseListeGeaendert && SCHREIBEN) {
+      // ⚠ Nur die TikTok-Vermerke uebertragen, auf die FRISCH gelesene Liste
+      // (26.09.2026, siehe merklisteAendern in blob.mjs) — nicht die ganze,
+      // Minuten alte Liste zurueckschreiben: Eine Facebook- oder
+      // Instagram-Freigabe dazwischen ginge sonst verloren. Und nur dort, wo
+      // noch derselbe Upload (publishId) steht; hat jemand inzwischen neu
+      // gepostet, gilt dessen Vermerk.
+      const neu = new Map(posten.filter((p) => p.kanaele.tiktok.publishId)
+        .map((p) => [p.datei, JSON.parse(JSON.stringify(p.kanaele.tiktok))]));
+      const passend = (l) => (l.uebersicht ?? [])
+        .filter((p) => neu.has(p.datei) && p.kanaele?.tiktok?.publishId === neu.get(p.datei).publishId);
       try {
-        await merklisteAblegen({
-          datum, appSchluessel: liste.app, name: liste.name,
-          eintraege: liste.eintraege, uebersicht: liste.uebersicht,
-          tiktok: liste.tiktok, token: blobToken,
+        await merklisteAendern({
+          datum, appSchluessel: liste.app, token: blobToken,
+          aendern: (l) => {
+            for (const p of passend(l)) p.kanaele = { ...p.kanaele, tiktok: neu.get(p.datei) };
+          },
+          drin: (l) => passend(l).every((p) => JSON.stringify(p.kanaele.tiktok) === JSON.stringify(neu.get(p.datei))),
         });
       } catch (e) {
         fehler.push(`${datum} · ${liste.app}: Merkliste nicht schreibbar — ${e.message}`);

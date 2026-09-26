@@ -14,7 +14,7 @@
 // Geprueft wird die ECHTE `merklisteAendern` aus blob.mjs gegen einen Speicher
 // im Arbeitsspeicher, der Lesen und Schreiben absichtlich verschraenkt.
 
-import { merklisteAendern, istVorbedingungsFehler } from './veroeffentlichen/blob.mjs';
+import { merklisteAendern, istVorbedingungsFehler, md5 } from './veroeffentlichen/blob.mjs';
 import { BlobPreconditionFailedError } from '@vercel/blob';
 
 let gut = 0;
@@ -40,11 +40,14 @@ function startListe() {
 /** Ein Speicher, der wie der Blob nur ganze Dateien kennt. */
 function speicher(anfang) {
   let inhalt = kopie(anfang);
+  // Wie der echte Weg: gelesen wird mit `_md5`, geschrieben ohne — und
+  // `ablegen` meldet den MD5 der geschriebenen Fassung zurueck.
+  const ohneMd5 = (l) => { const { _md5, ...rest } = l; return rest; };
   return {
-    lesen: async () => kopie(inhalt),
-    ablegen: async (l) => { inhalt = kopie(l); },
+    lesen: async () => ({ ...kopie(inhalt), _md5: md5(JSON.stringify(inhalt)) }),
+    ablegen: async (l) => { inhalt = kopie(ohneMd5(l)); return { md5: md5(JSON.stringify(inhalt)) }; },
     get: () => inhalt,
-    set: (l) => { inhalt = kopie(l); },
+    set: (l) => { inhalt = kopie(ohneMd5(l)); },
   };
 }
 
@@ -82,8 +85,8 @@ console.log('\n2. merklisteAendern — Facebook und Instagram nacheinander, lang
 {
   const s = speicher(startListe());
   // Beide „arbeiten" (posten) zuerst — erst DANN wird geschrieben, jeweils frisch.
-  await merklisteAendern({ datum: 'd', appSchluessel: 'mahjong', aendern: fbAendern, drin: fbDrin, lesen: s.lesen, ablegen: s.ablegen, pauseMs: 0 });
-  await merklisteAendern({ datum: 'd', appSchluessel: 'mahjong', aendern: igAendern, drin: igDrin, lesen: s.lesen, ablegen: s.ablegen, pauseMs: 0 });
+  await merklisteAendern({ datum: 'd', appSchluessel: 'mahjong', aendern: fbAendern, drin: fbDrin, lesen: s.lesen, ablegen: s.ablegen, pauseMs: 0, nachlesenTakt: 0 });
+  await merklisteAendern({ datum: 'd', appSchluessel: 'mahjong', aendern: igAendern, drin: igDrin, lesen: s.lesen, ablegen: s.ablegen, pauseMs: 0, nachlesenTakt: 0 });
   pruefe('Facebook-Vermerk bleibt stehen', fbDrin(s.get()), JSON.stringify(s.get().uebersicht[0].kanaele));
   pruefe('Instagram-Vermerk steht', igDrin(s.get()), JSON.stringify(s.get().uebersicht[0].kanaele));
   pruefe('Instagram-Eintrag traegt die Beitragsnummer', s.get().eintraege[0].beitragId === 'IG1', JSON.stringify(s.get().eintraege[0]));
@@ -103,15 +106,16 @@ console.log('\n3. Fremdschreibung im Restfenster — Nachlesen und Wiederholen')
   let schreibVersuche = 0;
   const ablegenMitStoerung = async (l) => {
     schreibVersuche += 1;
-    await s.ablegen(l);
+    const r = await s.ablegen(l);
     if (!zugeschlagen) {
       // Direkt nach Facebooks Schreiben kommt ein fremder Stand herein, der
       // Facebooks Eintrag nicht kennt (eine alte Fassung mit Instagram).
       zugeschlagen = true;
       const alt = startListe(); igAendern(alt); s.set(alt);
     }
+    return r;
   };
-  const r = await merklisteAendern({ datum: 'd', appSchluessel: 'mahjong', aendern: fbAendern, drin: fbDrin, lesen: s.lesen, ablegen: ablegenMitStoerung, pauseMs: 0 });
+  const r = await merklisteAendern({ datum: 'd', appSchluessel: 'mahjong', aendern: fbAendern, drin: fbDrin, lesen: s.lesen, ablegen: ablegenMitStoerung, pauseMs: 0, nachlesenTakt: 0 });
   pruefe('der Verlust wird bemerkt und wiederholt', r.versuche === 2 && schreibVersuche === 2, `versuche=${r.versuche}, geschrieben=${schreibVersuche}`);
   pruefe('danach steht der Facebook-Vermerk', fbDrin(s.get()), JSON.stringify(s.get().uebersicht[0].kanaele));
   pruefe('und der fremde Instagram-Vermerk ist nicht verloren', igDrin(s.get()), JSON.stringify(s.get().uebersicht[0].kanaele));
@@ -121,10 +125,10 @@ console.log('\n3. Fremdschreibung im Restfenster — Nachlesen und Wiederholen')
 console.log('\n4. Jemand schreibt JEDES Mal dazwischen');
 {
   const s = speicher(startListe());
-  const immerStoeren = async (l) => { await s.ablegen(l); s.set(startListe()); };
+  const immerStoeren = async (l) => { const r = await s.ablegen(l); s.set(startListe()); return r; };
   let fehler = null;
   try {
-    await merklisteAendern({ datum: 'd', appSchluessel: 'mahjong', aendern: fbAendern, drin: fbDrin, lesen: s.lesen, ablegen: immerStoeren, versuche: 3, pauseMs: 0 });
+    await merklisteAendern({ datum: 'd', appSchluessel: 'mahjong', aendern: fbAendern, drin: fbDrin, lesen: s.lesen, ablegen: immerStoeren, versuche: 3, pauseMs: 0, nachlesenTakt: 0 });
   } catch (e) { fehler = e; }
   pruefe('nach drei Versuchen ein Fehler — kein stilles „erledigt"', fehler && /3 Versuchen/.test(fehler.message), String(fehler?.message));
 }
@@ -139,8 +143,8 @@ console.log('\n5. Ablehnen der anderen Karte, waehrend Facebook das Reel vermerk
     l.eintraege = l.eintraege.filter((e) => e.datei !== 'k.jpg');
   };
   const ablehnenDrin = (l) => Boolean(l.uebersicht.find((x) => x.datei === 'k.jpg').abgelehnt);
-  await merklisteAendern({ datum: 'd', appSchluessel: 'mahjong', aendern: ablehnenAendern, drin: ablehnenDrin, lesen: s.lesen, ablegen: s.ablegen, pauseMs: 0 });
-  await merklisteAendern({ datum: 'd', appSchluessel: 'mahjong', aendern: fbAendern, drin: fbDrin, lesen: s.lesen, ablegen: s.ablegen, pauseMs: 0 });
+  await merklisteAendern({ datum: 'd', appSchluessel: 'mahjong', aendern: ablehnenAendern, drin: ablehnenDrin, lesen: s.lesen, ablegen: s.ablegen, pauseMs: 0, nachlesenTakt: 0 });
+  await merklisteAendern({ datum: 'd', appSchluessel: 'mahjong', aendern: fbAendern, drin: fbDrin, lesen: s.lesen, ablegen: s.ablegen, pauseMs: 0, nachlesenTakt: 0 });
   pruefe('die Ablehnung bleibt stehen', ablehnenDrin(s.get()), JSON.stringify(s.get().uebersicht[1]));
   pruefe('der Instagram-Eintrag der abgelehnten Karte bleibt weg', !s.get().eintraege.some((e) => e.datei === 'k.jpg'), JSON.stringify(s.get().eintraege));
   pruefe('und Facebook ist vermerkt', fbDrin(s.get()), JSON.stringify(s.get().uebersicht[0].kanaele));
@@ -162,9 +166,9 @@ console.log('\n6. Vorbedingung verletzt — frisch lesen, erneut schreiben');
       const ig = s.get(); igAendern(ig); s.set(ig);
       throw new BlobPreconditionFailedError();
     }
-    await s.ablegen(l);
+    return s.ablegen(l);
   };
-  const r = await merklisteAendern({ datum: 'd', appSchluessel: 'mahjong', aendern: fbAendern, drin: fbDrin, lesen: s.lesen, ablegen: ablegenMitSperre, pauseMs: 0 });
+  const r = await merklisteAendern({ datum: 'd', appSchluessel: 'mahjong', aendern: fbAendern, drin: fbDrin, lesen: s.lesen, ablegen: ablegenMitSperre, pauseMs: 0, nachlesenTakt: 0 });
   pruefe('die Ablehnung fuehrt zu einem zweiten Versuch', r.versuche === 2 && abgelehnt === 1, `versuche=${r.versuche}`);
   pruefe('Facebook steht danach', fbDrin(s.get()), JSON.stringify(s.get().uebersicht[0].kanaele));
   pruefe('Instagram, das dazwischen schrieb, auch', igDrin(s.get()), JSON.stringify(s.get().uebersicht[0].kanaele));
@@ -173,9 +177,32 @@ console.log('\n6. Vorbedingung verletzt — frisch lesen, erneut schreiben');
   let anderer = null;
   try {
     await merklisteAendern({ datum: 'd', appSchluessel: 'mahjong', aendern: fbAendern, drin: fbDrin, lesen: s.lesen,
-      ablegen: async () => { throw new Error('Netz weg'); }, pauseMs: 0 });
+      ablegen: async () => { throw new Error('Netz weg'); }, pauseMs: 0, nachlesenTakt: 0 });
   } catch (e) { anderer = e; }
   pruefe('andere Fehler werden NICHT verschluckt', anderer?.message === 'Netz weg', String(anderer?.message));
+}
+
+// --- 7. Das CDN hinkt hinterher — warten, NICHT neu schreiben ----------------
+//
+// Lauf 36259599833 (26.09.2026): geschrieben war richtig, aber das CDN zeigte
+// noch 15 s den alten Stand; das Nachlesen hielt das fuer einen Verlust,
+// schrieb viermal und meldete rot. Jetzt wird gewartet, bis die eigene Fassung
+// (gleicher MD5) zu sehen ist — und nur einmal geschrieben.
+console.log('\n7. CDN zeigt nach dem Schreiben noch den alten Stand');
+{
+  const s = speicher(startListe());
+  const alt = await s.lesen();
+  let geschrieben = 0;
+  let nachDemSchreiben = 0;
+  const lesenMitVerzug = async () => {
+    if (geschrieben && nachDemSchreiben < 4) { nachDemSchreiben += 1; return kopie(alt); }
+    return s.lesen();
+  };
+  const ablegenZaehlen = async (l) => { geschrieben += 1; return s.ablegen(l); };
+  const r = await merklisteAendern({ datum: 'd', appSchluessel: 'mahjong', aendern: fbAendern, drin: fbDrin, lesen: lesenMitVerzug, ablegen: ablegenZaehlen, pauseMs: 0, nachlesenTakt: 0 });
+  pruefe('genau EIN Schreibvorgang trotz vier veralteter Nachlesungen', geschrieben === 1 && r.versuche === 1, `geschrieben=${geschrieben}, versuche=${r.versuche}`);
+  pruefe('danach steht der Vermerk', fbDrin(s.get()), JSON.stringify(s.get().uebersicht[0].kanaele));
+  pruefe('erkannt am MD5 der eigenen Fassung', r.liste._md5 === md5(JSON.stringify(s.get())), r.liste._md5);
 }
 
 console.log(`\n${gut} von ${gut + schlecht.length} Proben gruen.`);

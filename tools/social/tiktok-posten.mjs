@@ -35,7 +35,7 @@ import { writeFileSync, unlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { merklistenLesen, merklisteAblegen } from './veroeffentlichen/blob.mjs';
+import { merklistenLesen, merklisteAendern } from './veroeffentlichen/blob.mjs';
 import { direktPosten, fotoPosten, inPosteingang, frischerToken }
   from './veroeffentlichen/tiktok.mjs';
 import { tiktokBildAdresse } from './veroeffentlichen/bildadresse.mjs';
@@ -92,6 +92,25 @@ if (post.kanaele?.tiktok?.stand === 'veroeffentlicht') {
   console.log(`„${DATEI}" ist am ${post.kanaele.tiktok.wann} schon gepostet worden.`);
   console.log('Nichts getan.');
   process.exit(0);
+}
+
+/**
+ * Den TikTok-Vermerk setzen — auf der FRISCH gelesenen Liste (26.09.2026).
+ * Bis dahin wurde die ganze, am Anfang gelesene Liste zurueckgeschrieben; lief
+ * Facebook oder Instagram fuer dieselbe App parallel, loeschte das deren
+ * Vermerk (oder umgekehrt). Details bei merklisteAendern in blob.mjs.
+ */
+async function tiktokVermerken(kanal) {
+  await merklisteAendern({
+    datum: DATUM, appSchluessel: APP, token: zugaenge(APP).blobToken,
+    aendern: (l) => {
+      const p = (l.uebersicht ?? []).find((x) => x.datei === DATEI);
+      if (!p) throw new Error(`„${DATEI}" fehlt in der frischen Merkliste.`);
+      p.kanaele = { ...(p.kanaele ?? {}), tiktok: kanal };
+    },
+    drin: (l) => (l.uebersicht ?? []).find((x) => x.datei === DATEI)
+      ?.kanaele?.tiktok?.wann === kanal.wann,
+  });
 }
 
 console.log(`TikTok · ${liste.name} · ${DATEI}`);
@@ -245,11 +264,8 @@ try {
   // Freigabe-Seite weiter offen aus, und der naechste Tipper macht einen
   // zweiten daraus — TikTok hat dagegen keine Sperre.
   //
-  // Zurueckgeschrieben wird die GANZE Merkliste dieser App, nicht nur der eine
-  // Eintrag: Sie liegt als eine Datei im Blob. `liste` ist eben frisch gelesen
-  // worden, `post` ist ein Verweis hinein — die Aenderung ist also schon drin.
-  post.kanaele = post.kanaele ?? {};
-  post.kanaele.tiktok = {
+  // ⚠ Nur den TikTok-Vermerk, auf der frischen Liste (tiktokVermerken).
+  await tiktokVermerken({
     stand: entwurf ? 'posteingang' : 'veroeffentlicht',
     publishId: r.publishId,
     // Beim Entwurf waehlt der Mensch die Sichtbarkeit in der App — hier eine
@@ -264,11 +280,6 @@ try {
       }
       : { privacy: PRIVACY }),
     wann: new Date().toISOString(),
-  };
-  await merklisteAblegen({
-    datum: DATUM, appSchluessel: APP, name: liste.name,
-    eintraege: liste.eintraege, uebersicht: liste.uebersicht,
-    tiktok: liste.tiktok, token: zugaenge(APP).blobToken,
   });
   console.log('   Merkliste aktualisiert.');
 } catch (e) {
@@ -280,16 +291,10 @@ try {
   //
   // Geschrieben wird, bevor weitergeworfen wird: Der Lauf soll rot bleiben.
   try {
-    post.kanaele = post.kanaele ?? {};
-    post.kanaele.tiktok = {
+    await tiktokVermerken({
       stand: 'fehler',
       meldung: String(e.message).slice(0, 300),
       wann: new Date().toISOString(),
-    };
-    await merklisteAblegen({
-      datum: DATUM, appSchluessel: APP, name: liste.name,
-      eintraege: liste.eintraege, uebersicht: liste.uebersicht,
-      tiktok: liste.tiktok, token: zugaenge(APP).blobToken,
     });
     console.error('   Fehler in der Merkliste vermerkt.');
   } catch (e2) {
