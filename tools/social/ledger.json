@@ -2069,6 +2069,15 @@
       "schluessel": "wissensthema",
       "inhalt": "seed20555",
       "sprache": "de"
+    },
+    {
+      "app": "swaply",
+      "datum": "2026-09-26",
+      "winkel": "regel",
+      "medium": "bild",
+      "schluessel": "regel",
+      "inhalt": "seed34642",
+      "sprache": "de"
     }
   ]
 }
