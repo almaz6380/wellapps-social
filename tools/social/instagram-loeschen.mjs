@@ -27,6 +27,11 @@ const APP = (process.env.APPS || process.env.APP || '').trim();
 const DATUM = (process.env.DATUM || new Date().toISOString().slice(0, 10)).trim();
 const DATEI = (process.env.DATEI || '').trim();
 const LOESCHEN = (process.env.LOESCHEN || '').trim();
+// Schon von Hand in der Instagram-App geloescht → nur den Stand eintragen.
+// ⚠ Nicht aus der Fehlermeldung ableiten: Meta antwortet auf einen schon
+// geloeschten Beitrag und auf fehlende Rechte mit DERSELBEN Meldung
+// („does not exist, cannot be loaded due to missing permissions …", 26.09.).
+const SCHON_GELOESCHT = ['1', 'true', 'ja'].includes((process.env.SCHON_GELOESCHT || '').trim().toLowerCase());
 
 if (!APP || APP.includes(',') || !DATEI || !LOESCHEN) {
   console.error('Genau EINE App (APPS), DATEI und LOESCHEN (Beitragsnummer) muessen gesetzt sein.');
@@ -49,8 +54,12 @@ if (!bekannt.includes(LOESCHEN)) {
 const z = zugaenge(APP);
 console.log(`Instagram · ${liste.name} · ${DATEI}`);
 console.log(`   LOESCHEN — Beitrag ${LOESCHEN}`);
-await beitragLoeschen({ id: LOESCHEN, token: z.fbToken });
-console.log(`✓ ${LOESCHEN} geloescht.`);
+if (SCHON_GELOESCHT) {
+  console.log('   Schon von Hand geloescht — Instagram wird nicht angefragt, nur der Stand eingetragen.');
+} else {
+  await beitragLoeschen({ id: LOESCHEN, token: z.fbToken });
+  console.log(`✓ ${LOESCHEN} geloescht.`);
+}
 
 const wann = new Date().toISOString();
 const { versuche } = await merklisteAendern({

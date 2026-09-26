@@ -54,6 +54,10 @@ on:
         description: 'Nur fuer `loeschen`: die Instagram-Beitragsnummer (UNWIDERRUFLICH). Braucht genau eine App und die Datei'
         type: string
         required: false
+      schon_geloescht:
+        description: 'Nur fuer `loeschen`: schon von Hand geloescht — nur den Stand eintragen, Instagram nicht anfragen'
+        type: boolean
+        default: false
 
 jobs:
   freigeben:
@@ -88,6 +92,7 @@ jobs:
           TAGE: ${{ inputs.tage }}
           TROCKEN: ${{ inputs.trocken && '1' || '' }}
           LOESCHEN: ${{ inputs.loeschen_id }}
+          SCHON_GELOESCHT: ${{ inputs.schon_geloescht && '1' || '' }}
         # ⚠ `nachtragen` geht in ein eigenes Skript: Es ruft Instagram gar
         # nicht an, es gleicht nur `kanaele` an `eintraege` an. In
         # freigeben.mjs waere es ein dritter Zweig durch eine Schleife, die
