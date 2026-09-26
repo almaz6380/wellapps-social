@@ -164,7 +164,15 @@ export async function merklisteAendern({
   lesen = async () => (await merklistenLesen({ datum, token })).find((l) => l.app === appSchluessel),
   ablegen = (l) => merklisteAblegen({
     datum, appSchluessel, name: l.name, eintraege: l.eintraege,
-    uebersicht: l.uebersicht, tiktok: l.tiktok, token, ifMatch: l._etag,
+    uebersicht: l.uebersicht, tiktok: l.tiktok, token,
+    // ⚠ KEIN `ifMatch: l._etag` (26.09.2026, gemessen): `_etag` stammt vom
+    // CDN und ist dort der MD5 des Inhalts. Die Speicher-API fuehrt einen
+    // ANDEREN ETag — mit dem CDN-Wert lehnte `put` jeden Schreibversuch als
+    // „Vorbedingung verletzt" ab, obwohl niemand dazwischen schrieb (Ablehnen-
+    // Lauf 36259433347: 4 von 4 abgelehnt, Liste unveraendert). Und `get`
+    // umgeht das CDN nur bei PRIVATEN Blobs (`useCache: false` wirkt bei
+    // `access: 'public'` nicht, siehe @vercel/blob get()). Bis der API-ETag
+    // samt passendem Inhalt verlaesslich zu lesen ist: Nachlesen wie gehabt.
   }),
   versuche = 4, pauseMs = 1500,
 }) {
