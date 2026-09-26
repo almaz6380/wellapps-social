@@ -67,6 +67,12 @@ const LISTE = {
       datei: 'b.jpg', url: 'x', text: 'Text B', istVideo: false,
       kanaele: { facebook: { stand: 'veroeffentlicht', id: '1' } },
     },
+    {
+      // 26.09.2026: gepostet und wieder geloescht (falscher Clip). Darf KEINEN
+      // Facebook-Knopf bekommen — sonst ginge derselbe Fehler noch einmal raus.
+      datei: 'c.mp4', url: 'x', text: 'Text C', istVideo: true,
+      kanaele: { facebook: { stand: 'geloescht', id: '2' }, instagram: { stand: 'veroeffentlicht' } },
+    },
   ],
 };
 
@@ -131,6 +137,9 @@ await seite.waitForTimeout(600);
 let text = await seite.locator('body').innerText();
 pruefe('ohne Vermerk keine Warnung', !text.includes('immer noch offen'),
   text.split('\n').filter((z) => z.includes('geändert')).join(' | ') || '(nichts)');
+pruefe('⚠ gelöschter Beitrag bekommt keinen Facebook-Knopf (nur a hat einen)',
+  (await seite.getByRole('button', { name: 'Auf Facebook veröffentlichen' }).count()) === 1,
+  String(await seite.getByRole('button', { name: 'Auf Facebook veröffentlichen' }).count()));
 pruefe('beide Knöpfe da',
   text.includes('Auf Facebook veröffentlichen') && text.includes('Auf Instagram veröffentlichen'),
   text.slice(0, 300).replace(/\n/g, ' · '));

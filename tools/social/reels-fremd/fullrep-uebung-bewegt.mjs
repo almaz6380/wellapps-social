@@ -52,6 +52,28 @@ function zufall(seed) {
   };
 }
 
+/**
+ * Passt die Ausführung des Clips zur Übung? (26.09.2026)
+ *
+ * ⚠ Am 26.09. lief „Schulterdrücken sitzend (KH)" mit einer STEHENDEN Puppe
+ * auf Instagram und Facebook — Josef sah es. Die Zuordnung kommt aus der App
+ * (mypeak/src/data/exerciseAnimations.js) und ist dort korrigiert. Diese
+ * Probe ist die zweite Linie: Sagt die Übung sitzend, liegend oder stehend,
+ * muss der Clip-Ordner dasselbe sagen — sonst kommt sie nicht ins Reel.
+ * Fehlt die Angabe am Ordner, ist das ein Nein: lieber eine Übung weniger
+ * als ein Reel, das die Übung falsch vormacht.
+ */
+const HALTUNG = [
+  { wort: 'seated', muster: /\bseated\b|sitzend/i },
+  { wort: 'lying', muster: /\blying\b|liegend/i },
+  { wort: 'standing', muster: /\bstanding\b|stehend/i },
+];
+export function ausfuehrungPasst({ id, name = '', ordner }) {
+  const uebung = `${id.replace(/-/g, ' ')} ${name}`;
+  return HALTUNG.every(({ wort, muster }) =>
+    !muster.test(uebung) || new RegExp(wort, 'i').test(ordner));
+}
+
 /** Übungen, die eine Animation UND einen deutschen Namen samt Beschreibung haben. */
 export async function animierteUebungen(appPfad, sprache = 'de') {
   const daten = await import(join(appPfad, 'scripts', 'social-daten.mjs'));
@@ -59,6 +81,7 @@ export async function animierteUebungen(appPfad, sprache = 'de') {
   return daten.exercises
     .filter((u) => anim[u.id] && existsSync(join(appPfad, 'public', 'exercise-demos-anim', anim[u.id], 'demo.mp4')))
     .map((u) => ({ id: u.id, ordner: anim[u.id], ...daten.uebungTexte(u, sprache) }))
+    .filter((u) => ausfuehrungPasst(u))
     // Ohne Muskelgruppe und Gerät stünde auf den Chips „undefined" — das
     // betrifft die Ausdauer- und Ganzkörperübungen (Laufband, Rudern, Seile …).
     .filter((u) => u.muskel && u.geraet)

@@ -89,19 +89,19 @@ if (LOESCHEN) {
     console.error('LOESCHEN und BEHALTEN sind derselbe Beitrag.');
     process.exit(1);
   }
-  // Wuerde der Vermerk danach auf einen geloeschten Beitrag zeigen, braucht
-  // es den, der bleibt — sonst saehe der Beitrag auf der Seite offen aus.
-  if (post.kanaele?.facebook?.id === LOESCHEN && !BEHALTEN) {
-    console.error(`Die Merkliste fuehrt ${LOESCHEN} als den Beitrag — BEHALTEN muss gesetzt sein.`);
-    process.exit(1);
-  }
   await beitragLoeschen({ id: LOESCHEN, token: z.fbToken });
   console.log(`✓ ${LOESCHEN} geloescht.`);
   if (BEHALTEN) {
+    // Ein Doppel: Der andere Beitrag bleibt und steht danach in der Liste.
     await vermerken({
       stand: 'veroeffentlicht', id: BEHALTEN, wann: post.kanaele?.facebook?.wann ?? new Date().toISOString(),
       doppelGeloescht: LOESCHEN,
     });
+  } else if (post.kanaele?.facebook?.id === LOESCHEN) {
+    // Der Beitrag selbst ist falsch (26.09.2026: FullRep-Uebung mit falschem
+    // Clip). ⚠ Stand `geloescht`, NICHT `wartet`: Sonst boete die
+    // Freigabe-Seite an, genau diesen Beitrag noch einmal zu posten.
+    await vermerken({ stand: 'geloescht', id: LOESCHEN, wann: new Date().toISOString() });
   }
   process.exit(0);
 }
@@ -126,8 +126,12 @@ async function vermerken(kanal) {
       if (!p) throw new Error(`„${DATEI}" fehlt in der frischen Merkliste.`);
       p.kanaele = { ...(p.kanaele ?? {}), facebook: kanal };
     },
-    drin: (l) => (l.uebersicht ?? []).find((x) => x.datei === DATEI)
-      ?.kanaele?.facebook?.id === kanal.id,
+    // Nummer UND Stand: Beim Loeschen bleibt die Nummer gleich, nur der Stand
+    // wechselt — die Nummer allein wuerde einen alten Stand als „drin" melden.
+    drin: (l) => {
+      const f = (l.uebersicht ?? []).find((x) => x.datei === DATEI)?.kanaele?.facebook;
+      return f?.id === kanal.id && f?.stand === kanal.stand;
+    },
   });
   console.log(`   Merkliste aktualisiert${versuche > 1 ? ` (im ${versuche}. Versuch — es schrieb jemand dazwischen)` : ''}.`);
   return frisch;

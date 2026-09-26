@@ -357,6 +357,9 @@ const STAND_TEXT = {
   posteingang: 'im Posteingang',
   wartet: 'wartet auf dich',
   veroeffentlicht: 'veröffentlicht',
+  // 26.09.2026: nach dem Posten wieder geloescht (falscher Inhalt). Kein
+  // Knopf mehr — sonst boete die Seite an, ihn noch einmal zu posten.
+  geloescht: 'gelöscht',
   uebersprungen: 'übersprungen',
   fehler: 'Fehler',
   trocken: 'nur Probelauf',
@@ -531,7 +534,7 @@ function postKarte(post, liste) {
     versuchSperren(fb, 'facebook', liste.datum, post.datei);
     const warnung = versuchWarnung('facebook', liste.datum, post.datei);
     if (warnung) nachtrag.append(warnung);
-  } else if (post.kanaele?.facebook?.stand === 'veroeffentlicht') {
+  } else if (['veroeffentlicht', 'geloescht'].includes(post.kanaele?.facebook?.stand)) {
     // Geglückt — der Vermerk hat seinen Zweck erfüllt und darf weg, sonst
     // warnt die Seite beim nächsten Laden über einen Versuch, der gelang.
     versuchVergessen('facebook', liste.datum, post.datei);
@@ -588,7 +591,7 @@ function postKarte(post, liste) {
   // kann ihn nur Loeschen im jeweiligen Netzwerk. Das Skript wuerde ohnehin
   // abbrechen — der Knopf soll gar nicht erst dazu einladen.
   const irgendwoDraussen = Object.values(post.kanaele ?? {})
-    .some((e) => e.stand === 'veroeffentlicht')
+    .some((e) => e.stand === 'veroeffentlicht' || e.stand === 'geloescht')
     || (liste.eintraege ?? []).some((e) => e.datei === post.datei && e.veroeffentlicht);
 
   if (!post.abgelehnt && !irgendwoDraussen) {
@@ -757,7 +760,8 @@ function appBlock(liste, datum) {
     // mitzuzaehlen hiesse, Beitraege zu verstecken, die hier noch offen sind.
     const wege = ['facebook', 'instagram']
       .map((k) => p.kanaele?.[k]).filter(Boolean);
-    return wege.length > 0 && wege.every((e) => e.stand === 'veroeffentlicht');
+    // `geloescht` ist erledigt: Da gibt es nichts mehr freizugeben.
+    return wege.length > 0 && wege.every((e) => e.stand === 'veroeffentlicht' || e.stand === 'geloescht');
   };
 
   const alle = liste.uebersicht ?? [];

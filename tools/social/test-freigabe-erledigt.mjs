@@ -24,11 +24,11 @@
 // um, waehrend die Seite laeuft, sind die beiden auseinandergelaufen — auch
 // das ist ein Befund.
 
-/** Die Fassung aus freigabe-app/index.html, Stand 20.09.2026. */
+/** Die Fassung aus freigabe-app/index.html, Stand 26.09.2026 (`geloescht` zaehlt als erledigt). */
 function erledigt(p) {
   if (p.abgelehnt) return true;
   const wege = ['facebook', 'instagram'].map((k) => p.kanaele?.[k]).filter(Boolean);
-  return wege.length > 0 && wege.every((e) => e.stand === 'veroeffentlicht');
+  return wege.length > 0 && wege.every((e) => e.stand === 'veroeffentlicht' || e.stand === 'geloescht');
 }
 
 let gut = 0;
@@ -38,6 +38,11 @@ const pruefe = (name, ok, gemessen) => {
 };
 
 const V = { stand: 'veroeffentlicht' };
+
+// 26.09.2026: Facebook nach dem Posten wieder geloescht (falscher Clip),
+// Instagram draussen — nichts mehr freizugeben, also erledigt.
+pruefe('Facebook geloescht + Instagram draussen → erledigt',
+  erledigt({ kanaele: { facebook: { stand: 'geloescht' }, instagram: V } }), 'offen');
 const W = { stand: 'wartet' };
 const F = { stand: 'fehler' };
 const P = { stand: 'posteingang' };
