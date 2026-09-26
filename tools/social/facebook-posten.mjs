@@ -32,8 +32,8 @@ import { writeFileSync, unlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { merklistenLesen, merklisteAendern, aufraeumen, nochGebraucht } from './veroeffentlichen/blob.mjs';
-import { entwurfAnlegen, mehrbildAnlegen } from './veroeffentlichen/facebook.mjs';
+import { merklistenLesen, merklisteAendern, aufraeumen, nochGebraucht, sperreSetzen, sperreLoesen } from './veroeffentlichen/blob.mjs';
+import { entwurfAnlegen, mehrbildAnlegen, beitragLoeschen } from './veroeffentlichen/facebook.mjs';
 import { zugaenge } from './veroeffentlichen/geheimnisse.mjs';
 
 const APP = (process.env.APP || '').trim();
@@ -44,6 +44,11 @@ const DATEI = (process.env.DATEI || '').trim();
 // merklisteAendern in blob.mjs). Wert = die Facebook-Beitragsnummer aus dem
 // Protokoll des Laufs, der wirklich gepostet hat.
 const NUR_VERMERKEN = (process.env.NUR_VERMERKEN || '').trim();
+// Doppel entfernen (26.09.2026): LOESCHEN=<Beitragsnummer> loescht genau diesen
+// Beitrag auf Facebook; BEHALTEN=<Beitragsnummer> ist der, der stehen bleibt
+// und danach in der Merkliste steht. Postet nichts.
+const LOESCHEN = (process.env.LOESCHEN || '').trim();
+const BEHALTEN = (process.env.BEHALTEN || '').trim();
 
 if (!APP || !DATEI) {
   console.error('APP und DATEI muessen gesetzt sein.');
@@ -75,15 +80,42 @@ if (!post.url) {
   process.exit(1);
 }
 
-// ⚠ Die einzige Sperre gegen einen doppelten Beitrag. Facebook selbst hat
-// keine: Zweimal posten ergibt zwei Beitraege.
+const z = zugaenge(APP);
+
+if (LOESCHEN) {
+  console.log(`Facebook · ${liste.name} · ${DATEI}`);
+  console.log(`   LOESCHEN — Beitrag ${LOESCHEN}${BEHALTEN ? `, es bleibt ${BEHALTEN}` : ''}`);
+  if (BEHALTEN && BEHALTEN === LOESCHEN) {
+    console.error('LOESCHEN und BEHALTEN sind derselbe Beitrag.');
+    process.exit(1);
+  }
+  // Wuerde der Vermerk danach auf einen geloeschten Beitrag zeigen, braucht
+  // es den, der bleibt — sonst saehe der Beitrag auf der Seite offen aus.
+  if (post.kanaele?.facebook?.id === LOESCHEN && !BEHALTEN) {
+    console.error(`Die Merkliste fuehrt ${LOESCHEN} als den Beitrag — BEHALTEN muss gesetzt sein.`);
+    process.exit(1);
+  }
+  await beitragLoeschen({ id: LOESCHEN, token: z.fbToken });
+  console.log(`✓ ${LOESCHEN} geloescht.`);
+  if (BEHALTEN) {
+    await vermerken({
+      stand: 'veroeffentlicht', id: BEHALTEN, wann: post.kanaele?.facebook?.wann ?? new Date().toISOString(),
+      doppelGeloescht: LOESCHEN,
+    });
+  }
+  process.exit(0);
+}
+
+// ⚠ Erste Sperre: der Vermerk in der Merkliste. Facebook selbst hat keine —
+// zweimal posten ergibt zwei Beitraege. Sie allein reicht NICHT (die Liste
+// kommt ueber das CDN und kann eine Minute alt sein); die harte Sperre
+// (sperreSetzen) kommt unten, unmittelbar vor dem Posten.
 if (post.kanaele?.facebook?.stand === 'veroeffentlicht') {
   console.log(`„${DATEI}" ist am ${post.kanaele.facebook.wann} schon gepostet worden.`);
   console.log('Nichts getan.');
   process.exit(0);
 }
 
-const z = zugaenge(APP);
 
 /** Den Facebook-Vermerk setzen — auf der FRISCH gelesenen Liste, nicht auf `liste`. */
 async function vermerken(kanal) {
@@ -113,6 +145,7 @@ if (NUR_VERMERKEN) {
 console.log(`Facebook · ${liste.name} · ${DATEI}`);
 console.log(`   ${post.text.length} Zeichen Text`);
 
+
 // ⚠ Ein Karussell erkennt man an `urls`, NICHT daran, dass `url` fehlt. `url`
 // bleibt gesetzt (die erste Folie) — dieselbe Regel wie in freigeben.mjs.
 //
@@ -138,6 +171,16 @@ for (const [i, quelle] of quellen.entries()) {
   tmpDateien.push(pfad);
 }
 
+// ⚠ DIE HARTE SPERRE (26.09.2026, nach dem FullRep-Doppel um 21:31/21:35).
+// Nur EIN Lauf je Datei bekommt sie — egal, was Merkliste und Seite gerade
+// anzeigen. Siehe sperreSetzen in blob.mjs.
+if (!(await sperreSetzen({ datum: DATUM, kanal: 'facebook', datei: DATEI, token: z.blobToken, lauf: process.env.GITHUB_RUN_ID ?? null }))) {
+  console.log('   ⚠ Ein anderer Lauf hat diesen Beitrag schon auf Facebook gepostet (oder postet ihn gerade).');
+  console.log('   Nichts getan. Die Freigabe-Seite zieht in bis zu einer Minute nach.');
+  process.exit(0);
+}
+let gepostet = false;
+
 try {
   const r = tmpDateien.length >= 2
     ? await mehrbildAnlegen({
@@ -148,6 +191,7 @@ try {
       seitenId: z.fbSeitenId, token: z.fbToken,
       datei: tmpDateien[0], text: post.text, veroeffentlicht: true,
     });
+  gepostet = true;
   console.log(`✓ veroeffentlicht — ${r.art}, Beitrag ${r.id}`);
 
   // ⚠ Sofort vermerken. Ohne den Vermerk sieht der Beitrag auf der
@@ -173,6 +217,11 @@ try {
     await aufraeumen({ url: post.url, urls: folien, token: z.blobToken });
     console.log('   Datei weggeraeumt.');
   }
+} catch (e) {
+  // Nicht gepostet → Sperre frei, damit ein neuer Versuch geht. Gepostet
+  // (und nur das Vermerken scheiterte) → Sperre BLEIBT: Der Beitrag ist draussen.
+  if (!gepostet) await sperreLoesen({ datum: DATUM, kanal: 'facebook', datei: DATEI, token: z.blobToken });
+  throw e;
 } finally {
   for (const p of tmpDateien) {
     try { unlinkSync(p); } catch { /* der Ordner raeumt sich selbst */ }

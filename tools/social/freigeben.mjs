@@ -25,7 +25,7 @@
 // weg. Statt vier Minuten neu zu rendern, liest dieses Werkzeug die Merkliste,
 // die posten.mjs im selben Speicher abgelegt hat.
 
-import { merklistenLesen, merklisteAendern, aufraeumen, nochGebraucht } from './veroeffentlichen/blob.mjs';
+import { merklistenLesen, merklisteAendern, aufraeumen, nochGebraucht, sperreSetzen, sperreLoesen } from './veroeffentlichen/blob.mjs';
 import {
   containerAnlegen, karussellAnlegen, aufBereitWarten, veroeffentlichen, KARUSSELL_MIN,
 } from './veroeffentlichen/instagram.mjs';
@@ -115,6 +115,16 @@ for (const liste of listen) {
       continue;
     }
 
+    // ⚠ DIE HARTE SPERRE (26.09.2026). `e.veroeffentlicht` oben kommt aus der
+    // Merkliste, und die liest sich ueber das CDN — bis zu einer Minute alt.
+    // Nur EIN Lauf je Datei bekommt die Sperre. Siehe sperreSetzen in blob.mjs.
+    if (!(await sperreSetzen({ datum: DATUM, kanal: 'instagram', datei: e.datei, token: z.blobToken, lauf: process.env.GITHUB_RUN_ID ?? null }))) {
+      console.log(`   ${nummer} ${e.datei}`);
+      console.log('        ⚠ schon von einem anderen Lauf gepostet (oder gerade dabei) — nichts getan');
+      uebersprungen += 1;
+      continue;
+    }
+    let gepostet = false;
     try {
       console.log(`   ${nummer} ${e.datei}${istKarussell ? ` (${folien.length} Folien)` : ''} …`);
       const c = istKarussell
@@ -131,6 +141,7 @@ for (const liste of listen) {
         kontoId: z.igKontoId, token: z.fbToken, containerId: c.containerId,
       });
 
+      gepostet = true;
       e.veroeffentlicht = new Date().toISOString();
       e.beitragId = r.id;
 
@@ -186,6 +197,8 @@ for (const liste of listen) {
     } catch (err) {
       fehler += 1;
       console.log(`        ✗ ${err.message}`);
+      // Nicht gepostet → Sperre frei fuer einen neuen Versuch. Gepostet → sie bleibt.
+      if (!gepostet) await sperreLoesen({ datum: DATUM, kanal: 'instagram', datei: e.datei, token: z.blobToken });
     }
   }
 

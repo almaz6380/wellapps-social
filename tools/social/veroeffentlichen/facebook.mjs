@@ -133,3 +133,21 @@ export async function mehrbildAnlegen({
   }
   return { id: daten.id ?? daten.post_id, art: `${dateien.length} Bilder`, veroeffentlicht };
 }
+
+/**
+ * Einen Beitrag der Seite loeschen (26.09.2026, fuer das FullRep-Doppel).
+ *
+ * ⚠ Unwiderruflich. Wird nur mit einer ausdruecklich genannten Beitragsnummer
+ * aufgerufen (facebook-posten.mjs, LOESCHEN=…), nie aus einer Schleife.
+ * Bei einem Video ist die Nummer die Video-ID, die `entwurfAnlegen` liefert —
+ * genau die steht in der Merkliste und im Laufprotokoll.
+ */
+export async function beitragLoeschen({ id, token }) {
+  if (!/^\d+(_\d+)?$/.test(String(id))) throw new Error(`Keine Beitragsnummer: ${id}`);
+  const antwort = await fetch(`${GRAPH}/${id}?access_token=${encodeURIComponent(token)}`, { method: 'DELETE' });
+  const daten = await antwort.json().catch(() => ({}));
+  if (!antwort.ok || daten.success !== true) {
+    throw new Error(`Loeschen von ${id} fehlgeschlagen: HTTP ${antwort.status} ${JSON.stringify(daten.error ?? daten).slice(0, 300)}`);
+  }
+  return true;
+}

@@ -129,7 +129,7 @@ await seite.waitForTimeout(600);
 
 // --- 1. Ohne Vermerk: keine Warnung -----------------------------------------
 let text = await seite.locator('body').innerText();
-pruefe('ohne Vermerk keine Warnung', !text.includes('hat nichts geändert'),
+pruefe('ohne Vermerk keine Warnung', !text.includes('immer noch offen'),
   text.split('\n').filter((z) => z.includes('geändert')).join(' | ') || '(nichts)');
 pruefe('beide Knöpfe da',
   text.includes('Auf Facebook veröffentlichen') && text.includes('Auf Instagram veröffentlichen'),
@@ -144,7 +144,7 @@ await seite.evaluate((d) => {
 await seite.reload({ waitUntil: 'load' });
 await seite.waitForTimeout(600);
 text = await seite.locator('body').innerText();
-const warnungen = text.split('\n').filter((z) => z.includes('hat nichts geändert'));
+const warnungen = text.split('\n').filter((z) => z.includes('immer noch offen'));
 pruefe('alter Vermerk → zwei Warnungen', warnungen.length === 2,
   `${warnungen.length}: ${warnungen.join(' | ')}`);
 pruefe('Warnung nennt den Kanal',
@@ -177,8 +177,13 @@ await seite.evaluate((d) => {
 await seite.reload({ waitUntil: 'load' });
 await seite.waitForTimeout(600);
 text = await seite.locator('body').innerText();
-pruefe('frischer Vermerk → keine Warnung', !text.includes('hat nichts geändert'),
+pruefe('frischer Vermerk → keine Warnung', !text.includes('immer noch offen'),
   text.split('\n').filter((z) => z.includes('geändert')).join(' | ') || '(nichts)');
+// ⚠ 26.09.2026: Ein laufender Versuch sperrt den Knopf. Vorher stand er nach
+// einer Minute wieder scharf da, und ein zweiter Tipper postete doppelt.
+const gesperrt = seite.getByRole('button', { name: /nicht nochmal tippen/ });
+pruefe('frischer Vermerk → Knopf gesperrt', (await gesperrt.count()) === 1 && await gesperrt.isDisabled(),
+  text.split('\n').filter((z) => /Gesendet|Auf Facebook/.test(z)).join(' | ') || '(nichts)');
 
 // --- 4. Veroeffentlichter Beitrag: Vermerk wird geloescht -------------------
 await seite.evaluate((d) => {
@@ -190,7 +195,7 @@ await seite.waitForTimeout(600);
 const nochDa = await seite.evaluate((d) => sessionStorage.getItem(`freigabe.versuch.facebook.${d}.b.jpg`), DATUM);
 pruefe('Vermerk eines geglückten Beitrags wird vergessen', nochDa === null, String(nochDa));
 text = await seite.locator('body').innerText();
-pruefe('und keine Warnung dazu', !text.includes('hat nichts geändert'),
+pruefe('und keine Warnung dazu', !text.includes('immer noch offen'),
   text.split('\n').filter((z) => z.includes('geändert')).join(' | ') || '(nichts)');
 
 // --- 5. Der Knopf löst aus und plant das Nachladen --------------------------
@@ -218,13 +223,13 @@ pruefe('erster Tipper fragt nach', await fb2.isVisible(),
 await fb2.click();                                  // zweiter Tipper: los
 await seite.waitForTimeout(400);
 const beschriftung = (await seite.locator('body').innerText())
-  .split('\n').find((z) => /Ergebnis in etwa|Läuft|Fehler:/.test(z)) ?? '(keine solche Zeile)';
-pruefe('zweiter Tipper löst aus', beschriftung.includes('Ergebnis in etwa einer Minute'), beschriftung);
+  .split('\n').find((z) => /Gesendet|Läuft|Fehler:/.test(z)) ?? '(keine solche Zeile)';
+pruefe('zweiter Tipper löst aus', beschriftung.includes('nicht nochmal tippen'), beschriftung);
 const vermerkt = await seite.evaluate((d) => sessionStorage.getItem(`freigabe.versuch.facebook.${d}.a.jpg`), DATUM);
 pruefe('Versuch ist vermerkt', vermerkt !== null, String(vermerkt));
 
 const fristen = await seite.evaluate(() => window.__fristen);
-pruefe('das Nachladen ist geplant', fristen.includes(60000), `Fristen: ${fristen.join(', ') || '(keine)'}`);
+pruefe('das Nachladen ist geplant', fristen.includes(150000), `Fristen: ${fristen.join(', ') || '(keine)'}`);
 
 // --- Das Archiv: zeigt es die Bilder, und vertraegt es die fehlenden? -------
 await seite.click('#archiv-an');

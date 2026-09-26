@@ -44,7 +44,7 @@ import { createHash } from 'node:crypto';
 import { createReadStream } from 'node:fs';
 import { basename } from 'node:path';
 
-import { put, del, list, BlobPreconditionFailedError } from '@vercel/blob';
+import { put, del, list, head, BlobPreconditionFailedError } from '@vercel/blob';
 
 /** MD5 als Hex — derselbe Wert, den das Blob-CDN als ETag ausliefert (gemessen 26.09.2026). */
 export const md5 = (text) => createHash('md5').update(text).digest('hex');
@@ -135,6 +135,11 @@ export async function merklisteAblegen({ datum, appSchluessel, eintraege, uebers
     addRandomSuffix: false,
     contentType: 'application/json',
     ...(ifMatch ? { ifMatch } : {}),
+    // ⚠ Hoechstens eine Minute im CDN (26.09.2026). Vorgabe sind 30 Tage;
+    // beim Ueberschreiben wird zwar geleert, aber das zog bis zu einer Minute
+    // nach — die Freigabe-Seite zeigte „nichts geaendert", Josef tippte
+    // nochmal. 60 s ist das Minimum, das Vercel annimmt.
+    cacheControlMaxAge: 60,
   });
   // `md5` = woran merklisteAendern die eigene Fassung beim Nachlesen erkennt.
   return { url, pfad, md5: md5(text) };
@@ -214,6 +219,52 @@ export async function merklisteAendern({
   }
   throw new Error(`Merkliste ${appSchluessel}/${datum}: eigene Aenderung nach ${versuche} Versuchen `
     + 'nicht drin — ein anderer Lauf schreibt dauernd dazwischen.');
+}
+
+/**
+ * Die harte Sperre gegen doppelte Beitraege (26.09.2026).
+ *
+ * ⚠ Warum. Die Sperre bis dahin war der Vermerk in der Merkliste — und die
+ * liest jeder Lauf ueber das CDN, das bis zu einer Minute den alten Stand
+ * zeigt. Am 26.09. um 21:31 und 21:35 zweimal dasselbe FullRep-Video auf
+ * Facebook: Der zweite Lauf las „wartet", obwohl der erste laengst gepostet
+ * und vermerkt hatte.
+ *
+ * Jetzt legt jeder Lauf VOR dem Posten eine Sperrdatei an, mit
+ * `allowOverwrite: false` — der Speicher nimmt sie genau einmal an. Ob sie
+ * schon da ist, entscheidet `head()` an der Speicher-API, nicht am CDN.
+ * Gibt `false` zurueck, wenn schon ein Lauf fuer diesen Kanal und diese Datei
+ * gepostet hat (oder gerade postet). Scheitert das Posten, gibt
+ * `sperreLoesen` sie wieder frei, damit ein neuer Versuch moeglich ist.
+ */
+export function sperrPfad({ datum, kanal, datei }) {
+  return `social/${datum}/sperren/${kanal}-${datei}.json`;
+}
+
+export async function sperreSetzen({ datum, kanal, datei, token, lauf = null }) {
+  const pfad = sperrPfad({ datum, kanal, datei });
+  try {
+    await put(pfad, JSON.stringify({ kanal, datei, wann: new Date().toISOString(), lauf }), {
+      access: 'public', token, allowOverwrite: false, addRandomSuffix: false,
+      contentType: 'application/json',
+    });
+    return true;
+  } catch (e) {
+    // Welcher Fehler „gibt es schon" bedeutet, sagt das SDK nicht verlaesslich —
+    // also nachsehen. Existiert die Datei, ist die Sperre belegt; sonst war es
+    // ein anderer Fehler, und dann wird NICHT blind gepostet.
+    const da = await head(pfad, { token }).then(() => true, () => false);
+    if (da) return false;
+    throw new Error(`Sperre ${pfad} nicht setzbar — ${e.message}`);
+  }
+}
+
+export async function sperreLoesen({ datum, kanal, datei, token }) {
+  const pfad = sperrPfad({ datum, kanal, datei });
+  try {
+    const h = await head(pfad, { token });
+    await del(h.url, { token });
+  } catch { /* schon weg */ }
 }
 
 export function istVorbedingungsFehler(e) {

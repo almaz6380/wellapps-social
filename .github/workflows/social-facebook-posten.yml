@@ -29,6 +29,21 @@ on:
         description: 'NUR REPARATUR: Facebook-Beitragsnummer eines schon geposteten Beitrags. Gesetzt = nichts posten, nur den Vermerk nachtragen'
         type: string
         required: false
+      loeschen_id:
+        description: 'NUR REPARATUR: diesen Facebook-Beitrag LOESCHEN (unwiderruflich). Postet nichts'
+        type: string
+        required: false
+      behalten_id:
+        description: 'Zu loeschen_id: der Beitrag, der stehen bleibt und danach in der Merkliste steht'
+        type: string
+        required: false
+
+# ⚠ Zwei Tipper auf denselben Beitrag laufen nacheinander, nicht gleichzeitig
+# (26.09.2026). Die eigentliche Sperre ist sperreSetzen in blob.mjs; das hier
+# verhindert nur, dass beide im selben Augenblick an ihr ankommen.
+concurrency:
+  group: facebook-${{ inputs.app }}-${{ inputs.datei }}
+  cancel-in-progress: false
 
 jobs:
   posten:
@@ -59,4 +74,6 @@ jobs:
           DATEI: ${{ inputs.datei }}
           DATUM: ${{ inputs.datum }}
           NUR_VERMERKEN: ${{ inputs.beitrag_id }}
+          LOESCHEN: ${{ inputs.loeschen_id }}
+          BEHALTEN: ${{ inputs.behalten_id }}
         run: node tools/social/facebook-posten.mjs
