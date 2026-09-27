@@ -26,9 +26,9 @@ on:
   workflow_dispatch:
     inputs:
       modus:
-        description: 'zeigen = ansehen · veroeffentlichen = posten (oeffentlich!) · nachtragen = nur Anzeige reparieren · loeschen = einen Beitrag loeschen (mit loeschen_id)'
+        description: 'zeigen = ansehen · veroeffentlichen = posten (oeffentlich!) · nachtragen = nur Anzeige reparieren · loeschen = einen Beitrag loeschen (mit loeschen_id) · story = Beitrag zusaetzlich als Story auf Instagram + Facebook (eine App, eine Datei)'
         type: choice
-        options: [zeigen, veroeffentlichen, nachtragen, loeschen]
+        options: [zeigen, veroeffentlichen, nachtragen, loeschen, story]
         default: zeigen
       apps:
         description: 'Nur diese Apps (anigosha,mahjong,wellbooked,fullrep,swaply) — leer = alle'
@@ -102,6 +102,10 @@ jobs:
             node tools/social/instagram-nachtragen.mjs
           elif [ "$MODUS" = "loeschen" ]; then
             node tools/social/instagram-loeschen.mjs
+          elif [ "$MODUS" = "story" ]; then
+            # Braucht ffmpeg (ffmpeg-static aus npm ci) — die Story-Datei
+            # entsteht hier aus dem Beitrag plus Pille (tools/social/story/).
+            node tools/social/story.mjs
           else
             node tools/social/freigeben.mjs
           fi

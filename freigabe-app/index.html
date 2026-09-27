@@ -263,7 +263,7 @@ async function ruf(aktion, extra = {}) {
   return daten;
 }
 
-const KANAL_NAME = { facebook: 'Facebook', tiktok: 'TikTok', instagram: 'Instagram' };
+const KANAL_NAME = { facebook: 'Facebook', tiktok: 'TikTok', instagram: 'Instagram', story: 'Die Story' };
 
 // ------------------------------------------------- Versuche merken
 //
@@ -582,6 +582,56 @@ function postKarte(post, liste) {
     if (warnung) nachtrag.append(warnung);
   } else if (!post.abgelehnt) {
     versuchVergessen('instagram', liste.datum, post.datei);
+  }
+
+  // Story (27.09.2026, Josef: „kannst du auch storys posten?"). Derselbe
+  // Beitrag zusaetzlich als Story auf Instagram UND der Facebook-Seite, mit
+  // dem Hinweis „Gratis laden · Link in Bio ↑" im Bild — einen klickbaren
+  // Link-Sticker lassen die Schnittstellen nicht zu.
+  //
+  // ⚠ Unabhaengig davon, ob der Beitrag selbst schon draussen ist: Die Story
+  // kommt oft NACH dem Beitrag. Zwei Tipper wie ueberall, und nach dem Lauf
+  // steht der Vermerk `story` in der Uebersicht — dann gibt es keinen Knopf
+  // mehr, sondern nur noch die Marke.
+  const storyQuelle = post.url
+    || (liste.eintraege ?? []).find((e) => e.datei === post.datei)?.url;
+  const st = post.story;
+  if (st?.instagram?.id || st?.facebook?.id) {
+    const teile = [st.instagram?.id ? 'Instagram ✓' : 'Instagram ✗', st.facebook?.id ? 'Facebook ✓' : 'Facebook ✗'];
+    marken.append(el('span', 'marke', `Story: ${teile.join(' · ')}`));
+    const fehl = [st.instagram?.fehler && `Instagram: ${st.instagram.fehler}`, st.facebook?.fehler && `Facebook: ${st.facebook.fehler}`]
+      .filter(Boolean);
+    for (const f of fehl) nachtrag.append(el('p', 'leise', `Story ${f}`));
+    versuchVergessen('story', liste.datum, post.datei);
+  } else if (!post.abgelehnt && storyQuelle) {
+    const sb = el('button', 'rand', 'Auch als Story');
+    let sicher = false;
+    sb.onclick = async () => {
+      if (!sicher) {
+        sicher = true;
+        sb.textContent = 'Story auf Instagram + Facebook? Nochmal tippen';
+        setTimeout(() => {
+          if (!sicher) return;
+          sicher = false; sb.textContent = 'Auch als Story';
+        }, 10000);
+        return;
+      }
+      sicher = false;
+      sb.disabled = true; sb.textContent = 'Story wird gepostet …';
+      try {
+        await ruf('story', { datum: liste.datum, app: liste.app, datei: post.datei });
+        versuchMerken('story', liste.datum, post.datei);
+        sb.textContent = 'Gesendet — Anzeige zieht in 1–2 Minuten nach, nicht nochmal tippen';
+        setTimeout(laden, VERSUCH_MS);
+      } catch (e) {
+        sb.disabled = false;
+        sb.textContent = fehlerText(e, 'Fehler:');
+      }
+    };
+    knoepfe.append(sb);
+    versuchSperren(sb, 'story', liste.datum, post.datei);
+    const warnung = versuchWarnung('story', liste.datum, post.datei);
+    if (warnung) nachtrag.append(warnung);
   }
 
   // Ablehnen — solange noch nichts von diesem Beitrag draussen ist.

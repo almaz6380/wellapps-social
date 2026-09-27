@@ -151,3 +151,41 @@ export async function beitragLoeschen({ id, token }) {
   }
   return true;
 }
+
+/**
+ * Seiten-Story (27.09.2026). Facebook hat dafuer zwei eigene Endpunkte:
+ *
+ *   Bild:  POST /{seite}/photos (url, published=false) → Foto-ID
+ *          POST /{seite}/photo_stories (photo_id)
+ *   Video: POST /{seite}/video_stories upload_phase=start → video_id, upload_url
+ *          POST upload_url mit Kopfzeile `file_url` (Facebook holt die Datei selbst)
+ *          POST /{seite}/video_stories upload_phase=finish, video_id
+ *
+ * ⚠ Wie bei Instagram: kein Link-Sticker ueber die Schnittstelle.
+ */
+export async function storyPosten({ seitenId, token, url, istVideo }) {
+  const post = async (pfad, felder, kopf = {}) => {
+    const antwort = await fetch(pfad.startsWith('http') ? pfad : `${GRAPH}/${seitenId}/${pfad}`, {
+      method: 'POST', headers: kopf,
+      body: felder ? new URLSearchParams({ access_token: token, ...felder }) : undefined,
+    });
+    const daten = await antwort.json().catch(() => ({}));
+    if (!antwort.ok || daten.error) {
+      throw new Error(`Facebook-Story ${antwort.status}: ${daten.error?.message ?? JSON.stringify(daten)}`);
+    }
+    return daten;
+  };
+
+  if (!istVideo) {
+    const foto = await post('photos', { url, published: 'false' });
+    const r = await post('photo_stories', { photo_id: foto.id });
+    return { id: r.post_id ?? foto.id };
+  }
+  const start = await post('video_stories', { upload_phase: 'start' });
+  if (!start.video_id || !start.upload_url) {
+    throw new Error(`Facebook-Story: kein Upload-Platz (${JSON.stringify(start)})`);
+  }
+  await post(start.upload_url, null, { Authorization: `OAuth ${token}`, file_url: url });
+  const fertig = await post('video_stories', { upload_phase: 'finish', video_id: start.video_id });
+  return { id: fertig.post_id ?? start.video_id };
+}

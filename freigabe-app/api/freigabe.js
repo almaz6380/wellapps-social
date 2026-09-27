@@ -410,6 +410,25 @@ export default async function handler(req, res) {
       return;
     }
 
+    // Story (27.09.2026): EIN Beitrag zusaetzlich als Story auf Instagram und
+    // der Facebook-Seite. Oeffentlich wie ein Beitrag — deshalb derselbe
+    // Pruefweg (bekannte App, erwarteter Dateiname), und im Pruefmodus
+    // startet nichts.
+    if (aktion === 'story') {
+      if (ohneToken()) return;
+      if (!APPS.includes(app)) {
+        res.status(400).json({ fehler: 'Unbekannte App.' });
+        return;
+      }
+      if (!DATEINAME.test(String(datei ?? ''))) {
+        res.status(400).json({ fehler: 'Unerwarteter Dateiname.' });
+        return;
+      }
+      await starten(WORKFLOW, { modus: 'story', apps: app, datei, datum: tag });
+      fertig({ gestartet: true, datum: tag, app, datei });
+      return;
+    }
+
     // Facebook: EIN Beitrag. Anders als bei Instagram und TikTok gibt es hier
     // nichts zu waehlen — der Beitrag entsteht aus Datei und Text, so wie er
     // auf der Seite steht.

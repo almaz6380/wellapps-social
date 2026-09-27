@@ -175,3 +175,25 @@ export async function beitragLoeschen({ id, token }) {
   }
   return true;
 }
+
+/**
+ * Story statt Beitrag (27.09.2026, Josef: „kannst du auch storys posten?").
+ *
+ * Derselbe zweistufige Weg wie beim Beitrag — Container, warten, dann
+ * `media_publish` —, nur mit `media_type=STORIES` und ohne Text: Storys haben
+ * keine Bildunterschrift. Bild UND Video gehen, die Datei muss wie immer
+ * oeffentlich erreichbar sein.
+ *
+ * ⚠ Link-Sticker, Umfragen und Erwaehnungen gibt es ueber die Schnittstelle
+ * nicht. Der Hinweis „Link in Bio" steckt deshalb im Bild selbst (story.mjs).
+ */
+export async function storyAnlegen({ kontoId, token, url, istVideo }) {
+  const felder = new URLSearchParams({ access_token: token, media_type: 'STORIES' });
+  felder.set(istVideo ? 'video_url' : 'image_url', url);
+  const antwort = await fetch(`${GRAPH}/${kontoId}/media`, { method: 'POST', body: felder });
+  const daten = await antwort.json();
+  if (!antwort.ok || !daten.id) {
+    throw new Error(`Instagram-Story ${antwort.status}: ${daten.error?.message ?? JSON.stringify(daten)}`);
+  }
+  return { containerId: daten.id };
+}
