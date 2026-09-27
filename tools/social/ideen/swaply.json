@@ -138,48 +138,48 @@
       "medium": "reel",
       "format": "tausch-loop",
       "bereich": "doomscrolling",
-      "status": "pausiert",
-      "haken": "Filmszene vorn (5 s, fotorealistische KI-Hand, fal.ai: flux-pro 1.1 ultra + kling 2.1), danach der Tausch „Endlos durch Feeds scrollen → …\" aus der App. Rezept von Mahjongs bestem Beitrag (18.08., 1103 Aufrufe). Josef am 27.09.2026: „nicht immer zigaretten. wir brauchen abwechslung\" → „ja mach swaply alle drei\". KEIN AI-Plaettchen im Bild — das KI-Label setzt Josef beim Posten (Beiblatt sagt es). Herkunft: tools/social/reels-fremd/vorspann/HERKUNFT.md.",
+      "status": "vorhanden",
+      "haken": "Stillleben vorn (5 s, KI-Bild OHNE Menschen, langsame Kamerafahrt — kein KI-Video), danach der Swaply-Inhalt. Josef am 27.09.2026: KI-Videos und Hände hatten sichtbare Fehler („hand am weinglas hat einen ki fehler“) → Stillleben ohne Hände, kein KI-Label nötig. Herkunft: tools/social/reels-fremd/vorspann/HERKUNFT.md.",
       "schluessel": "film-handy",
       "sprachen": [
         "de",
         "en",
         "es"
       ],
-      "vorspann": "tools/social/reels-fremd/vorspann/swaply-handy.mp4",
-      "_pausiert": "Josef, 27.09.2026: „alle swaply clips sind so schlecht produziert mit ki fehler\". Aus der Rotation genommen, bis bessere Szenen da sind."
+      "vorspann": "tools/social/reels-fremd/vorspann/swaply-handy-bild.mp4",
+      "vorspann_menschen": false
     },
     {
       "id": "film-zucker",
       "medium": "reel",
       "format": "tausch-loop",
       "bereich": "sugar",
-      "status": "pausiert",
-      "haken": "Filmszene vorn (5 s, fotorealistische KI-Hand, fal.ai: flux-pro 1.1 ultra + kling 2.1), danach der Tausch „Zum süßen Snack greifen → …\" aus der App. Rezept von Mahjongs bestem Beitrag (18.08., 1103 Aufrufe). Josef am 27.09.2026: „nicht immer zigaretten. wir brauchen abwechslung\" → „ja mach swaply alle drei\". KEIN AI-Plaettchen im Bild — das KI-Label setzt Josef beim Posten (Beiblatt sagt es). Herkunft: tools/social/reels-fremd/vorspann/HERKUNFT.md.",
+      "status": "vorhanden",
+      "haken": "Stillleben vorn (5 s, KI-Bild OHNE Menschen, langsame Kamerafahrt — kein KI-Video), danach der Swaply-Inhalt. Josef am 27.09.2026: KI-Videos und Hände hatten sichtbare Fehler („hand am weinglas hat einen ki fehler“) → Stillleben ohne Hände, kein KI-Label nötig. Herkunft: tools/social/reels-fremd/vorspann/HERKUNFT.md.",
       "schluessel": "film-zucker",
       "sprachen": [
         "de",
         "en",
         "es"
       ],
-      "vorspann": "tools/social/reels-fremd/vorspann/swaply-zucker.mp4",
-      "_pausiert": "Josef, 27.09.2026: „alle swaply clips sind so schlecht produziert mit ki fehler\". Aus der Rotation genommen, bis bessere Szenen da sind."
+      "vorspann": "tools/social/reels-fremd/vorspann/swaply-zucker-bild.mp4",
+      "vorspann_menschen": false
     },
     {
       "id": "film-alkohol",
       "medium": "reel",
       "format": "notfall-loop",
       "bereich": "alcohol",
-      "status": "pausiert",
-      "haken": "Filmszene vorn (5 s, fotorealistische KI-Hand, fal.ai: flux-pro 1.1 ultra + kling 2.1), danach die Sofort-Hilfe für Alkohol aus der App. Rezept von Mahjongs bestem Beitrag (18.08., 1103 Aufrufe). Josef am 27.09.2026: „nicht immer zigaretten. wir brauchen abwechslung\" → „ja mach swaply alle drei\". KEIN AI-Plaettchen im Bild — das KI-Label setzt Josef beim Posten (Beiblatt sagt es). Herkunft: tools/social/reels-fremd/vorspann/HERKUNFT.md.",
+      "status": "vorhanden",
+      "haken": "Stillleben vorn (5 s, KI-Bild OHNE Menschen, langsame Kamerafahrt — kein KI-Video), danach der Swaply-Inhalt. Josef am 27.09.2026: KI-Videos und Hände hatten sichtbare Fehler („hand am weinglas hat einen ki fehler“) → Stillleben ohne Hände, kein KI-Label nötig. Herkunft: tools/social/reels-fremd/vorspann/HERKUNFT.md.",
       "schluessel": "film-alkohol",
       "sprachen": [
         "de",
         "en",
         "es"
       ],
-      "vorspann": "tools/social/reels-fremd/vorspann/swaply-alkohol.mp4",
-      "_pausiert": "Josef, 27.09.2026: „alle swaply clips sind so schlecht produziert mit ki fehler\". Aus der Rotation genommen, bis bessere Szenen da sind."
+      "vorspann": "tools/social/reels-fremd/vorspann/swaply-alkohol-bild.mp4",
+      "vorspann_menschen": false
     }
   ]
 }

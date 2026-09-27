@@ -310,6 +310,7 @@ export function aufruf({ appSchluessel, app, post, wuerfel, out }) {
           ...(appSchluessel === 'swaply' && post.bereich ? ['--kategorie', post.bereich] : []),
           // KI-Filmszene davor (Josef, 27.09.2026), Pfad in diesem Repo.
           ...(post.vorspann ? ['--vorspann', post.vorspann] : []),
+          ...(post.vorspann && post.vorspannMenschen === false ? ['--vorspann-ohne-menschen'] : []),
           '--seed', String(post.seed), '--name', post.dateiname,
           // ⚠ ABSOLUTER Zielpfad. `out` kommt fuer diese beiden Apps relativ
           // herein (sie haengen ihn sonst an ihre eigene Wurzel, siehe

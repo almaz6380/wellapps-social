@@ -68,6 +68,10 @@ const KATEGORIE = arg('kategorie', null);
 // ⚠ Ohne AI-Plaettchen (Josef: „das ki wasserzeichen ist aber nicht
 // notwendig") — das KI-Label setzt er beim Posten. Das Beiblatt sagt es ihm.
 const VORSPANN = arg('vorspann', null) ? resolve(WURZEL, arg('vorspann')) : null;
+// Zeigt die Szene KEINE Menschen (nur Gegenstaende), gibt es auch kein
+// KI-Label fuer Menschen — Josef, 27.09.2026, nach den Handfehlern: „hand am
+// weinglas hat einen ki fehler". Die Swaply-Szenen sind seitdem Stillleben.
+const VORSPANN_MENSCHEN = !process.argv.includes('--vorspann-ohne-menschen');
 const VOR_SEK = 5.0;
 const BLENDE_VOR = 0.35;
 if (VORSPANN && !existsSync(VORSPANN)) {
@@ -565,11 +569,13 @@ function beiblatt(dateiname, sekunden) {
     '• Das Video ist stumm. In der App einen Trending-Sound drueberlegen —',
     '  bei WELLbooked! NICHT: dort ist Stille Vorgabe.',
     '• Erste Zeile der Caption ist der Hook.',
-    ...(VORSPANN ? ['• KI-LABEL SETZEN (TikTok: „KI-generierter Inhalt“, Instagram: „KI-Info“) —',
+    ...(VORSPANN && VORSPANN_MENSCHEN ? ['• KI-LABEL SETZEN (TikTok: „KI-generierter Inhalt“, Instagram: „KI-Info“) —',
       '  die Filmszene am Anfang zeigt eine fotorealistische KI-Hand.'] : []),
     // ⚠ Liest der Tageslauf fuer die Leitplanke (vorflug.mjs): „ki-menschen"
     // verlangt das Plaettchen, „ki-figur" verbietet es.
-    ...(VORSPANN ? [
+    ...(VORSPANN && !VORSPANN_MENSCHEN ? [
+      `- Medienherkunft: ki-bild (KI-Stillleben ${VORSPANN.split('/').pop()} ohne Menschen, kein Plättchen)`,
+    ] : VORSPANN ? [
       `- Medienherkunft: ki-menschen (realistische KI-Filmszene ${VORSPANN.split('/').pop()}, `
         + 'kein Wasserzeichen — KI-Label beim Posten setzen)',
     ] : (inhalt.einblendung && inhalt.einblendungKi) || (inhalt.einblendungEnde && inhalt.einblendungEndeKi) ? [
