@@ -2294,6 +2294,33 @@
       "schluessel": "film-alkohol",
       "inhalt": "seed81653",
       "sprache": "de"
+    },
+    {
+      "app": "swaply",
+      "datum": "2026-09-27",
+      "winkel": "film-handy",
+      "medium": "reel",
+      "schluessel": "film-handy",
+      "inhalt": "seed8828",
+      "sprache": "de"
+    },
+    {
+      "app": "swaply",
+      "datum": "2026-09-27",
+      "winkel": "film-zucker",
+      "medium": "reel",
+      "schluessel": "film-zucker",
+      "inhalt": "seed43771",
+      "sprache": "de"
+    },
+    {
+      "app": "swaply",
+      "datum": "2026-09-27",
+      "winkel": "film-alkohol",
+      "medium": "reel",
+      "schluessel": "film-alkohol",
+      "inhalt": "seed21924",
+      "sprache": "de"
     }
   ]
 }
