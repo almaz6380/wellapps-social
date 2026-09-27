@@ -2204,6 +2204,24 @@
       "schluessel": "figur-vierer",
       "inhalt": "seed56031",
       "sprache": "en"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-27",
+      "winkel": "mythos-check",
+      "medium": "reel",
+      "schluessel": "wissensthema",
+      "inhalt": "seed51276",
+      "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-27",
+      "winkel": "naehrstoff",
+      "medium": "bild",
+      "schluessel": "wissensthema",
+      "inhalt": "seed39100",
+      "sprache": "de"
     }
   ]
 }
