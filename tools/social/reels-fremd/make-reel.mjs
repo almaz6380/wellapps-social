@@ -40,12 +40,12 @@
 // verrutschen Frames und nichts ist reproduzierbar. Dieselbe Regel wie bei
 // den Quiz-Reels.
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, rmSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 
-import { videoSenke } from '../../reels/encode.mjs';
+import { videoSenke, lauf } from '../../reels/encode.mjs';
 import { ladeApps } from '../waehlen.mjs';
 
 const HIER = dirname(fileURLToPath(import.meta.url));
@@ -62,6 +62,18 @@ const OUT = arg('out', join(WURZEL, 'out', 'social'));
 // Nur Swaply: eine bestimmte Kategorie statt einer gewuerfelten (ideen/swaply.json
 // → `bereich`, z. B. `nicotine`). Leer = wie bisher gewuerfelt.
 const KATEGORIE = arg('kategorie', null);
+// KI-Filmszene VOR dem Reel (Josef, 27.09.2026 — dasselbe Rezept wie Mahjongs
+// bester Beitrag: erst ein paar Sekunden Film, dann der Inhalt). Pfad relativ
+// zu diesem Repo, z. B. tools/social/reels-fremd/vorspann/swaply-handy.mp4.
+// ⚠ Ohne AI-Plaettchen (Josef: „das ki wasserzeichen ist aber nicht
+// notwendig") — das KI-Label setzt er beim Posten. Das Beiblatt sagt es ihm.
+const VORSPANN = arg('vorspann', null) ? resolve(WURZEL, arg('vorspann')) : null;
+const VOR_SEK = 5.0;
+const BLENDE_VOR = 0.35;
+if (VORSPANN && !existsSync(VORSPANN)) {
+  console.error(`✗ Vorspann fehlt: ${VORSPANN}`);
+  process.exit(1);
+}
 
 const B = 1080;
 const H = 1920;
@@ -204,6 +216,9 @@ const EINBLENDUNG_REALISTISCH = new Set(['nicotine']);
 // Zigarette. Das Reichweitenrisiko (TikTok nimmt Tabakkonsum aus dem
 // Fuer-dich-Feed) hat Josef ausdruecklich in Kauf genommen.
 function einblendungFuer(id, zusatz = '') {
+  // Mit Vorspann keine Einblendungen: Filmszene und Comic-Begleiter wären
+  // zwei Welten in einem Reel.
+  if (VORSPANN) return null;
   const datei = join(HIER, 'einblendungen', `swaply-${id}${zusatz}.jpg`);
   return existsSync(datei) ? `data:image/jpeg;base64,${readFileSync(datei).toString('base64')}` : null;
 }
@@ -550,9 +565,14 @@ function beiblatt(dateiname, sekunden) {
     '• Das Video ist stumm. In der App einen Trending-Sound drueberlegen —',
     '  bei WELLbooked! NICHT: dort ist Stille Vorgabe.',
     '• Erste Zeile der Caption ist der Hook.',
+    ...(VORSPANN ? ['• KI-LABEL SETZEN (TikTok: „KI-generierter Inhalt“, Instagram: „KI-Info“) —',
+      '  die Filmszene am Anfang zeigt eine fotorealistische KI-Hand.'] : []),
     // ⚠ Liest der Tageslauf fuer die Leitplanke (vorflug.mjs): „ki-menschen"
     // verlangt das Plaettchen, „ki-figur" verbietet es.
-    ...((inhalt.einblendung && inhalt.einblendungKi) || (inhalt.einblendungEnde && inhalt.einblendungEndeKi) ? [
+    ...(VORSPANN ? [
+      `- Medienherkunft: ki-menschen (realistische KI-Filmszene ${VORSPANN.split('/').pop()}, `
+        + 'kein Wasserzeichen — KI-Label beim Posten setzen)',
+    ] : (inhalt.einblendung && inhalt.einblendungKi) || (inhalt.einblendungEnde && inhalt.einblendungEndeKi) ? [
       '- Medienherkunft: ki-menschen (realistisches KI-Foto, Wasserzeichen gesetzt)',
     ] : inhalt.einblendung || inhalt.einblendungEnde ? [
       '- Medienherkunft: ki-figur (Swaply-Begleiter, Comic, kein Plättchen)',
@@ -567,6 +587,7 @@ const dateiname = NAME ?? `${MARKE}-${FORMAT}-${LANG}-s${SEED}`;
 const zielOrdner = resolve(OUT);
 mkdirSync(zielOrdner, { recursive: true });
 const ziel = join(zielOrdner, `${dateiname}.mp4`);
+const kern = VORSPANN ? join(zielOrdner, `${dateiname}.kern.mp4`) : ziel;
 
 const browser = await chromium.launch(
   process.env.CHROMIUM_PFAD ? { executablePath: process.env.CHROMIUM_PFAD } : {},
@@ -577,7 +598,7 @@ await page.setContent(html(), { waitUntil: 'load' });
 await page.waitForFunction('window.__bereit === true', null, { timeout: 20000 });
 
 const gesamt = await page.evaluate('window.__gesamt');
-const senke = videoSenke({ fps: FPS, ziel });
+const senke = videoSenke({ fps: FPS, ziel: kern });
 
 for (let n = 0; n < gesamt; n++) {
   await page.evaluate((i) => window.setFrame(i), n);
@@ -588,7 +609,24 @@ senke.stdin.end();
 await senke.fertig;
 await browser.close();
 
-writeFileSync(join(zielOrdner, `${dateiname}.txt`), beiblatt(dateiname, gesamt / FPS));
+let sekunden = gesamt / FPS;
+if (VORSPANN) {
+  // Stumm wie das Reel selbst (tonspur_muss_leer_sein): Den Sound legt Josef
+  // in der App darueber.
+  const versatz = VOR_SEK - BLENDE_VOR;
+  await lauf(['-y', '-i', VORSPANN, '-i', kern, '-filter_complex',
+    `[0:v]scale=${B}:${H}:force_original_aspect_ratio=increase,crop=${B}:${H},fps=${FPS},setsar=1,`
+    // Beide Seiten auf dasselbe Pixelformat und dieselbe Zeitbasis — xfade
+    // verweigert sonst (das Reel kommt aus JPEG-Bildern als yuvj420p), und fps ZULETZT: ohne feste Bildrate bricht xfade ab.
+    + `trim=0:${VOR_SEK},setpts=PTS-STARTPTS,format=yuv420p,fps=${FPS}[a];`
+    + `[1:v]setsar=1,format=yuv420p,fps=${FPS}[b];`
+    + `[a][b]xfade=transition=fade:duration=${BLENDE_VOR}:offset=${versatz.toFixed(3)},format=yuv420p[v]`,
+    '-map', '[v]', '-an', '-c:v', 'libx264', '-preset', 'medium', '-crf', '19',
+    '-movflags', '+faststart', ziel]);
+  rmSync(kern, { force: true });
+  sekunden += versatz;
+}
+writeFileSync(join(zielOrdner, `${dateiname}.txt`), beiblatt(dateiname, sekunden));
 
-console.log(`✓ ${dateiname}.mp4  ${(gesamt / FPS).toFixed(1)} s  ${B}×${H}  stumm`);
+console.log(`✓ ${dateiname}.mp4  ${sekunden.toFixed(1)} s  ${B}×${H}  stumm${VORSPANN ? '  (mit Vorspann)' : ''}`);
 console.log(`✓ ${dateiname}.txt`);

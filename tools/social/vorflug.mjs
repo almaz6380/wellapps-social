@@ -187,7 +187,12 @@ export function pruefe({ appSchluessel, app, post, texte }) {
   //   ki-bild (…)      KI-Bild ohne Menschen        → kein Plaettchen
   // Die Regel prueft beide Richtungen: Ein Plaettchen zu viel ist genauso ein
   // Fehler wie eines zu wenig — es behauptet etwas, das nicht stimmt.
-  if (texte.medienherkunft?.startsWith('ki-menschen') && texte.wasserzeichen !== true) {
+  // ⚠ Josef, 27.09.2026: „das ki wasserzeichen ist aber nicht notwendig" — das
+  // KI-Label setzt er beim Posten in TikTok und Instagram selbst. Ein
+  // ki-menschen-Beitrag darf deshalb OHNE Plaettchen durch, wenn das Beiblatt
+  // ausdruecklich „KI-Label" vermerkt; sonst bleibt das Plaettchen Pflicht.
+  if (texte.medienherkunft?.startsWith('ki-menschen') && texte.wasserzeichen !== true
+      && !/KI-Label/.test(texte.medienherkunft)) {
     funde.push(befund(true, 'ki-wasserzeichen',
       'Fotorealistische KI-Menschen im Bild, aber kein AI-Wasserzeichen. Es gehoert '
       + 'unten rechts in die Ecke — sonst setzt die Plattform ihr eigenes Label darueber.'));

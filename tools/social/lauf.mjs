@@ -217,6 +217,12 @@ function vorflugProbe() {
       texte: { caption: 'Wenn der Impuls kommt: Routine tauschen.',
         medienherkunft: 'ki-menschen (realistisches KI-Foto, Wasserzeichen gesetzt)', wasserzeichen: true } },
 
+    { name: 'Swaply: KI-Filmszene OHNE Plaettchen, KI-Label von Hand',
+      // Josef, 27.09.2026: „das ki wasserzeichen ist aber nicht notwendig".
+      app: 'swaply', post: { sprache: 'de', medium: 'reel' },
+      texte: { caption: 'Tausch statt Verzicht.',
+        medienherkunft: 'ki-menschen (realistische KI-Filmszene, kein Wasserzeichen — KI-Label beim Posten setzen)' } },
+
     { name: 'Genau fuenf Hashtags und der App-Link gehen durch',
       app: 'anigosha', post: { sprache: 'de', medium: 'bild' },
       texte: { caption: 'Nur echte Fans schaffen 3/3.',

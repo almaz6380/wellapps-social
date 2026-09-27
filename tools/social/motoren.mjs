@@ -308,6 +308,8 @@ export function aufruf({ appSchluessel, app, post, wuerfel, out }) {
           '--format', post.format ?? post.winkel, '--lang', post.sprache,
           // Swaply: fester Bereich (z. B. `nicotine`) aus ideen/swaply.json.
           ...(appSchluessel === 'swaply' && post.bereich ? ['--kategorie', post.bereich] : []),
+          // KI-Filmszene davor (Josef, 27.09.2026), Pfad in diesem Repo.
+          ...(post.vorspann ? ['--vorspann', post.vorspann] : []),
           '--seed', String(post.seed), '--name', post.dateiname,
           // ⚠ ABSOLUTER Zielpfad. `out` kommt fuer diese beiden Apps relativ
           // herein (sie haengen ihn sonst an ihre eigene Wurzel, siehe
