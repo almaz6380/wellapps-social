@@ -2222,6 +2222,24 @@
       "schluessel": "wissensthema",
       "inhalt": "seed39100",
       "sprache": "de"
+    },
+    {
+      "app": "swaply",
+      "datum": "2026-09-27",
+      "winkel": "nikotin-loop",
+      "medium": "reel",
+      "schluessel": "nikotin-loop",
+      "inhalt": "seed15296",
+      "sprache": "de"
+    },
+    {
+      "app": "swaply",
+      "datum": "2026-09-27",
+      "winkel": "tausch",
+      "medium": "bild",
+      "schluessel": "kategorie",
+      "inhalt": "seed58860",
+      "sprache": "de"
     }
   ]
 }
