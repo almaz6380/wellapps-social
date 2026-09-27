@@ -56,7 +56,7 @@ const mahjongLevel = (winkel, wuerfel) => {
   const [von, bis] = {
     paar: [6, 52], 'paar-standbild': [6, 52],
     clear: [40, 300], 'figur-des-tages': [40, 300],
-    'blumen-falle': [40, 120], fakt: [10, 180],
+    'blumen-falle': [40, 120], fakt: [10, 180], 'fakt-film': [10, 180],
   }[winkel] ?? [20, 120];
   return von + Math.floor(wuerfel() * (bis - von));
 };
@@ -271,6 +271,8 @@ export function aufruf({ appSchluessel, app, post, wuerfel, out }) {
         '--name', post.dateiname, '--out', out];
       if (post.format === 'fakt') bau.push('--fakt', String(post.seed % 34));
       if (post.winkel === 'figur-des-tages') bau.push('--figur', post.figur ?? 'dragon');
+      // KI-Filmszene davor (Josef, 27.09.2026 — Vorbild: sein bester Beitrag vom 18.08.).
+      if (post.vorspann) bau.push('--vorspann', post.vorspann);
       return {
         schritte: [
           fest

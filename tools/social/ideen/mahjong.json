@@ -56,6 +56,24 @@
       ]
     },
     {
+      "id": "fakt-film",
+      "medium": "reel",
+      "format": "fakt",
+      "status": "vorhanden",
+      "haken": "Wie der beste Mahjong-Beitrag (18.08.2026, 1103 Aufrufe): erst 5 s KI-Filmszene — eine alte Hand stellt einen Drachenstein auf den Holztisch, Laternenlicht —, dann das echte Spiel mit „Did you know?“ und Kulturfakt. Fotorealistische Hand → AI-Plättchen auf der Szene. Josef am 27.09.2026: „ja“. ⚠ Nur EIN Clip (assets/vorspann/hand-drache.mp4) — läuft er zu oft, braucht es weitere Szenen.",
+      "schluessel": "fakt-index",
+      "bereich": {
+        "fakt": [
+          0,
+          35
+        ]
+      },
+      "sprachen": [
+        "en"
+      ],
+      "vorspann": "scripts/reel/assets/vorspann/hand-drache.mp4"
+    },
+    {
       "id": "blumen-falle",
       "medium": "reel",
       "format": "paar",

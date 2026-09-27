@@ -326,6 +326,8 @@ export function waehlePosts({
     schluessel: w.schluessel,
     haken: w.haken,
     bereich: w.bereich ?? null,
+    // Filmszene vor dem Reel (Mahjong `fakt-film`, 27.09.2026) — Pfad im App-Repo.
+    vorspann: w.vorspann ?? null,
     // Die Leitplanke braucht diese beiden — ohne sie verlangte sie den
     // Gesundheitshinweis auch auf einer reinen Uebungskarte.
     hinweis_pflicht: w.hinweis_pflicht === true,
