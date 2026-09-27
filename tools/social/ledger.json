@@ -2168,6 +2168,24 @@
       "schluessel": "kategorie",
       "inhalt": "seed3710",
       "sprache": "de"
+    },
+    {
+      "app": "wellbooked",
+      "datum": "2026-09-27",
+      "winkel": "entlastung",
+      "medium": "reel",
+      "schluessel": "entlastung",
+      "inhalt": "seed25312",
+      "sprache": "de"
+    },
+    {
+      "app": "wellbooked",
+      "datum": "2026-09-27",
+      "winkel": "vorteil",
+      "medium": "bild",
+      "schluessel": "vorteil",
+      "inhalt": "seed24363",
+      "sprache": "de"
     }
   ]
 }
