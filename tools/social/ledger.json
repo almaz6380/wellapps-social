@@ -2240,6 +2240,15 @@
       "schluessel": "kategorie",
       "inhalt": "seed58860",
       "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-27",
+      "winkel": "uebung-bewegt",
+      "medium": "reel",
+      "schluessel": "uebung-bewegt",
+      "inhalt": "seed37611",
+      "sprache": "de"
     }
   ]
 }
