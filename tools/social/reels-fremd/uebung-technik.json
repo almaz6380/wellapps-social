@@ -1,0 +1,51 @@
+{
+  "_warum": "Josef, 27.09.2026: „für fullrep soll eine Übung mit einer Animation erklärt werden\". Die App führt je Übung nur ein bis zwei Sätze (hipThrustDesc: „Beste Übung für den Gluteus.\") — das zeigt die Bewegung, erklärt sie aber nicht. Hier stehen je Übung vier Ausführungsschritte. Hat die gewürfelte Übung Schritte, zeigt das Reel sie nacheinander zur Animation; sonst bleibt es bei der App-Beschreibung. ⚠ Nur allgemeine Technikhinweise: keine Dosierung, kein Heilversprechen, nichts zu Verletzungen oder Schmerzen (apps.json → regeln). ⚠ Jeder Schritt höchstens 48 Zeichen — länger bricht er um, und vier zweizeilige Schritte laufen in die Knopfleiste von TikTok/Instagram (ab ~1650 px). test-uebung-haltung.mjs prüft das. ⚠ Nur Übungen eintragen, deren Clip zur Beschreibung passt — Bulgarische Kniebeuge fehlt absichtlich: Ihr Clip (Split_Squat_with_Dumbbells) zeigt den hinteren Fuß am Boden, nicht auf der Bank.",
+  "hip-thrust": [
+    "Schulterblätter an die Bankkante legen",
+    "Füße hüftbreit, Stange liegt über der Hüfte",
+    "Hüfte strecken, bis der Rumpf waagrecht ist",
+    "Oben das Gesäß anspannen, Blick nach vorn"
+  ],
+  "goblet-squat": [
+    "Kurzhantel eng vor der Brust halten",
+    "Füße etwas breiter als hüftbreit",
+    "Tief in die Hocke, Knie folgen den Zehen",
+    "Oberkörper aufrecht, über die Fersen hoch"
+  ],
+  "romanian-deadlift": [
+    "Stange nah am Körper, Knie leicht gebeugt",
+    "Hüfte nach hinten schieben, Rücken gerade",
+    "Senken, bis es hinten im Oberschenkel zieht",
+    "Hüfte nach vorn strecken und aufrichten"
+  ],
+  "lateral-raise": [
+    "Aufrecht stehen, Arme leicht gebeugt",
+    "Hanteln seitlich bis auf Schulterhöhe heben",
+    "Keinen Schwung aus dem Oberkörper holen",
+    "Langsam und kontrolliert absenken"
+  ],
+  "squat": [
+    "Stange auf dem oberen Rücken ablegen",
+    "Füße schulterbreit, Zehen leicht nach außen",
+    "Hüfte nach hinten unten, Knie über die Zehen",
+    "Rücken gerade, kraftvoll nach oben drücken"
+  ],
+  "leg-press": [
+    "Rücken und Gesäß fest ans Polster",
+    "Füße schulterbreit auf die Plattform",
+    "Beugen, bis die Knie etwa rechtwinklig sind",
+    "Hochdrücken, Knie oben nicht durchstrecken"
+  ],
+  "rope-pushdown": [
+    "Oberarme eng am Körper fixieren",
+    "Seil nach unten drücken, Arme strecken",
+    "Unten die Seilenden leicht auseinanderziehen",
+    "Langsam zurück, die Ellbogen bleiben ruhig"
+  ],
+  "arnold-press": [
+    "Hanteln vor der Brust, Handflächen zu dir",
+    "Beim Hochdrücken die Hände nach außen drehen",
+    "Oben die Arme fast ganz strecken",
+    "Mit der Gegendrehung kontrolliert zurück"
+  ]
+}

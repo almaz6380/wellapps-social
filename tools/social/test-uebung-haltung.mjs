@@ -16,7 +16,7 @@
 import { existsSync } from 'node:fs';
 import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { ausfuehrungPasst, animierteUebungen } from './reels-fremd/fullrep-uebung-bewegt.mjs';
+import { ausfuehrungPasst, animierteUebungen, TECHNIK } from './reels-fremd/fullrep-uebung-bewegt.mjs';
 
 let gut = 0;
 const schlecht = [];
@@ -40,6 +40,16 @@ pruefe('liegend + Seated-Clip → abgewiesen',
 pruefe('ohne Haltungsangabe → erlaubt',
   ausfuehrungPasst({ id: 'goblet-squat', name: 'Goblet Squat', ordner: 'Goblet_Squat' }), 'abgewiesen');
 
+console.log('\n1b. Die Ausführungsschritte (uebung-technik.json)');
+const technik = Object.entries(TECHNIK).filter(([k]) => !k.startsWith('_'));
+pruefe('jede Übung hat genau vier Schritte', technik.every(([, s]) => s.length === 4),
+  technik.filter(([, s]) => s.length !== 4).map(([k]) => k).join(', '));
+// Länger bricht um — vier zweizeilige Schritte laufen in die Knopfleiste.
+pruefe('kein Schritt länger als 48 Zeichen', technik.every(([, s]) => s.every((x) => x.length <= 48)),
+  technik.flatMap(([k, s]) => s.filter((x) => x.length > 48).map((x) => `${k}: ${x}`)).join(' | '));
+pruefe('keine Dosierung und kein Heilversprechen',
+  technik.every(([, s]) => s.every((x) => !/\b(mg|Gramm|heilt|Schmerz|Verletzung|Therapie)\b/i.test(x))), 'Treffer');
+
 // --- 2. Die echte Zuordnung der App -----------------------------------------
 const HIER = dirname(fileURLToPath(import.meta.url));
 const APP = resolve(process.env.FULLREP_PFAD || join(HIER, '..', '..', '..', 'mypeak'));
@@ -54,6 +64,10 @@ if (existsSync(join(APP, 'src', 'data', 'exerciseAnimations.js'))) {
   pruefe('jede Übung im Topf besteht die Haltungsprobe',
     liste.every((u) => ausfuehrungPasst(u)), liste.filter((u) => !ausfuehrungPasst(u)).map((u) => u.id).join(', '));
   pruefe('der Topf ist nicht leer', liste.length >= 10, String(liste.length));
+  // Eine Schrittliste für eine Übung, die nicht im Topf ist, würde nie gezeigt —
+  // und fiele niemandem auf.
+  pruefe('jede Übung mit Schritten ist animiert im Topf',
+    technik.every(([k]) => ids.has(k)), technik.filter(([k]) => !ids.has(k)).map(([k]) => k).join(', '));
 } else {
   console.log(`\n2. (übersprungen — FullRep-Repo nicht unter ${APP})`);
 }

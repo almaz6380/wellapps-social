@@ -38,8 +38,12 @@ export const B = 1080;
 export const H = 1920;
 export const FPS = 30;
 const SZENE = 10.2;   // zwei Durchläufe der 5-s-Animation
+// Mit Ausführungsschritten (uebung-technik.json) länger: vier Schritte à
+// 2,2 s brauchen Lesezeit, danach bleiben alle stehen.
+const SZENE_ERKLAERT = 13.2;
 const OUTRO = 3.0;
 export const DAUER = SZENE + OUTRO;
+export const TECHNIK = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'uebung-technik.json'), 'utf8'));
 
 function zufall(seed) {
   let a = seed >>> 0;
@@ -88,12 +92,13 @@ export async function animierteUebungen(appPfad, sprache = 'de') {
     .filter((u) => u.name && u.name !== u.id && u.beschreibung.length >= 30 && u.beschreibung.length <= 220);
 }
 
-function seiteHtml({ u, bilder, storeSatz, logo, gesamtUebungen }) {
+function seiteHtml({ u, bilder, storeSatz, logo, gesamtUebungen, szene }) {
   const b64 = (d) => readFileSync(d).toString('base64');
   const font = (name, datei, gewicht) => `@font-face{font-family:'${name}';src:url(data:font/woff2;base64,${b64(datei)}) format('woff2');font-weight:${gewicht}}`;
   // Beschreibung in Sätze: jeder Satz gleitet einzeln ein.
   const saetze = u.beschreibung.match(/[^.!?]+[.!?]+/g)?.map((x) => x.trim()) ?? [u.beschreibung];
-  const daten = JSON.stringify({ bilder, fps: FPS, SZENE, OUTRO, saetze });
+  const schritte = u.schritte ?? null;
+  const daten = JSON.stringify({ bilder, fps: FPS, SZENE: szene, OUTRO, saetze, schritte });
   return `<!doctype html><html><head><meta charset="utf-8"><style>
 ${font('Anton', u.anton, 400)}
 ${font('Inter', join(SCHRIFTEN, 'inter-latin-400-normal.woff2'), 400)}
@@ -115,6 +120,15 @@ html,body{width:${B}px;height:${H}px;overflow:hidden;background:#0a0a0a;color:#f
 .chip{padding:14px 26px;border-radius:999px;background:#1a1a1a;border:2px solid #3f3f46;font-size:32px;font-weight:600;color:#e7e5e4}
 .chip.g{background:#fbbf24;border-color:#fbbf24;color:#0a0a0a}
 .satz{position:absolute;left:100px;right:100px;font-size:38px;line-height:1.3;color:#e7e5e4}
+/* Erklärt-Fassung: Karte kleiner, darunter vier nummerierte Schritte — alles
+   oberhalb der sicheren Zone (~1650 px). */
+body.erklaert .karte{top:430px;height:700px;left:190px;right:190px}
+body.erklaert .karte img{width:700px;height:700px;margin:-350px 0 0 -350px}
+body.erklaert .chips{top:1160px}
+.schritt{position:absolute;left:100px;right:100px;display:flex;gap:22px;align-items:center;font-size:36px;line-height:1.25;font-weight:600;color:#e7e5e4}
+.schritt b{flex:none;width:58px;height:58px;border-radius:50%;background:#1a1a1a;border:2px solid #fbbf24;color:#fbbf24;
+  display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:900}
+.schritt.jetzt b{background:#fbbf24;color:#0a0a0a}
 .outro{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:34px;padding:0 100px;background:#0a0a0a}
 .outro img{width:150px;height:150px;border-radius:34px}
 .outro .t{font-family:Anton,sans-serif;font-size:96px;line-height:1;text-transform:uppercase}
@@ -123,7 +137,7 @@ html,body{width:${B}px;height:${H}px;overflow:hidden;background:#0a0a0a;color:#f
 .outro .s{font-size:36px;font-weight:600;padding:22px 40px;border-radius:999px;background:#fbbf24;color:#0a0a0a}
 </style></head><body>
 <div class="schein" id="schein"></div>
-<div class="kopf" id="kopf"><div class="etikett"><img src="${logo}">ÜBUNG IN BEWEGUNG</div><div class="name" id="name"></div></div>
+<div class="kopf" id="kopf"><div class="etikett"><img src="${logo}">${schritte ? 'SO GEHT’S RICHTIG' : 'ÜBUNG IN BEWEGUNG'}</div><div class="name" id="name"></div></div>
 <div class="karte" id="karte"><img id="bild"></div>
 <div class="chips" id="chips"><span class="chip g" id="c1"></span><span class="chip" id="c2"></span></div>
 <div id="saetze"></div>
@@ -138,8 +152,15 @@ $('name').textContent = ${JSON.stringify(u.name)};
 $('c1').textContent = ${JSON.stringify(u.muskel)};
 $('c2').textContent = ${JSON.stringify(u.geraet)};
 $('store').textContent = ${JSON.stringify(storeSatz)};
+if (D.schritte) document.body.classList.add('erklaert');
+(D.schritte ?? []).forEach((s, i) => {
+  const d = document.createElement('div'); d.className = 'schritt'; d.id = 'k' + i;
+  const b = document.createElement('b'); b.textContent = String(i + 1);
+  const t = document.createElement('span'); t.textContent = s;
+  d.append(b, t); d.style.top = (1250 + i * 92) + 'px'; $('saetze').appendChild(d);
+});
 let y = 1410;
-D.saetze.slice(0, 3).forEach((s, i) => {
+(D.schritte ? [] : D.saetze.slice(0, 3)).forEach((s, i) => {
   const d = document.createElement('div'); d.className = 'satz'; d.id = 's' + i; d.textContent = s;
   d.style.top = y + 'px'; y += 20 + Math.ceil(s.length / 42) * 50; $('saetze').appendChild(d);
 });
@@ -158,7 +179,15 @@ window.setFrame = async (n) => {
   const ch = aus((t - .8) / .4);
   $('chips').style.opacity = String(ch);
   $('chips').style.transform = 'translateX(' + ((1 - ch) * -60) + 'px)';
-  D.saetze.slice(0, 3).forEach((_, j) => {
+  (D.schritte ?? []).forEach((_, j) => {
+    const start = 1.4 + j * 2.2;
+    const p = aus((t - start) / .5);
+    const el = $('k' + j); el.style.opacity = String(p); el.style.transform = 'translateX(' + ((1 - p) * 50) + 'px)';
+    // Der gerade eingeblendete Schritt ist hervorgehoben, bis der nächste kommt.
+    const jetzt = t >= start && (j === D.schritte.length - 1 ? t < D.SZENE : t < start + 2.2);
+    el.classList.toggle('jetzt', jetzt);
+  });
+  (D.schritte ? [] : D.saetze.slice(0, 3)).forEach((_, j) => {
     const p = aus((t - 1.6 - j * 1.4) / .5);
     const el = $('s' + j); el.style.opacity = String(p); el.style.transform = 'translateY(' + ((1 - p) * 30) + 'px)';
   });
@@ -173,8 +202,15 @@ document.fonts.ready.then(() => { window.__bereit = true; });
 export async function uebungReel({ appPfad, seed, datei, uebungId = null, storeSatz = 'Gratis im App Store und bei Google Play' }) {
   const liste = await animierteUebungen(appPfad);
   if (!liste.length) throw new Error('Keine animierte Übung mit Text gefunden.');
-  const u = uebungId ? liste.find((x) => x.id === uebungId) : liste[Math.floor(zufall(seed * 2654435761)() * liste.length)];
+  // Übungen mit Ausführungsschritten zuerst: Josef will die Übung ERKLÄRT
+  // sehen (27.09.2026). Ohne Schritte würfelt er wie bisher aus allen.
+  const erklaerbar = liste.filter((x) => TECHNIK[x.id]);
+  const topf = erklaerbar.length ? erklaerbar : liste;
+  const u = uebungId ? liste.find((x) => x.id === uebungId) : topf[Math.floor(zufall(seed * 2654435761)() * topf.length)];
   if (!u) throw new Error(`Übung ${uebungId} hat keine Animation oder keinen Text.`);
+  u.schritte = TECHNIK[u.id] ?? null;
+  const szene = u.schritte ? SZENE_ERKLAERT : SZENE;
+  const dauer = szene + OUTRO;
   u.anton = join(appPfad, 'scripts', 'schriften', 'anton.woff2');
   const quelle = join(appPfad, 'public', 'exercise-demos-anim', u.ordner, 'demo.mp4');
   const logo = `data:image/png;base64,${readFileSync(join(appPfad, 'public', 'icon-512.png')).toString('base64')}`;
@@ -188,14 +224,14 @@ export async function uebungReel({ appPfad, seed, datei, uebungId = null, storeS
     const bilder = readdirSync(join(tmp, 'f')).filter((x) => x.endsWith('.jpg')).sort().map((x) => `f/${x}`);
     // Die Zahl im Abspann kommt aus den App-Daten, nicht aus dem Kopf.
     const gesamtUebungen = (await import(join(appPfad, 'scripts', 'social-daten.mjs'))).exercises.length;
-    writeFileSync(join(tmp, 'seite.html'), seiteHtml({ u, bilder, storeSatz, logo, gesamtUebungen }));
+    writeFileSync(join(tmp, 'seite.html'), seiteHtml({ u, bilder, storeSatz, logo, gesamtUebungen, szene }));
 
     // Ton: der eigene FullRep-Musikteppich, leise, weich aus.
-    const gesamt = Math.round(DAUER * FPS);
+    const gesamt = Math.round(dauer * FPS);
     const ton = join(tmp, 'ton.m4a');
     await lauf(['-y', '-i', join(WURZEL, 'tools', 'social', 'musik', 'fullrep-bett.mp3'), '-af',
-      `atrim=0:${DAUER},asetpts=N/SR/TB,volume=0.5,afade=t=in:d=0.4,afade=t=out:st=${(DAUER - 1.2).toFixed(2)}:d=1.2,apad=whole_dur=${DAUER}`,
-      '-t', String(DAUER), '-c:a', 'aac', '-b:a', '160k', '-ar', '48000', ton]);
+      `atrim=0:${dauer},asetpts=N/SR/TB,volume=0.5,afade=t=in:d=0.4,afade=t=out:st=${(dauer - 1.2).toFixed(2)}:d=1.2,apad=whole_dur=${dauer}`,
+      '-t', String(dauer), '-c:a', 'aac', '-b:a', '160k', '-ar', '48000', ton]);
 
     const browser = await chromium.launch(process.env.CHROMIUM_PFAD ? { executablePath: process.env.CHROMIUM_PFAD } : {});
     try {
@@ -219,7 +255,7 @@ export async function uebungReel({ appPfad, seed, datei, uebungId = null, storeS
     rmSync(tmp, { recursive: true, force: true });
   }
   if (statSync(datei).size < 100_000) throw new Error(`Reel ${datei} ist zu klein — ffmpeg hat kein Video geschrieben.`);
-  return { uebung: u, sekunden: DAUER, anzahl: liste.length };
+  return { uebung: u, sekunden: dauer, anzahl: liste.length };
 }
 
 // --- Aufruf (Tageslauf: motoren.mjs) -----------------------------------------
@@ -245,9 +281,15 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     '',
     '── CAPTION ZUM KOPIEREN ──────────────────────────────',
     '',
-    `${u.name} – so sieht die Bewegung aus 🏋️`,
-    '',
-    u.beschreibung,
+    ...(u.schritte ? [
+      `${u.name} – so geht's richtig 🏋️`,
+      '',
+      ...u.schritte.map((x, i) => `${i + 1}. ${x}`),
+    ] : [
+      `${u.name} – so sieht die Bewegung aus 🏋️`,
+      '',
+      u.beschreibung,
+    ]),
     '',
     `Muskelgruppe: ${u.muskel} · Gerät: ${u.geraet}`,
     '',
