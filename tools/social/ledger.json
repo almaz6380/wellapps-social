@@ -2267,6 +2267,33 @@
       "schluessel": "fakt-index",
       "inhalt": "seed35159",
       "sprache": "en"
+    },
+    {
+      "app": "swaply",
+      "datum": "2026-09-27",
+      "winkel": "film-handy",
+      "medium": "reel",
+      "schluessel": "film-handy",
+      "inhalt": "seed88733",
+      "sprache": "de"
+    },
+    {
+      "app": "swaply",
+      "datum": "2026-09-27",
+      "winkel": "film-zucker",
+      "medium": "reel",
+      "schluessel": "film-zucker",
+      "inhalt": "seed93312",
+      "sprache": "de"
+    },
+    {
+      "app": "swaply",
+      "datum": "2026-09-27",
+      "winkel": "film-alkohol",
+      "medium": "reel",
+      "schluessel": "film-alkohol",
+      "inhalt": "seed81653",
+      "sprache": "de"
     }
   ]
 }
