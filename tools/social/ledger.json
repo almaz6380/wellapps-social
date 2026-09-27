@@ -2186,6 +2186,24 @@
       "schluessel": "vorteil",
       "inhalt": "seed24363",
       "sprache": "de"
+    },
+    {
+      "app": "mahjong",
+      "datum": "2026-09-27",
+      "winkel": "clear",
+      "medium": "reel",
+      "schluessel": "level",
+      "inhalt": "seed41804",
+      "sprache": "en"
+    },
+    {
+      "app": "mahjong",
+      "datum": "2026-09-27",
+      "winkel": "figur-galerie",
+      "medium": "bild",
+      "schluessel": "figur-vierer",
+      "inhalt": "seed56031",
+      "sprache": "en"
     }
   ]
 }
