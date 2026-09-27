@@ -2249,6 +2249,15 @@
       "schluessel": "uebung-bewegt",
       "inhalt": "seed37611",
       "sprache": "de"
+    },
+    {
+      "app": "mahjong",
+      "datum": "2026-09-27",
+      "winkel": "fakt-film",
+      "medium": "reel",
+      "schluessel": "fakt-index",
+      "inhalt": "seed35159",
+      "sprache": "en"
     }
   ]
 }
