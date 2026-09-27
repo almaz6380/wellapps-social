@@ -2078,6 +2078,96 @@
       "schluessel": "regel",
       "inhalt": "seed34642",
       "sprache": "de"
+    },
+    {
+      "app": "anigosha",
+      "datum": "2026-09-27",
+      "winkel": "app-schau-reel",
+      "medium": "reel",
+      "schluessel": "bildschirm",
+      "inhalt": "seed69664",
+      "sprache": "de"
+    },
+    {
+      "app": "anigosha",
+      "datum": "2026-09-27",
+      "winkel": "schwierigkeitsleiter",
+      "medium": "bild",
+      "schluessel": "kategorie",
+      "inhalt": "seed49334",
+      "sprache": "de"
+    },
+    {
+      "app": "mahjong",
+      "datum": "2026-09-27",
+      "winkel": "paar",
+      "medium": "reel",
+      "schluessel": "level",
+      "inhalt": "seed6739",
+      "sprache": "en"
+    },
+    {
+      "app": "mahjong",
+      "datum": "2026-09-27",
+      "winkel": "paar-standbild",
+      "medium": "bild",
+      "schluessel": "level",
+      "inhalt": "seed73524",
+      "sprache": "en"
+    },
+    {
+      "app": "wellbooked",
+      "datum": "2026-09-27",
+      "winkel": "kalender-clip",
+      "medium": "reel",
+      "schluessel": "screen",
+      "inhalt": "seed11034",
+      "sprache": "de"
+    },
+    {
+      "app": "wellbooked",
+      "datum": "2026-09-27",
+      "winkel": "rechenbeispiel",
+      "medium": "bild",
+      "schluessel": "kennzahl",
+      "inhalt": "seed62734",
+      "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-27",
+      "winkel": "mythos-check",
+      "medium": "reel",
+      "schluessel": "wissensthema",
+      "inhalt": "seed65196",
+      "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-27",
+      "winkel": "uebung-karte",
+      "medium": "bild",
+      "schluessel": "uebung",
+      "inhalt": "seed4446",
+      "sprache": "de"
+    },
+    {
+      "app": "swaply",
+      "datum": "2026-09-27",
+      "winkel": "tausch",
+      "medium": "bild",
+      "schluessel": "kategorie",
+      "inhalt": "seed20191",
+      "sprache": "de"
+    },
+    {
+      "app": "swaply",
+      "datum": "2026-09-27",
+      "winkel": "notfall",
+      "medium": "bild",
+      "schluessel": "kategorie",
+      "inhalt": "seed3710",
+      "sprache": "de"
     }
   ]
 }
