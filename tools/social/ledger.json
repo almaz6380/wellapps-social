@@ -2429,6 +2429,15 @@
       "schluessel": "uebung-schritte",
       "inhalt": "seed49833",
       "sprache": "de"
+    },
+    {
+      "app": "anigosha",
+      "datum": "2026-09-28",
+      "winkel": "wusstest-du-karte",
+      "medium": "bild",
+      "schluessel": "fragen-ids",
+      "inhalt": "seed72449",
+      "sprache": "de"
     }
   ]
 }
