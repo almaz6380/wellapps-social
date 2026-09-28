@@ -2321,6 +2321,96 @@
       "schluessel": "film-alkohol",
       "inhalt": "seed21924",
       "sprache": "de"
+    },
+    {
+      "app": "anigosha",
+      "datum": "2026-09-28",
+      "winkel": "ladder",
+      "medium": "reel",
+      "schluessel": "fragen-ids",
+      "inhalt": "seed5308",
+      "sprache": "de"
+    },
+    {
+      "app": "anigosha",
+      "datum": "2026-09-28",
+      "winkel": "serien-steckbrief",
+      "medium": "bild",
+      "schluessel": "kategorie",
+      "inhalt": "seed83638",
+      "sprache": "de"
+    },
+    {
+      "app": "mahjong",
+      "datum": "2026-09-28",
+      "winkel": "figur-des-tages",
+      "medium": "reel",
+      "schluessel": "figur",
+      "inhalt": "seed55597",
+      "sprache": "en"
+    },
+    {
+      "app": "mahjong",
+      "datum": "2026-09-28",
+      "winkel": "blumen-falle",
+      "medium": "reel",
+      "schluessel": "level",
+      "inhalt": "seed31185",
+      "sprache": "en"
+    },
+    {
+      "app": "wellbooked",
+      "datum": "2026-09-28",
+      "winkel": "kalender-clip",
+      "medium": "reel",
+      "schluessel": "screen",
+      "inhalt": "seed2053",
+      "sprache": "de"
+    },
+    {
+      "app": "wellbooked",
+      "datum": "2026-09-28",
+      "winkel": "rechenbeispiel",
+      "medium": "bild",
+      "schluessel": "kennzahl",
+      "inhalt": "seed30451",
+      "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-28",
+      "winkel": "uebung-loop",
+      "medium": "reel",
+      "schluessel": "uebung",
+      "inhalt": "seed10447",
+      "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-28",
+      "winkel": "rezept-karte",
+      "medium": "bild",
+      "schluessel": "rezept",
+      "inhalt": "seed70513",
+      "sprache": "de"
+    },
+    {
+      "app": "swaply",
+      "datum": "2026-09-28",
+      "winkel": "tausch-loop",
+      "medium": "reel",
+      "schluessel": "kategorie",
+      "inhalt": "seed51815",
+      "sprache": "de"
+    },
+    {
+      "app": "swaply",
+      "datum": "2026-09-28",
+      "winkel": "tausch",
+      "medium": "bild",
+      "schluessel": "kategorie",
+      "inhalt": "seed55393",
+      "sprache": "de"
     }
   ]
 }
