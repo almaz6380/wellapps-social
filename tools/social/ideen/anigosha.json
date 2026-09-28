@@ -6,25 +6,27 @@
       "id": "fandom",
       "medium": "reel",
       "format": "fandom",
-      "status": "vorhanden",
+      "status": "pausiert",
       "haken": "Drei Fragen aus EINER Serie, Schwierigkeit steigend — spricht den Fandom direkt an",
       "schluessel": "kategorie",
       "sprachen": [
         "de",
         "en"
-      ]
+      ],
+      "_pausiert": "Josef, 28.09.2026: „anigosha gerne bilder mit der animefigur\" — Anigosha nur noch mit dem Jungen: die Bildkarten (tragen ihn über apps.json → figur) und richtig-falsch. Reels ohne Figur und die App-Schau ruhen."
     },
     {
       "id": "ladder",
       "medium": "reel",
       "format": "ladder",
-      "status": "vorhanden",
+      "status": "pausiert",
       "haken": "Drei verschiedene Serien, Schwierigkeit steigend — erreicht mehrere Fandoms auf einmal",
       "schluessel": "fragen-ids",
       "sprachen": [
         "de",
         "en"
-      ]
+      ],
+      "_pausiert": "Josef, 28.09.2026: „anigosha gerne bilder mit der animefigur\" — Anigosha nur noch mit dem Jungen: die Bildkarten (tragen ihn über apps.json → figur) und richtig-falsch. Reels ohne Figur und die App-Schau ruhen."
     },
     {
       "id": "nur-fuer-profis",
@@ -130,26 +132,28 @@
       "id": "app-schau",
       "medium": "bild",
       "format": "app-schau",
-      "status": "vorhanden",
+      "status": "pausiert",
       "haken": "Die App selbst: drei echte Store-Screenshots (Start, Solo, Duell, Bestenliste) gefaechert vor dem Herbstpark aus dem eigenen Werbespot. Der EINZIGE Winkel, der zeigt, dass es eine App gibt — alle anderen zeigen eine Frage daraus. Drei Aufzuege: Ueberblick, Duell, Taegliche Challenge.",
       "schluessel": "bildschirm",
       "sprachen": [
         "de",
         "en"
-      ]
+      ],
+      "_pausiert": "Josef, 28.09.2026: „anigosha gerne bilder mit der animefigur\" — Anigosha nur noch mit dem Jungen: die Bildkarten (tragen ihn über apps.json → figur) und richtig-falsch. Reels ohne Figur und die App-Schau ruhen."
     },
     {
       "id": "app-schau-reel",
       "medium": "reel",
       "format": "app-schau",
-      "status": "vorhanden",
+      "status": "pausiert",
       "haken": "Dieselbe App-Schau als Reel, 1080x1920, 12 s, mit Musikbett. Josef am 20.09.2026: jeden Post einmal als Bild und einmal als Reel. Der Generator liegt in wellapps-social und holt Texte, Bildschirme und Farben mit --schau-json vom BILDgenerator der App — Bild und Reel koennen deshalb nicht auseinanderlaufen. Gleicher Seed = gleicher Aufzug.",
       "schluessel": "bildschirm",
       "sprachen": [
         "de",
         "en"
       ],
-      "wieWinkel": "app-schau"
+      "wieWinkel": "app-schau",
+      "_pausiert": "Josef, 28.09.2026: „anigosha gerne bilder mit der animefigur\" — Anigosha nur noch mit dem Jungen: die Bildkarten (tragen ihn über apps.json → figur) und richtig-falsch. Reels ohne Figur und die App-Schau ruhen."
     },
     {
       "id": "richtig-falsch",

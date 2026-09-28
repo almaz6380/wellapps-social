@@ -1,5 +1,5 @@
 {
-  "_warum": "Josef, 27.09.2026: „für fullrep soll eine Übung mit einer Animation erklärt werden\". Die App führt je Übung nur ein bis zwei Sätze (hipThrustDesc: „Beste Übung für den Gluteus.\") — das zeigt die Bewegung, erklärt sie aber nicht. Hier stehen je Übung vier Ausführungsschritte. Hat die gewürfelte Übung Schritte, zeigt das Reel sie nacheinander zur Animation; sonst bleibt es bei der App-Beschreibung. ⚠ Nur allgemeine Technikhinweise: keine Dosierung, kein Heilversprechen, nichts zu Verletzungen oder Schmerzen (apps.json → regeln). ⚠ Jeder Schritt höchstens 48 Zeichen — länger bricht er um, und vier zweizeilige Schritte laufen in die Knopfleiste von TikTok/Instagram (ab ~1650 px). test-uebung-haltung.mjs prüft das. ⚠ Nur Übungen eintragen, deren Clip zur Beschreibung passt — Bulgarische Kniebeuge fehlt absichtlich: Ihr Clip (Split_Squat_with_Dumbbells) zeigt den hinteren Fuß am Boden, nicht auf der Bank.",
+  "_warum": "Josef, 27.09.2026: „für fullrep soll eine Übung mit einer Animation erklärt werden\". Die App führt je Übung nur ein bis zwei Sätze (hipThrustDesc: „Beste Übung für den Gluteus.\") — das zeigt die Bewegung, erklärt sie aber nicht. Hier stehen je Übung vier Ausführungsschritte. Hat die gewürfelte Übung Schritte, zeigt das Reel sie nacheinander zur Animation; sonst bleibt es bei der App-Beschreibung. ⚠ Nur allgemeine Technikhinweise: keine Dosierung, kein Heilversprechen, nichts zu Verletzungen oder Schmerzen (apps.json → regeln). ⚠ Jeder Schritt höchstens 48 Zeichen — länger bricht er um, und vier zweizeilige Schritte laufen in die Knopfleiste von TikTok/Instagram (ab ~1650 px). test-uebung-haltung.mjs prüft das. ⚠ Nur Übungen eintragen, deren Clip zur Beschreibung passt — Bulgarische Kniebeuge fehlt absichtlich: Ihr Clip (Split_Squat_with_Dumbbells) zeigt den hinteren Fuß am Boden, nicht auf der Bank. ⚠ 28.09.2026: 13 weitere Übungen dazu (Josef: „fullrep posts … größtenteils müll … mach lieber posts, wo übungen gezeigt werden\"), jeder Clip vorher am Kontaktblatt geprüft.",
   "hip-thrust": [
     "Schulterblätter an die Bankkante legen",
     "Füße hüftbreit, Stange liegt über der Hüfte",
@@ -47,5 +47,83 @@
     "Beim Hochdrücken die Hände nach außen drehen",
     "Oben die Arme fast ganz strecken",
     "Mit der Gegendrehung kontrolliert zurück"
+  ],
+  "pec-deck": [
+    "Rücken fest an die Lehne, Brust raus",
+    "Griffe auf Brusthöhe, Ellbogen leicht gebeugt",
+    "Arme vor der Brust zusammenführen",
+    "Langsam öffnen, bis die Brust dehnt"
+  ],
+  "overhead-press": [
+    "Stange auf Schulterhöhe, Griff schulterbreit",
+    "Bauch und Gesäß fest anspannen",
+    "Stange senkrecht über den Kopf drücken",
+    "Kontrolliert zurück auf die Schultern"
+  ],
+  "front-raise": [
+    "Aufrecht stehen, Hanteln vor den Oberschenkeln",
+    "Arme fast gestreckt nach vorn heben",
+    "Bis etwa auf Schulterhöhe",
+    "Langsam absenken, ohne Schwung"
+  ],
+  "cable-lateral-raise": [
+    "Zwischen den Kabelzügen, Griffe über Kreuz",
+    "Aufrecht stehen, Arme leicht gebeugt",
+    "Seitlich bis auf Schulterhöhe heben",
+    "Langsam zurück, Spannung halten"
+  ],
+  "rear-delt-cable-fly": [
+    "Seile über Kreuz auf Schulterhöhe greifen",
+    "Arme leicht gebeugt, Brust raus",
+    "Arme weit nach hinten außen ziehen",
+    "Schulterblätter zusammen, dann zurück"
+  ],
+  "upright-row": [
+    "Stange eng vor dem Körper halten",
+    "Ellbogen führen, Stange bleibt nah",
+    "Hochziehen bis etwa auf Brusthöhe",
+    "Langsam und kontrolliert absenken"
+  ],
+  "leg-extension": [
+    "Knie auf Höhe des Drehpunkts",
+    "Polster knapp über den Knöcheln",
+    "Beine strecken, oben kurz halten",
+    "Langsam zurück, nicht fallen lassen"
+  ],
+  "lying-leg-curl": [
+    "Bauchlage, Polster über den Fersen",
+    "Hüfte fest auf der Bank lassen",
+    "Fersen Richtung Gesäß ziehen",
+    "Langsam und kontrolliert strecken"
+  ],
+  "seated-leg-curl": [
+    "Rücken an die Lehne, Knie am Drehpunkt",
+    "Polster über den Knöcheln",
+    "Fersen nach unten hinten ziehen",
+    "Langsam zurück in die Streckung"
+  ],
+  "hack-squat": [
+    "Rücken und Schultern fest ans Polster",
+    "Füße schulterbreit auf die Plattform",
+    "Tief beugen, Knie folgen den Zehen",
+    "Über die ganzen Füße hochdrücken"
+  ],
+  "front-squat": [
+    "Stange vorn auf den Schultern ablegen",
+    "Ellbogen hoch, Oberkörper aufrecht",
+    "Tief in die Hocke gehen",
+    "Kraftvoll nach oben drücken"
+  ],
+  "cable-kickback": [
+    "Manschette am Knöchel, Blick zum Kabelzug",
+    "Oberkörper leicht nach vorn, Bauch fest",
+    "Bein gestreckt nach hinten führen",
+    "Oben das Gesäß anspannen, dann zurück"
+  ],
+  "hip-abductor": [
+    "Aufrecht sitzen, Polster außen am Knie",
+    "Beine kontrolliert nach außen drücken",
+    "Außen kurz halten",
+    "Langsam zurück, Gewicht nicht aufsetzen"
   ]
 }

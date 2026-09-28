@@ -6,19 +6,20 @@
       "id": "uebung-loop",
       "medium": "reel",
       "format": "uebung-loop",
-      "status": "vorhanden",
+      "status": "pausiert",
       "haken": "Start- und Endposition aus public/exercise-demos/<Uebung>/ als sauberer Loop, mit Name und Zielmuskel. 162 Uebungen = 162 Posts ohne Wiederholung",
       "schluessel": "uebung",
       "sprachen": [
         "de",
         "en"
-      ]
+      ],
+      "_pausiert": "Josef, 28.09.2026: „deine fullrep posts sind größtenteils müll.. du schreibst da irgendwelche stichwörter hin und das sieht billig aus. mach lieber posts, wo übungen gezeigt werden.\" FullRep zeigt seitdem nur noch Übungen (uebung-bewegt + uebung-schritte)."
     },
     {
       "id": "studien-fakt",
       "medium": "bild",
       "format": "studien-fakt",
-      "status": "vorhanden",
+      "status": "pausiert",
       "haken": "Ein Studienfund als Karte. 26 kuratierte Eintraege, jeder woertlich aus src/data/ — es wird keine Zahl erfunden. Im Stil `zahl` traegt der Studienwert das Bild: „27 % geringeres Gesamtsterblichkeitsrisiko“, „50 % weniger Trainingsvolumen“. 9 der 26 haben eine solche Zahl; die uebrigen (Spannen wie 1,6–2,2 g/kg) fallen sauber auf `premium` zurueck, statt eine zu erfinden",
       "schluessel": "studie",
       "sprachen": [
@@ -63,31 +64,34 @@
           "datei": "rudern.jpg",
           "fit": "contain"
         }
-      ]
+      ],
+      "_pausiert": "Josef, 28.09.2026: „deine fullrep posts sind größtenteils müll.. du schreibst da irgendwelche stichwörter hin und das sieht billig aus. mach lieber posts, wo übungen gezeigt werden.\" FullRep zeigt seitdem nur noch Übungen (uebung-bewegt + uebung-schritte)."
     },
     {
       "id": "quick-fakt",
       "medium": "reel",
       "format": "wissen-reel",
-      "status": "vorhanden",
+      "status": "pausiert",
       "haken": "Ein quickDE/quickEN-Paar aus den Wissensdateien, mit sichtbarer Quelle. Genau das, was Apple 1.4.1 verlangt hat — hier wird die Pflicht zum Format",
       "schluessel": "wissensthema",
       "sprachen": [
         "de",
         "en"
-      ]
+      ],
+      "_pausiert": "Josef, 28.09.2026: „deine fullrep posts sind größtenteils müll.. du schreibst da irgendwelche stichwörter hin und das sieht billig aus. mach lieber posts, wo übungen gezeigt werden.\" FullRep zeigt seitdem nur noch Übungen (uebung-bewegt + uebung-schritte)."
     },
     {
       "id": "mythos-check",
       "medium": "reel",
       "format": "wissen-reel",
-      "status": "vorhanden",
+      "status": "pausiert",
       "haken": "⚠ LIEFERT HEUTE DASSELBE WIE quick-fakt — ein zufaelliges Wissensthema. `wissen-reel` ist der einzige Reel-Zweig neben uebung-loop, und drei Winkel teilen ihn sich (gefunden 20.09.2026). Die Idee bleibt notiert: Trainingsmythos gegen die belegte Aussage; der Studienbeleg waere der Unterschied zu jedem anderen Fitnesskanal. Dafuer braucht es ein Mythos-Feld in den Wissensdateien, das es noch nicht gibt",
       "schluessel": "wissensthema",
       "sprachen": [
         "de",
         "en"
-      ]
+      ],
+      "_pausiert": "Josef, 28.09.2026: „deine fullrep posts sind größtenteils müll.. du schreibst da irgendwelche stichwörter hin und das sieht billig aus. mach lieber posts, wo übungen gezeigt werden.\" FullRep zeigt seitdem nur noch Übungen (uebung-bewegt + uebung-schritte)."
     },
     {
       "id": "drei-fehler",
@@ -117,7 +121,7 @@
       "id": "wissens-karte",
       "medium": "bild",
       "format": "wissens-karte",
-      "status": "vorhanden",
+      "status": "pausiert",
       "haken": "Zitatkarte mit sichtbarer Quellenangabe. Teilbar, weil belegt",
       "schluessel": "wissensthema",
       "sprachen": [
@@ -162,13 +166,14 @@
           "datei": "rudern.jpg",
           "fit": "contain"
         }
-      ]
+      ],
+      "_pausiert": "Josef, 28.09.2026: „deine fullrep posts sind größtenteils müll.. du schreibst da irgendwelche stichwörter hin und das sieht billig aus. mach lieber posts, wo übungen gezeigt werden.\" FullRep zeigt seitdem nur noch Übungen (uebung-bewegt + uebung-schritte)."
     },
     {
       "id": "uebung-karte",
       "medium": "bild",
       "format": "uebung-karte",
-      "status": "vorhanden",
+      "status": "pausiert",
       "haken": "Uebungsname, Zielmuskel und Ausfuehrung als Karte. ⚠ REIN TYPOGRAFISCH seit 30.08.2026 — die Demofotos gehen nicht mehr in Werbung (Rechtekette nicht belegt), der frueher hier versprochene Bildvergleich Start/Ende existiert nicht mehr",
       "schluessel": "uebung",
       "sprachen": [
@@ -178,13 +183,14 @@
       "stile": [
         "mix"
       ],
-      "_kein_wasserzeichen": "⚠ BEWUSST OHNE FOTO (21.09.2026). studien-fakt, wissens-karte und peptid tragen dieselben acht Trainingsbilder; diese Karte nicht. Sie NENNT eine bestimmte Uebung („Uebung: Seilspringen“) — ein Kniebeugen-Foto dahinter behauptet dann etwas Falsches. Gerendert und angesehen, nicht vermutet. Wer sie bebildern will, braucht eine Zuordnung Uebung → Motiv; die acht Bilder decken nur acht der 162 Uebungen ab."
+      "_kein_wasserzeichen": "⚠ BEWUSST OHNE FOTO (21.09.2026). studien-fakt, wissens-karte und peptid tragen dieselben acht Trainingsbilder; diese Karte nicht. Sie NENNT eine bestimmte Uebung („Uebung: Seilspringen“) — ein Kniebeugen-Foto dahinter behauptet dann etwas Falsches. Gerendert und angesehen, nicht vermutet. Wer sie bebildern will, braucht eine Zuordnung Uebung → Motiv; die acht Bilder decken nur acht der 162 Uebungen ab.",
+      "_pausiert": "Josef, 28.09.2026: „deine fullrep posts sind größtenteils müll.. du schreibst da irgendwelche stichwörter hin und das sieht billig aus. mach lieber posts, wo übungen gezeigt werden.\" FullRep zeigt seitdem nur noch Übungen (uebung-bewegt + uebung-schritte)."
     },
     {
       "id": "peptid",
       "medium": "bild",
       "format": "peptid-karte",
-      "status": "vorhanden",
+      "status": "pausiert",
       "haken": "Ein Peptid aus peptidesData.js, getragen von der Kettenlaenge: „15 Aminosäuren — BPC-157“. Die Zahl kommt aus dem Wort, das die App selbst benutzt (Pentadecapeptid = 15), sie wird nicht erfunden; Peptide ohne dieses Wort fallen weg. Wirkung nur als „Studien zeigen …“, ohne die einzelne Arbeit zu nennen (Josef, 20.09.2026)",
       "schluessel": "peptid",
       "sprachen": [
@@ -227,13 +233,14 @@
           "datei": "rudern.jpg",
           "fit": "contain"
         }
-      ]
+      ],
+      "_pausiert": "Josef, 28.09.2026: „deine fullrep posts sind größtenteils müll.. du schreibst da irgendwelche stichwörter hin und das sieht billig aus. mach lieber posts, wo übungen gezeigt werden.\" FullRep zeigt seitdem nur noch Übungen (uebung-bewegt + uebung-schritte)."
     },
     {
       "id": "rezept-karte",
       "medium": "bild",
       "format": "rezept-karte",
-      "status": "vorhanden",
+      "status": "pausiert",
       "haken": "Eines der 25 Rezepte mit Makros. Essen ist das teilbarste Fitnessthema ueberhaupt",
       "schluessel": "rezept",
       "sprachen": [
@@ -244,13 +251,14 @@
         "mix",
         "poster",
         "zahl"
-      ]
+      ],
+      "_pausiert": "Josef, 28.09.2026: „deine fullrep posts sind größtenteils müll.. du schreibst da irgendwelche stichwörter hin und das sieht billig aus. mach lieber posts, wo übungen gezeigt werden.\" FullRep zeigt seitdem nur noch Übungen (uebung-bewegt + uebung-schritte)."
     },
     {
       "id": "naehrstoff",
       "medium": "bild",
       "format": "naehrstoff",
-      "status": "vorhanden",
+      "status": "pausiert",
       "haken": "Ein Mikronaehrstoff aus nutritionKnowledge.js — was er tut, worin er steckt. Ohne Dosierung, ohne Heilversprechen",
       "schluessel": "wissensthema",
       "sprachen": [
@@ -261,7 +269,8 @@
         "mix",
         "poster",
         "zahl"
-      ]
+      ],
+      "_pausiert": "Josef, 28.09.2026: „deine fullrep posts sind größtenteils müll.. du schreibst da irgendwelche stichwörter hin und das sieht billig aus. mach lieber posts, wo übungen gezeigt werden.\" FullRep zeigt seitdem nur noch Übungen (uebung-bewegt + uebung-schritte)."
     },
     {
       "id": "erfolg",
@@ -279,26 +288,28 @@
       "id": "app-schau",
       "medium": "bild",
       "format": "app-schau",
-      "status": "vorhanden",
+      "status": "pausiert",
       "haken": "Die App selbst: Schlagzeile, drei echte Store-Screenshots gefaechert, darunter drei gezaehlte Zahlen. Der EINZIGE Winkel, der zeigt, worum es ueberhaupt geht — alle anderen zeigen einen Inhalt DARAUS (Josef, 20.09.2026). Vier Aufzuege, ueber 400 Seeds gleich verteilt gemessen (101/101/107/91). Einer davon zeigt Training, Ernaehrung und Bibliothek nebeneinander. Die Zahlen kommen aus bestandszahlen(), nie von Hand: 248 Uebungen, 25 Rezepte, 21 Programme, 24 Wissensthemen, 20 Peptide.",
       "schluessel": "bildschirm",
       "sprachen": [
         "de",
         "en"
-      ]
+      ],
+      "_pausiert": "Josef, 28.09.2026: „deine fullrep posts sind größtenteils müll.. du schreibst da irgendwelche stichwörter hin und das sieht billig aus. mach lieber posts, wo übungen gezeigt werden.\" FullRep zeigt seitdem nur noch Übungen (uebung-bewegt + uebung-schritte)."
     },
     {
       "id": "app-schau-reel",
       "medium": "reel",
       "format": "app-schau",
-      "status": "vorhanden",
+      "status": "pausiert",
       "haken": "Dieselbe App-Schau als Reel, 1080x1920, 12 s, mit Musikbett. Josef am 20.09.2026: jeden Post einmal als Bild und einmal als Reel. Der Generator liegt in wellapps-social und holt Texte, Bildschirme und Farben mit --schau-json vom BILDgenerator der App — Bild und Reel koennen deshalb nicht auseinanderlaufen. Gleicher Seed = gleicher Aufzug.",
       "schluessel": "bildschirm",
       "sprachen": [
         "de",
         "en"
       ],
-      "wieWinkel": "app-schau"
+      "wieWinkel": "app-schau",
+      "_pausiert": "Josef, 28.09.2026: „deine fullrep posts sind größtenteils müll.. du schreibst da irgendwelche stichwörter hin und das sieht billig aus. mach lieber posts, wo übungen gezeigt werden.\" FullRep zeigt seitdem nur noch Übungen (uebung-bewegt + uebung-schritte)."
     },
     {
       "id": "uebung-bewegt",
@@ -307,6 +318,17 @@
       "status": "vorhanden",
       "haken": "Übung in Bewegung: eine der lizenzierten 3D-Übungsanimationen (Vital Animations, public/exercise-demos-anim/) groß im Bild, dazu Muskelgruppe, Gerät und Beschreibung aus der App. Kein KI-Bild, keine echte Person. Josef am 24.09.2026: „Ja\".",
       "schluessel": "uebung-bewegt",
+      "sprachen": [
+        "de"
+      ]
+    },
+    {
+      "id": "uebung-schritte",
+      "medium": "bild",
+      "format": "uebung-schritte",
+      "status": "vorhanden",
+      "haken": "Eine Übung als Bild: Start- und Endposition aus der lizenzierten 3D-Animation (Vital Animations), darunter vier Ausführungsschritte aus reels-fremd/uebung-technik.json. Gegenstück zum Reel uebung-bewegt. Josef, 28.09.2026: „deine fullrep posts sind größtenteils müll.. du schreibst da irgendwelche stichwörter hin und das sieht billig aus. mach lieber posts, wo übungen gezeigt werden.\" FullRep zeigt seitdem nur noch Übungen (uebung-bewegt + uebung-schritte).",
+      "schluessel": "uebung-schritte",
       "sprachen": [
         "de"
       ]

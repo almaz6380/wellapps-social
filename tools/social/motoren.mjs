@@ -123,6 +123,8 @@ export const NEUE_FORMATE = {
   // Jungen"). Nur wenn apps.json eine Figur fuehrt, sonst faehrt nichts mit.
   'anigosha:richtig-falsch': { skript: 'anigosha-richtig-falsch.mjs', endung: '.mp4', figur: true },
   'fullrep:uebung-bewegt': { skript: 'fullrep-uebung-bewegt.mjs', endung: '.mp4' },
+  // Dieselbe Übung als Bild: Start/Endposition + vier Schritte (28.09.2026).
+  'fullrep:uebung-schritte': { skript: 'fullrep-uebung-schritte.mjs', endung: '.jpg' },
   'swaply:kein-drama': { skript: 'swaply-rueckfall-karussell.mjs', endung: '-1.jpg' },
 };
 
