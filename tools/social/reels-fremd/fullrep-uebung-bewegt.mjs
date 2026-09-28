@@ -195,7 +195,18 @@ window.setFrame = async (n) => {
   $('outro').style.opacity = String(op);
   $('outro').style.transform = 'scale(' + (1.04 - 0.04 * op) + ')';
 };
-document.fonts.ready.then(() => { window.__bereit = true; });
+document.fonts.ready.then(() => {
+  // ⚠ Der Name muss in EINE Zeile passen (28.09.2026: „Abduktoren-Maschine"
+  // brach um, die zweite Zeile verschwand hinter der Karte). Schrift so lange
+  // verkleinern, bis er einzeilig ist — nicht unter 64 px.
+  const n = $('name');
+  let groesse = 128;
+  n.style.whiteSpace = 'nowrap';
+  while (n.scrollWidth > n.clientWidth && groesse > 64) {
+    groesse -= 4; n.style.fontSize = groesse + 'px';
+  }
+  window.__bereit = true;
+});
 </script></body></html>`;
 }
 
