@@ -31,8 +31,12 @@ on:
   # ⚠ Der Zeitplan ist in diesem Repo erst SCHARF, wenn die Repository-Variable
   # SOCIAL_ZEITPLAN auf `an` steht — siehe Job „schalter". Bis dahin tut ein
   # geplanter Lauf nichts (und wird nicht rot).
-  schedule:
-    - cron: '0 5 * * *'
+  #
+  # ⚠⚠ KEIN ZEITPLAN MEHR (Josef, 28.09.2026): „Ok dann will ich dass du
+  # künftig nichts automatisch ins postfach oder in die entwürfeapp postest."
+  # Der Tageslauf laeuft nur noch VON HAND (workflow_dispatch) und nur auf
+  # Josefs ausdrueckliches Wort im Chat. Nicht wieder einschalten, auch nicht
+  # ueber SOCIAL_ZEITPLAN, ohne dass er es verlangt.
   workflow_dispatch:
     inputs:
       apps:

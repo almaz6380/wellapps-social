@@ -1,5 +1,22 @@
 # CLAUDE.md — WELLapps Social (Social-Automatik für fünf Apps)
 
+## ⚠⚠ Seit 28.09.2026: NICHTS mehr automatisch
+
+Josef: „Ok dann will ich dass du künftig nichts automatisch ins postfach oder in die
+entwürfeapp postest." Deshalb gilt:
+
+- **Kein Zeitplan.** Der `schedule:` in `social-tageslauf.yml` ist entfernt. Der
+  Tageslauf startet nur noch von Hand.
+- **Kein Lauf ohne sein ausdrückliches Wort.** Ein Tageslauf, Nachlauf oder
+  Nachschicken, das in den TikTok-Posteingang oder in die Freigabe-App schreibt,
+  startet nur, wenn Josef im Chat genau das verlangt. Kein eigenmächtiger Ersatz
+  nach einem Ablehnen, kein „ich schicke das mal nach". Vorschauen im Chat
+  (lokal gerendert, per SendUserFile) sind der Weg, etwas zu zeigen.
+- Der Lesezeitplan `social-tiktok-stand.yml` (18:00 UTC) bleibt. Er fragt nur
+  TikTok nach dem Stand und legt nichts ab.
+- Den TikTok-Posteingang kann keine Schnittstelle leeren. Löschen geht nur in der
+  TikTok-App.
+
 ## In einem Satz
 
 Die Automatik erzeugt jeden Morgen für alle fünf Apps (Anigosha, Mahjong Royale,
