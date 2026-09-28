@@ -2411,6 +2411,24 @@
       "schluessel": "kategorie",
       "inhalt": "seed55393",
       "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-28",
+      "winkel": "uebung-bewegt",
+      "medium": "reel",
+      "schluessel": "uebung-bewegt",
+      "inhalt": "seed68658",
+      "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-28",
+      "winkel": "uebung-schritte",
+      "medium": "bild",
+      "schluessel": "uebung-schritte",
+      "inhalt": "seed49833",
+      "sprache": "de"
     }
   ]
 }
