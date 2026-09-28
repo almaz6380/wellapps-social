@@ -205,6 +205,69 @@ console.log('\n7. CDN zeigt nach dem Schreiben noch den alten Stand');
   pruefe('erkannt am MD5 der eigenen Fassung', r.liste._md5 === md5(JSON.stringify(s.get())), r.liste._md5);
 }
 
+// --- 8. Nachlesen ueber die Adresse, nicht ueber list() ----------------------
+//
+// ⚠ Das ist die Probe auf den Fix vom 28.09.2026. Vorher lief JEDE Nachlesung
+// ueber `merklistenLesen` und damit ueber ein `list()` — eine Advanced
+// Operation. Bei bis zu 22 Nachlesungen je Versuch und drei Versuchen sind das
+// bis zu 69 fuer EINE Aenderung; der Hobby-Tarif hat 2.000 im MONAT. Am
+// 28.09. stand das Konto bei 2.800, und Vercel hat den gesamten Account
+// pausiert — Freigabe-Seite, Einnahmen, App-Dashboard, alles offline.
+//
+// Jetzt gilt: Sobald `ablegen` eine Adresse zurueckgibt, laeuft das Nachlesen
+// ueber das CDN. `lesen` darf danach KEIN einziges Mal mehr drankommen.
+console.log('\n8. Nachlesen laeuft ueber die Adresse statt ueber list()');
+{
+  const s = speicher(startListe());
+  const ADRESSE = 'https://blob.example/social/d/freigabe-mahjong.json';
+  const alt = await s.lesen();
+  let lesenAufrufe = 0;
+  let geschrieben = 0;
+  let abrufe = 0;
+
+  const lesenZaehlen = async () => { lesenAufrufe += 1; return s.lesen(); };
+  const ablegenMitAdresse = async (l) => { geschrieben += 1; return { ...(await s.ablegen(l)), url: ADRESSE }; };
+
+  // Das CDN haelt die ersten drei Abrufe den alten Stand — wie in echt.
+  const echtesFetch = globalThis.fetch;
+  globalThis.fetch = async (u) => {
+    if (!String(u).startsWith(ADRESSE)) throw new Error(`unerwartete Adresse: ${u}`);
+    abrufe += 1;
+    const { _md5, ...altOhne } = alt;
+    return { ok: true, text: async () => JSON.stringify(abrufe <= 3 ? altOhne : s.get()) };
+  };
+
+  try {
+    const r = await merklisteAendern({
+      datum: 'd', appSchluessel: 'mahjong', aendern: fbAendern, drin: fbDrin,
+      lesen: lesenZaehlen, ablegen: ablegenMitAdresse, pauseMs: 0, nachlesenTakt: 0,
+    });
+    pruefe('genau EIN Schreibvorgang', geschrieben === 1, `geschrieben=${geschrieben}`);
+    pruefe('lesen() nur EINMAL vorab — kein list() beim Nachlesen', lesenAufrufe === 1, `lesen()=${lesenAufrufe}`);
+    pruefe('stattdessen ueber das CDN nachgelesen', abrufe === 4, `abrufe=${abrufe}`);
+    pruefe('und der Vermerk steht', fbDrin(r.liste), JSON.stringify(r.liste.uebersicht[0].kanaele));
+  } finally {
+    globalThis.fetch = echtesFetch;
+  }
+}
+
+// --- 9. Ohne Adresse bleibt der alte Weg ------------------------------------
+//
+// Die Proben 1 bis 7 spritzen `lesen`/`ablegen` ohne Adresse ein. Das muss
+// weiter funktionieren, sonst waere der Fix eine verdeckte Verhaltensaenderung.
+console.log('\n9. Ohne Adresse faellt es auf den alten Weg zurueck');
+{
+  const s = speicher(startListe());
+  let lesenAufrufe = 0;
+  const lesenZaehlen = async () => { lesenAufrufe += 1; return s.lesen(); };
+  const r = await merklisteAendern({
+    datum: 'd', appSchluessel: 'mahjong', aendern: fbAendern, drin: fbDrin,
+    lesen: lesenZaehlen, ablegen: s.ablegen, pauseMs: 0, nachlesenTakt: 0,
+  });
+  pruefe('lesen() traegt das Nachlesen weiterhin', lesenAufrufe >= 2, `lesen()=${lesenAufrufe}`);
+  pruefe('und der Vermerk steht', fbDrin(r.liste), JSON.stringify(r.liste.uebersicht[0].kanaele));
+}
+
 console.log(`\n${gut} von ${gut + schlecht.length} Proben gruen.`);
 if (schlecht.length) {
   console.error('\n✗ Nicht bestanden:');
