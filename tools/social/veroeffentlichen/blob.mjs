@@ -35,19 +35,75 @@
 // additional usage. However, you will not be able to access Vercel Blob if
 // limits are exceeded."
 //
-// Verbrauch hier: acht Bilder taeglich zu je rund 150 kB, also etwa 36 MB im
-// Monat gegen 5 GB Freibetrag. Dazu werden die Bilder nach dem Posten wieder
-// geloescht (`del()` ist gratis). Der Freibetrag gilt geteilt ueber alle
-// Vercel-Dienste des Kontos — bei diesen Groessen ohne Belang.
+// ⚠ NICHT der Speicherplatz ist die Grenze, an die man stoesst (28.09.2026).
+// Hier stand: „acht Bilder taeglich zu je rund 150 kB, also etwa 36 MB im Monat
+// gegen 5 GB Freibetrag." Das stimmt und ist harmlos — und hat genau deshalb
+// verdeckt, was wirklich knapp ist. Am 28.09. stand das Konto bei 2.800 von
+// 2.000 ADVANCED OPERATIONS, und Vercel hat den gesamten Account pausiert:
+// Freigabe-Seite, Einnahmen, App-Dashboard, alles offline. Ursache war die
+// Nachlese-Schleife in merklisteAendern, die je Aenderung bis zu 69 `list()`
+// abfeuerte.
+//
+// Die Freibetraege, die wirklich zaehlen:
+//
+//   Advanced Operations   2.000/Monat   put(), copy(), list(), Store anlegen
+//   Simple Operations    10.000/Monat   head(), Cache-Fehltreffer beim Abruf
+//   Speicherplatz             1 GB      unkritisch bei acht Bildern am Tag
+//   del()                    gratis
+//
+// Wer hier etwas aendert, rechnet in OPERATIONEN, nicht in Megabyte. Ein
+// Beitrag darf ein put() fuer das Bild und eines fuer die Merkliste kosten —
+// mehr nicht. Jede Schleife um einen Blob-Aufruf ist verdaechtig.
+//
+// Die Bilder werden nach dem Posten wieder geloescht (`del()` ist gratis). Der
+// Freibetrag gilt geteilt ueber alle Vercel-Dienste des Kontos: Wer ihn hier
+// aufbraucht, schaltet auch jedes andere Projekt des Kontos ab.
 
 import { createHash } from 'node:crypto';
 import { createReadStream } from 'node:fs';
 import { basename } from 'node:path';
 
-import { put, del, list, head, BlobPreconditionFailedError } from '@vercel/blob';
+import { put as putRoh, del, list as listRoh, head, BlobPreconditionFailedError } from '@vercel/blob';
 
 /** MD5 als Hex — derselbe Wert, den das Blob-CDN als ETag ausliefert (gemessen 26.09.2026). */
 export const md5 = (text) => createHash('md5').update(text).digest('hex');
+
+// --- Reissleine gegen Kontingent-Ausreisser (28.09.2026) ---------------------
+//
+// ⚠ Warum. Der Fix an merklisteAendern nimmt die bekannte Verstaerkung heraus.
+// Er schuetzt aber nicht vor der NAECHSTEN Schleife, die jemand um einen
+// Blob-Aufruf legt — und bemerkt haette man die erst wieder an einem
+// abgeschalteten Account, drei Wochen spaeter.
+//
+// Also zaehlen wir mit. `put` und `list` sind Advanced Operations; jeder Aufruf
+// laeuft durch diese Huelle. Reisst ein einzelner Lauf die Obergrenze, bricht
+// er ab, statt das Monatskontingent leerzuraeumen.
+//
+// Die Grenze ist bewusst grosszuegig: Ein Tageslauf mit zehn Beitraegen kommt
+// auf rund 25 Operationen (Bild + Merkliste je Beitrag, ein paar Auflistungen).
+// 60 laesst Luft fuer Nachzuegler und Wiederholungen, faengt aber jede echte
+// Schleife.
+const GRENZE = Number(process.env.BLOB_GRENZE ?? 60);
+let verbraucht = 0;
+
+/** Wie viele Advanced Operations dieser Lauf bisher verbraucht hat. */
+export const operationenVerbraucht = () => verbraucht;
+
+function zaehlen(was) {
+  verbraucht += 1;
+  if (verbraucht > GRENZE) {
+    throw new Error(
+      `Blob-Reissleine: ${verbraucht} Advanced Operations in diesem Lauf (Grenze ${GRENZE}, `
+      + `zuletzt ${was}). Der Hobby-Tarif hat 2.000 im MONAT — bei diesem Tempo ist er in `
+      + 'Tagen leer und Vercel pausiert den gesamten Account. Vermutlich liegt ein Blob-Aufruf '
+      + 'in einer Schleife. Nicht die Grenze hochsetzen, sondern die Schleife suchen. '
+      + '(Notfalls BLOB_GRENZE setzen.)',
+    );
+  }
+}
+
+const put = (...a) => { zaehlen('put'); return putRoh(...a); };
+const list = (...a) => { zaehlen('list'); return listRoh(...a); };
 
 /**
  * Laedt eine Datei oeffentlich hoch und gibt ihre Adresse zurueck.
@@ -196,20 +252,36 @@ export async function merklisteAendern({
     if (!frisch) throw new Error(`Keine Merkliste fuer ${appSchluessel} am ${datum}.`);
     aendern(frisch);
     let geschrieben;
+    let adresse = frisch.url ?? null;
     try {
-      geschrieben = (await ablegen(frisch))?.md5;
+      const abgelegt = await ablegen(frisch);
+      geschrieben = abgelegt?.md5;
+      // Die Adresse aus dem Schreibvorgang ist die verlaesslichste: `put` gibt
+      // sie zurueck, und sie ist ueber alle Schreibvorgaenge dieselbe.
+      adresse = abgelegt?.url ?? adresse;
     } catch (e) {
       if (!istVorbedingungsFehler(e)) throw e;
       if (versuch < versuche) await new Promise((r) => setTimeout(r, pauseMs * versuch));
       continue;
     }
+    // ⚠ Nachgelesen wird ueber die ADRESSE, nicht ueber `lesen()` (28.09.2026).
+    // `lesen()` macht ein `list()`, und das ist eine Advanced Operation; diese
+    // Schleife laeuft bis zu 22-mal je Versuch. Genau das hat den Hobby-Tarif
+    // gesprengt und den ganzen Vercel-Account pausiert. Der Abruf ueber die
+    // CDN-Adresse liefert denselben Inhalt zum Nulltarif.
+    //
+    // Nur wenn keine Adresse bekannt ist — die Tests spritzen `lesen`/`ablegen`
+    // ein und liefern keine —, bleibt der alte Weg.
+    const nachlesenMit = adresse
+      ? () => merklisteLesenVonUrl({ url: adresse, pfad: frisch.pfad })
+      : lesen;
     // Nachlesen, bis entweder die EIGENE Fassung (gleicher MD5) oder eine mit
     // der eigenen Aenderung darin zu sehen ist. Alles andere kann ein alter
     // CDN-Stand sein — oder ein Lauf, der danach geschrieben hat. Unterscheiden
     // laesst sich das erst, wenn das CDN sicher nachgezogen hat; erst DANN
     // wird neu angewendet und geschrieben.
     for (let blick = 0; blick < nachlesen; blick++) {
-      const nachher = await lesen();
+      const nachher = await nachlesenMit();
       if (nachher && ((geschrieben && nachher._md5 === geschrieben) || drin(nachher))) {
         return { liste: nachher, versuche: versuch };
       }
@@ -272,7 +344,32 @@ export function istVorbedingungsFehler(e) {
     || /precondition/i.test(String(e?.message));
 }
 
-/** Alle Merklisten eines Tages, je App eine. */
+/**
+ * Eine EINZELNE Merkliste ueber ihre bekannte Adresse lesen — ohne `list()`.
+ *
+ * ⚠ Warum es das gibt (28.09.2026). `list()` ist eine Advanced Operation, und
+ * davon hat der Hobby-Tarif 2.000 im Monat. `merklisteAendern` las beim
+ * Nachlesen bis zu 22-mal je Versuch neu, dreimal — bis zu 69 Auflistungen
+ * fuer EINE Aenderung. Am 28.09. stand das Konto bei 2.800 von 2.000 und
+ * Vercel hat den GESAMTEN Account pausiert, samt Freigabe-Seite, Einnahmen
+ * und App-Dashboard.
+ *
+ * Der Abruf ueber die CDN-Adresse liefert denselben Inhalt und kostet KEINE
+ * Advanced Operation (hoechstens eine Simple Operation bei einem
+ * Cache-Fehltreffer, davon gibt es 10.000). Die Adresse ist stabil, weil
+ * `merklisteAblegen` mit `addRandomSuffix: false` schreibt.
+ *
+ * Gibt `null` zurueck, wenn die Datei (noch) nicht abrufbar ist — der
+ * Aufrufer behandelt das wie einen alten CDN-Stand und liest erneut.
+ */
+export async function merklisteLesenVonUrl({ url, pfad = null }) {
+  const antwort = await fetch(`${url}?frisch=${Date.now()}`, { cache: 'no-store' });
+  if (!antwort.ok) return null;
+  const text = await antwort.text();
+  return { ...JSON.parse(text), _md5: md5(text), url, ...(pfad ? { pfad } : {}) };
+}
+
+/** Alle Merklisten eines Tages, je App eine. Kostet EINE Advanced Operation (`list`). */
 export async function merklistenLesen({ datum, token }) {
   const { blobs } = await list({ prefix: `social/${datum}/freigabe-`, token });
   const raus = [];
@@ -290,7 +387,8 @@ export async function merklistenLesen({ datum, token }) {
     if (!antwort.ok) continue;
     const text = await antwort.text();
     const liste = { ...JSON.parse(text), _md5: md5(text) };
-    raus.push({ ...liste, pfad: b.pathname });
+    // `url` mitgeben, damit merklisteAendern beim Nachlesen ohne `list()` auskommt.
+    raus.push({ ...liste, pfad: b.pathname, url: b.url });
   }
   return raus;
 }
