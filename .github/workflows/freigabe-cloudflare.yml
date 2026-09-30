@@ -43,6 +43,28 @@ jobs:
         with:
           node-version: 22
 
+      # Beim Einfuegen ins GitHub-Secret rutscht leicht mehr mit als der Token
+      # (zweite Zeile, "Bearer ", der Pruefbefehl von Cloudflare). wrangler bricht
+      # dann mit "invalid header value" ab, ohne zu sagen, woran es liegt. Also
+      # den Token herausziehen: die erste Zeile, die wie ein Token aussieht.
+      - name: Zugang pruefen
+        run: |
+          token=$(printf '%s\n' "$CLOUDFLARE_API_TOKEN" | sed -E 's/^[[:space:]]*(Bearer[[:space:]]+)?//; s/[[:space:]]+$//' \
+            | grep -E -m1 '^[A-Za-z0-9_-]{30,}$' || true)
+          konto=$(printf '%s' "$CLOUDFLARE_ACCOUNT_ID" | grep -Eo '[0-9a-f]{32}' | head -1 || true)
+          if [ -z "$token" ]; then
+            echo "::error::CLOUDFLARE_API_TOKEN enthaelt keinen Token. Im GitHub-Secret nur die Zeichenkette von Cloudflare eintragen."
+            exit 1
+          fi
+          if [ -z "$konto" ]; then
+            echo "::error::CLOUDFLARE_ACCOUNT_ID enthaelt keine Account-ID (32 Zeichen, 0-9 und a-f)."
+            exit 1
+          fi
+          echo "::add-mask::$token"
+          echo "CLOUDFLARE_API_TOKEN=$token" >> "$GITHUB_ENV"
+          echo "CLOUDFLARE_ACCOUNT_ID=$konto" >> "$GITHUB_ENV"
+          [ "$token" = "$CLOUDFLARE_API_TOKEN" ] || echo "::warning::Im Secret CLOUDFLARE_API_TOKEN stand mehr als der Token - bereinigt. Bei Gelegenheit nur den Token eintragen."
+
       - name: Veroeffentlichen
         run: npx --yes wrangler@4 deploy
 
