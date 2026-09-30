@@ -1,0 +1,82 @@
+name: Freigabe veroeffentlichen (Cloudflare)
+
+# Die Freigabe laeuft seit dem 30.09.2026 als Cloudflare Worker
+# (freigabe-app/worker/index.js) statt als Vercel-Projekt "wellapps-freigabe".
+# Vercel hatte den ganzen Account pausiert, weil der Blob-Speicher dieser App sein
+# Kontingent gesprengt hatte. Workers Free kostet nichts und braucht keine Karte.
+#
+# Der Worker ist zugleich der Speicher (Bilder in KV, Merklisten in D1), den
+# tools/social/veroeffentlichen/blob.mjs anspricht.
+#
+# GitHub-Secrets:
+#   CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID   zum Veroeffentlichen
+#   BLOB_TOKEN              gemeinsames Geheimnis Worker <-> Werkzeuge (Zufallstext)
+#   FREIGABE_PASSWORT       Passwort der Freigabe-Seite
+#   FREIGABE_PRUEFER_PASSWORT  optional, TikTok-Pruefzugang
+#   FREIGABE_GITHUB_TOKEN   Fine-grained Token, Actions: Read and write auf dieses
+#                           Repository - damit startet die Seite die Workflows.
+#                           (Der Worker kennt ihn als GITHUB_TOKEN; GitHub erlaubt
+#                           keine eigenen Secrets mit dem Praefix GITHUB_.)
+
+on:
+  push:
+    branches: [main]
+    paths: ['freigabe-app/**', '.github/workflows/freigabe-cloudflare.yml']
+  workflow_dispatch:
+
+concurrency:
+  group: freigabe-cloudflare
+  cancel-in-progress: false
+
+jobs:
+  veroeffentlichen:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: freigabe-app
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Veroeffentlichen
+        run: npx --yes wrangler@4 deploy
+
+      # Nur gesetzte Secrets uebertragen: Ein leeres GitHub-Secret soll einen
+      # vorhandenen Wert bei Cloudflare nicht ueberschreiben.
+      - name: Schluessel uebertragen
+        env:
+          BLOB_TOKEN: ${{ secrets.BLOB_TOKEN }}
+          FREIGABE_PASSWORT: ${{ secrets.FREIGABE_PASSWORT }}
+          FREIGABE_PRUEFER_PASSWORT: ${{ secrets.FREIGABE_PRUEFER_PASSWORT }}
+          GITHUB_TOKEN: ${{ secrets.FREIGABE_GITHUB_TOKEN }}
+        run: |
+          node -e '
+            const namen = ["BLOB_TOKEN", "FREIGABE_PASSWORT", "FREIGABE_PRUEFER_PASSWORT", "GITHUB_TOKEN"];
+            const werte = Object.fromEntries(namen.filter((n) => process.env[n]).map((n) => [n, process.env[n]]));
+            require("fs").writeFileSync(process.env.RUNNER_TEMP + "/secrets.json", JSON.stringify(werte));
+            console.log("Uebertrage:", Object.keys(werte).join(", ") || "(nichts)");
+          '
+          if [ "$(cat "$RUNNER_TEMP/secrets.json")" != "{}" ]; then
+            npx --yes wrangler@4 secret bulk "$RUNNER_TEMP/secrets.json"
+          fi
+          rm -f "$RUNNER_TEMP/secrets.json"
+
+      - name: Gegenprobe
+        run: |
+          url="https://freigabe.almaz6380.workers.dev"
+          for i in $(seq 1 12); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "$url/" || true)
+            [ "$code" = 200 ] && break
+            sleep 10
+          done
+          echo "Seite: $code"
+          tiktok=$(curl -s -o /dev/null -w '%{http_code}' "$url/tiktok7dD2RlgMJAC4zRF0UFz6SM4CWGySc5S1.txt")
+          quelle=$(curl -s -o /dev/null -w '%{http_code}' "$url/wrangler.toml")
+          echo "TikTok-Signatur: $tiktok, Quelltext (soll 404): $quelle"
+          echo "## Freigabe veroeffentlicht: $url" >> "$GITHUB_STEP_SUMMARY"
+          [ "$code" = 200 ] && [ "$tiktok" = 200 ] && [ "$quelle" != 200 ]

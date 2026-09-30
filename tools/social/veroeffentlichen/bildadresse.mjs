@@ -11,8 +11,14 @@
 // Bilder weiter direkt aus dem Blob-Speicher; ihnen ist der Host gleich, und
 // ein Umweg waere eine Fehlerquelle ohne Gegenwert.
 
-export const BLOB_HOST = 'nz4nl23onpx9rppi.public.blob.vercel-storage.com';
-export const DURCHREICHE = 'https://wellapps-freigabe.vercel.app/api/bild';
+//
+// ⚠ Seit 30.09.2026 liegt der Speicher im Freigabe-Worker auf Cloudflare
+// (freigabe-app/worker/index.js), und die Durchreiche ist dort eine eigene Route.
+// Bild und Durchreiche teilen sich damit die Domain; im TikTok-Entwicklerportal
+// muss `freigabe.almaz6380.workers.dev` als verifizierte Domain eingetragen sein
+// (Signaturdateien liegen weiter im Wurzelverzeichnis von freigabe-app/).
+export const BLOB_HOST = 'freigabe.almaz6380.workers.dev';
+export const DURCHREICHE = 'https://freigabe.almaz6380.workers.dev/api/bild';
 
 /**
  * @param {string} url  die oeffentliche Blob-Adresse eines Bildes

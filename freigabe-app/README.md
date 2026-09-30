@@ -1,5 +1,15 @@
 # Freigabe-Seite
 
+⚠ **Seit 30.09.2026 läuft die Freigabe als Cloudflare Worker**, nicht mehr auf
+Vercel: **https://freigabe.almaz6380.workers.dev**. Vercel hatte den ganzen
+Account pausiert, weil der Blob-Speicher dieser App sein Kontingent gesprengt
+hatte. Der Worker (`worker/index.js`) ist zugleich Seite, API und Speicher:
+Bilder in Workers KV, Merklisten und Sperren in D1 — kostenlos, ohne Karte.
+Veröffentlicht wird per Workflow `freigabe-cloudflare.yml` bei jedem Push auf
+`main`, der `freigabe-app/` betrifft. Die Secrets stehen oben in dem Workflow.
+`api/` bleibt unverändert und wird vom Worker eingebunden; der Rest dieser Datei
+beschreibt die Vercel-Zeit und gilt nur noch für den Rückweg.
+
 ⚠ **Das Vercel-Projekt `wellapps-freigabe` hängt seit 17.09.2026 an DIESEM Repo**
 (vorher `almaz6380/anigosha`). Root Directory bleibt `freigabe-app`.
 

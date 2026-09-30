@@ -59,51 +59,88 @@
 // Freibetrag gilt geteilt ueber alle Vercel-Dienste des Kontos: Wer ihn hier
 // aufbraucht, schaltet auch jedes andere Projekt des Kontos ab.
 
-import { createHash } from 'node:crypto';
-import { createReadStream } from 'node:fs';
-import { basename } from 'node:path';
+// --- Seit 30.09.2026: eigener Speicher auf Cloudflare statt Vercel Blob ------
+//
+// Vercel hat den ganzen Account pausiert, weil DIESER Speicher sein Kontingent
+// gesprengt hatte (siehe oben). Die Dateien liegen jetzt im Freigabe-Worker
+// (freigabe-app/worker/index.js): Bilder und Videos in Workers KV, Merklisten und
+// Sperren in D1. Beides kostenlos, ohne Kreditkarte, und eine Ueberschreitung
+// sperrt dort nur den einzelnen Aufruf, nie das Konto.
+//
+// Die Schnittstelle dieser Datei ist gleich geblieben - kein Aufrufer musste sich
+// aendern. `token` ist jetzt das gemeinsame Geheimnis mit dem Worker (weiterhin
+// das GitHub-Secret BLOB_TOKEN, nur mit neuem Wert).
+//
+// Was sich dadurch verbessert: D1 ist sofort konsistent. Die Merkliste, die man
+// liest, ist die, die zuletzt geschrieben wurde - kein CDN, das eine Minute lang
+// den alten Stand zeigt. Die Nachlese-Schleife in merklisteAendern findet ihre
+// Aenderung deshalb beim ersten Blick, und `ifMatch` funktioniert wieder.
 
-import { put as putRoh, del, list as listRoh, head, BlobPreconditionFailedError } from '@vercel/blob';
+import { createHash, randomBytes } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { basename, extname } from 'node:path';
+
+/** Wo der Speicher liegt. Zum Testen gegen `wrangler dev` umstellbar. */
+export const SPEICHER = (process.env.SPEICHER_URL ?? 'https://freigabe.almaz6380.workers.dev').replace(/\/$/, '');
 
 /** MD5 als Hex — derselbe Wert, den das Blob-CDN als ETag ausliefert (gemessen 26.09.2026). */
 export const md5 = (text) => createHash('md5').update(text).digest('hex');
 
-// --- Reissleine gegen Kontingent-Ausreisser (28.09.2026) ---------------------
+// --- Reissleine gegen Ausreisser (28.09.2026, angepasst 30.09.2026) ----------
 //
-// ⚠ Warum. Der Fix an merklisteAendern nimmt die bekannte Verstaerkung heraus.
-// Er schuetzt aber nicht vor der NAECHSTEN Schleife, die jemand um einen
-// Blob-Aufruf legt — und bemerkt haette man die erst wieder an einem
-// abgeschalteten Account, drei Wochen spaeter.
+// ⚠ Warum. Auf Vercel hat eine Schleife um einen Speicheraufruf den ganzen
+// Account abgeschaltet. Workers KV erlaubt im Free-Tarif 1.000 Schreibvorgaenge
+// am Tag; ueber der Grenze scheitert nur der einzelne Aufruf, aber eine Schleife
+// wuerde den Tag trotzdem leerraeumen. Also weiter mitzaehlen: Reisst ein Lauf
+// die Obergrenze, bricht er ab.
 //
-// Also zaehlen wir mit. `put` und `list` sind Advanced Operations; jeder Aufruf
-// laeuft durch diese Huelle. Reisst ein einzelner Lauf die Obergrenze, bricht
-// er ab, statt das Monatskontingent leerzuraeumen.
-//
-// Die Grenze ist bewusst grosszuegig: Ein Tageslauf mit zehn Beitraegen kommt
-// auf rund 25 Operationen (Bild + Merkliste je Beitrag, ein paar Auflistungen).
-// 60 laesst Luft fuer Nachzuegler und Wiederholungen, faengt aber jede echte
-// Schleife.
+// Ein Tageslauf mit zehn Beitraegen kommt auf rund 25 Schreibvorgaenge. 60 laesst
+// Luft fuer Nachzuegler und Wiederholungen, faengt aber jede echte Schleife.
 const GRENZE = Number(process.env.BLOB_GRENZE ?? 60);
 let verbraucht = 0;
 
-/** Wie viele Advanced Operations dieser Lauf bisher verbraucht hat. */
+/** Wie viele Schreibvorgaenge dieser Lauf bisher verbraucht hat. */
 export const operationenVerbraucht = () => verbraucht;
 
 function zaehlen(was) {
   verbraucht += 1;
   if (verbraucht > GRENZE) {
     throw new Error(
-      `Blob-Reissleine: ${verbraucht} Advanced Operations in diesem Lauf (Grenze ${GRENZE}, `
-      + `zuletzt ${was}). Der Hobby-Tarif hat 2.000 im MONAT — bei diesem Tempo ist er in `
-      + 'Tagen leer und Vercel pausiert den gesamten Account. Vermutlich liegt ein Blob-Aufruf '
-      + 'in einer Schleife. Nicht die Grenze hochsetzen, sondern die Schleife suchen. '
-      + '(Notfalls BLOB_GRENZE setzen.)',
+      `Speicher-Reissleine: ${verbraucht} Schreibvorgaenge in diesem Lauf (Grenze ${GRENZE}, `
+      + `zuletzt ${was}). Vermutlich liegt ein Speicheraufruf in einer Schleife. Nicht die `
+      + 'Grenze hochsetzen, sondern die Schleife suchen. (Notfalls BLOB_GRENZE setzen.)',
     );
   }
 }
 
-const put = (...a) => { zaehlen('put'); return putRoh(...a); };
-const list = (...a) => { zaehlen('list'); return listRoh(...a); };
+class SpeicherFehler extends Error {}
+/** Gleicher Name wie beim Vercel-SDK, damit istVorbedingungsFehler ihn erkennt. */
+class BlobPreconditionFailedError extends Error {
+  constructor(m) { super(m); this.name = 'BlobPreconditionFailedError'; }
+}
+
+async function speicher(pfad, { methode = 'GET', token, body, typ, kopf = {} } = {}) {
+  if (!token) throw new SpeicherFehler('BLOB_TOKEN fehlt - ohne ihn nimmt der Speicher nichts an.');
+  if (methode === 'PUT') zaehlen(`PUT ${pfad}`);
+  return fetch(`${SPEICHER}/${pfad}`, {
+    method: methode,
+    headers: { authorization: `Bearer ${token}`, ...(typ ? { 'content-type': typ } : {}), ...kopf },
+    body,
+  });
+}
+
+async function fehlerText(antwort) {
+  return `${antwort.status} ${(await antwort.text().catch(() => '')).slice(0, 200)}`;
+}
+
+const TYPEN = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp', '.mp4': 'video/mp4', '.mov': 'video/quicktime', '.json': 'application/json', '.txt': 'text/plain' };
+
+/** Aus einer oeffentlichen Adresse des Speichers den Pfad darin machen. */
+function pfadAus(url) {
+  const u = new URL(url);
+  if (u.origin !== new URL(SPEICHER).origin) throw new SpeicherFehler(`Fremde Adresse: ${u.origin}`);
+  return decodeURIComponent(u.pathname.slice(1));
+}
 
 /**
  * Laedt eine Datei oeffentlich hoch und gibt ihre Adresse zurueck.
@@ -118,37 +155,20 @@ export async function hochladen({ datei, token, praefix, trocken }) {
   const pfad = `${praefix}/${basename(datei)}`;
   if (trocken) return { trocken: true, pfad };
 
-  // ⚠ addRandomSuffix seit 10.09.2026 AN. Vorher war der Pfad vorhersagbar
-  // (`social/<datum>/<dateiname>`) — wer die Kennung des Speichers kannte,
-  // konnte sich jede Adresse zusammenreimen.
-  //
-  // Ein Passwort ist hier keine Option und wird auch nie eine: Instagram holt
-  // die Datei SELBST ab, als anonymer Besucher („We will cURL your image using
-  // the passed in URL so it must be on a public server"). Jede Sperre traefe
-  // also Instagram. Unerratbar ist damit die Obergrenze des Machbaren.
-  //
-  // Die alte Begruendung gegen den Anhang („damit `aufraeumen` den Pfad
-  // wiederfindet") war falsch: `aufraeumen` bekommt die fertige URL aus der
-  // Merkliste, es baut nie einen Pfad zusammen.
-  //
-  // ⚠ Nebenwirkung: Ein zweiter Lauf ueberschreibt die Datei nicht mehr,
-  // sondern legt eine zweite daneben. Weggeraeumt wird die, die in der
-  // Merkliste steht; eine verwaiste kostet ein paar Kilobyte. `allowOverwrite`
-  // bleibt trotzdem stehen — es schadet nicht und faengt den Fall ab, falls
-  // der Anhang einmal ausbleibt.
-  //
-  // Als Strom, nicht als Puffer: Ein Reel sind vier Megabyte, und die muessen
-  // nicht erst vollstaendig in den Speicher.
-  const { url, pathname } = await put(pfad, createReadStream(datei), {
-    access: 'public',
-    token,
-    allowOverwrite: true,
-    addRandomSuffix: true,
+  // ⚠ Zufallsanhang wie vorher bei Vercel (`addRandomSuffix`, seit 10.09.2026):
+  // Die Adresse ist oeffentlich, weil Instagram sie als anonymer Besucher abholt.
+  // Ein Passwort geht also nicht - unerratbar ist die Obergrenze des Machbaren.
+  // Nebenwirkung wie gehabt: Ein zweiter Lauf legt eine zweite Datei daneben;
+  // weggeraeumt wird die, die in der Merkliste steht.
+  const endung = extname(datei);
+  const ziel = `${praefix}/${basename(datei, endung)}-${randomBytes(15).toString('base64url')}${endung}`;
+  // Als Puffer: Ein Reel sind rund vier Megabyte, KV nimmt bis 25 MB.
+  const antwort = await speicher(ziel, {
+    methode: 'PUT', token, body: readFileSync(datei), typ: TYPEN[endung.toLowerCase()] ?? 'application/octet-stream',
   });
-  // ⚠ `pathname` aus der Antwort, nicht der Pfad von oben: Seit dem Anhang
-  // unterscheiden sich die beiden. Wer den angefragten zurueckgibt, meldet
-  // einen Ort, an dem nichts liegt.
-  return { url, pfad: pathname ?? pfad };
+  if (!antwort.ok) throw new SpeicherFehler(`Hochladen ${ziel}: ${await fehlerText(antwort)}`);
+  const { url } = await antwort.json();
+  return { url, pfad: ziel };
 }
 
 /**
@@ -184,19 +204,13 @@ export async function merklisteAblegen({ datum, appSchluessel, eintraege, uebers
   // unveraendert ist. Sonst wirft `put` BlobPreconditionFailedError, und
   // merklisteAendern liest neu. Ohne das gewann, wer zuletzt schrieb.
   const text = JSON.stringify(inhalt, null, 2);
-  const { url } = await put(pfad, text, {
-    access: 'public',
-    token,
-    allowOverwrite: true,
-    addRandomSuffix: false,
-    contentType: 'application/json',
-    ...(ifMatch ? { ifMatch } : {}),
-    // ⚠ Hoechstens eine Minute im CDN (26.09.2026). Vorgabe sind 30 Tage;
-    // beim Ueberschreiben wird zwar geleert, aber das zog bis zu einer Minute
-    // nach — die Freigabe-Seite zeigte „nichts geaendert", Josef tippte
-    // nochmal. 60 s ist das Minimum, das Vercel annimmt.
-    cacheControlMaxAge: 60,
+  const antwort = await speicher(pfad, {
+    methode: 'PUT', token, body: text, typ: 'application/json',
+    kopf: ifMatch ? { 'if-match': `"${ifMatch}"` } : {},
   });
+  if (antwort.status === 412) throw new BlobPreconditionFailedError(`Merkliste ${pfad}: Vorbedingung verletzt.`);
+  if (!antwort.ok) throw new SpeicherFehler(`Merkliste ${pfad}: ${await fehlerText(antwort)}`);
+  const { url } = await antwort.json();
   // `md5` = woran merklisteAendern die eigene Fassung beim Nachlesen erkennt.
   return { url, pfad, md5: md5(text) };
 }
@@ -232,13 +246,10 @@ export async function merklisteAendern({
   ablegen = (l) => merklisteAblegen({
     datum, appSchluessel, name: l.name, eintraege: l.eintraege,
     uebersicht: l.uebersicht, tiktok: l.tiktok, token,
-    // ⚠ KEIN `ifMatch` (26.09.2026, gemessen): Der ETag, den man von einer
-    // OEFFENTLICHEN Merkliste lesen kann, stammt vom CDN (MD5 des Inhalts);
-    // die Speicher-API fuehrt einen anderen. Mit dem CDN-Wert lehnte `put`
-    // jeden Schreibversuch als „Vorbedingung verletzt" ab, obwohl niemand
-    // dazwischen schrieb (Ablehnen-Lauf 36259433347: 4 von 4 abgelehnt).
-    // `get(..., { useCache: false })` hilft nicht — es wirkt nur bei privaten
-    // Blobs.
+    // `ifMatch` wieder an (30.09.2026): Auf Vercel lieferte das CDN einen anderen
+    // ETag als die Speicher-API, jeder Schreibversuch scheiterte. Der eigene
+    // Speicher prueft gegen den MD5 genau des Inhalts, den `lesen` geliefert hat.
+    ifMatch: l._md5,
   }),
   versuche = 3, pauseMs = 1500,
   // ⚠ Das CDN zeigt nach dem Schreiben noch bis zu einer Minute den ALTEN
@@ -303,8 +314,9 @@ export async function merklisteAendern({
  * und vermerkt hatte.
  *
  * Jetzt legt jeder Lauf VOR dem Posten eine Sperrdatei an, mit
- * `allowOverwrite: false` — der Speicher nimmt sie genau einmal an. Ob sie
- * schon da ist, entscheidet `head()` an der Speicher-API, nicht am CDN.
+ * „nur anlegen, wenn neu“ — der Speicher nimmt sie genau einmal an (seit
+ * 30.09.2026 D1 mit INSERT … ON CONFLICT DO NOTHING, vorher Vercels
+ * `allowOverwrite: false`).
  * Gibt `false` zurueck, wenn schon ein Lauf fuer diesen Kanal und diese Datei
  * gepostet hat (oder gerade postet). Scheitert das Posten, gibt
  * `sperreLoesen` sie wieder frei, damit ein neuer Versuch moeglich ist.
@@ -315,28 +327,23 @@ export function sperrPfad({ datum, kanal, datei }) {
 
 export async function sperreSetzen({ datum, kanal, datei, token, lauf = null }) {
   const pfad = sperrPfad({ datum, kanal, datei });
-  try {
-    await put(pfad, JSON.stringify({ kanal, datei, wann: new Date().toISOString(), lauf }), {
-      access: 'public', token, allowOverwrite: false, addRandomSuffix: false,
-      contentType: 'application/json',
-    });
-    return true;
-  } catch (e) {
-    // Welcher Fehler „gibt es schon" bedeutet, sagt das SDK nicht verlaesslich —
-    // also nachsehen. Existiert die Datei, ist die Sperre belegt; sonst war es
-    // ein anderer Fehler, und dann wird NICHT blind gepostet.
-    const da = await head(pfad, { token }).then(() => true, () => false);
-    if (da) return false;
-    throw new Error(`Sperre ${pfad} nicht setzbar — ${e.message}`);
-  }
+  // `?nurNeu=1`: D1 legt die Zeile genau einmal an (INSERT ... ON CONFLICT DO
+  // NOTHING). 201 = diese Sperre gehoert uns, 409 = ein anderer Lauf war schneller.
+  const antwort = await fetch(`${SPEICHER}/${pfad}?nurNeu=1`, {
+    method: 'PUT',
+    headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+    body: JSON.stringify({ kanal, datei, wann: new Date().toISOString(), lauf }),
+  });
+  zaehlen(`Sperre ${pfad}`);
+  if (antwort.status === 201) return true;
+  if (antwort.status === 409) return false;
+  // Jeder andere Ausgang: NICHT blind posten.
+  throw new Error(`Sperre ${pfad} nicht setzbar - ${await fehlerText(antwort)}`);
 }
 
 export async function sperreLoesen({ datum, kanal, datei, token }) {
   const pfad = sperrPfad({ datum, kanal, datei });
-  try {
-    const h = await head(pfad, { token });
-    await del(h.url, { token });
-  } catch { /* schon weg */ }
+  try { await speicher(pfad, { methode: 'DELETE', token }); } catch { /* schon weg */ }
 }
 
 export function istVorbedingungsFehler(e) {
@@ -369,26 +376,19 @@ export async function merklisteLesenVonUrl({ url, pfad = null }) {
   return { ...JSON.parse(text), _md5: md5(text), url, ...(pfad ? { pfad } : {}) };
 }
 
-/** Alle Merklisten eines Tages, je App eine. Kostet EINE Advanced Operation (`list`). */
+/** Alle Merklisten eines Tages, je App eine. */
 export async function merklistenLesen({ datum, token }) {
-  const { blobs } = await list({ prefix: `social/${datum}/freigabe-`, token });
+  const antwort = await fetch(`${SPEICHER}/api/speicher?praefix=${encodeURIComponent(`social/${datum}/freigabe-`)}`, {
+    headers: { authorization: `Bearer ${token}` },
+  });
+  if (!antwort.ok) throw new SpeicherFehler(`Merklisten ${datum}: ${await fehlerText(antwort)}`);
+  const { dateien } = await antwort.json();
   const raus = [];
-  for (const b of blobs) {
-    if (!b.pathname.endsWith('.json')) continue;
-    // ⚠ Gelesen wird ueber das CDN — einen anderen Weg gibt es fuer oeffentliche
-    // Blobs nicht (26.09.2026 geprueft): `?frisch=<Zeit>` aendert nichts
-    // (`x-vercel-cache: HIT, age: 56`), `?cache=0` gibt 400, und
-    // `get(..., { useCache: false })` umgeht den Cache nur bei privaten Blobs.
-    // Ein Stand kann also bis zu einer Minute alt sein. merklisteAendern
-    // rechnet damit: `_md5` (= der ETag des CDN) sagt ihm, ob es beim
-    // Nachlesen die eigene Fassung sieht. Das Feld wird nie mitgeschrieben —
-    // merklisteAblegen schreibt nur benannte Felder.
-    const antwort = await fetch(`${b.url}?frisch=${Date.now()}`, { cache: 'no-store' });
-    if (!antwort.ok) continue;
-    const text = await antwort.text();
-    const liste = { ...JSON.parse(text), _md5: md5(text) };
-    // `url` mitgeben, damit merklisteAendern beim Nachlesen ohne `list()` auskommt.
-    raus.push({ ...liste, pfad: b.pathname, url: b.url });
+  for (const d of dateien) {
+    if (!d.pfad.endsWith('.json')) continue;
+    // Direkt aus D1 - kein CDN dazwischen, der Stand ist der zuletzt geschriebene.
+    const liste = await merklisteLesenVonUrl({ url: d.url, pfad: d.pfad });
+    if (liste) raus.push(liste);
   }
   return raus;
 }
@@ -442,7 +442,10 @@ export async function aufraeumen({ url, urls, token }) {
   const ziele = [...new Set([...(urls ?? []), url].filter(Boolean))];
   if (!ziele.length) return false;
   try {
-    await del(ziele.length === 1 ? ziele[0] : ziele, { token });
+    for (const ziel of ziele) {
+      const antwort = await speicher(pfadAus(ziel), { methode: 'DELETE', token });
+      if (!antwort.ok && antwort.status !== 404) return false;
+    }
     return true;
   } catch {
     // Ein misslungenes Aufraeumen darf einen gelungenen Beitrag nicht zum

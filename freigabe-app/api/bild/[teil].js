@@ -53,8 +53,11 @@
 // Punkt, Strich, Unterstrich), taugt also als Trennzeichen. Und die Adresse
 // endet weiter auf `.jpg` — TikTok bekommt etwas, das wie ein Bild aussieht.
 
-// Der Blob-Speicher der Social-Automatik. Fest, s. o.
-const BLOB_HOST = 'nz4nl23onpx9rppi.public.blob.vercel-storage.com';
+// Der Speicher der Social-Automatik. Fest, s. o.
+// ⚠ Seit 30.09.2026 liegt er im Freigabe-Worker auf Cloudflare, und dort
+// beantwortet worker/index.js diese Route selbst. Diese Datei bleibt nur als
+// Rueckweg fuer Vercel liegen und zeigt deshalb ebenfalls auf den Worker.
+const BLOB_HOST = 'freigabe.almaz6380.workers.dev';
 // Der Ordner darin. Ebenfalls fest, damit aus der Anfrage nie ein anderer wird.
 const ORDNER = 'social';
 
