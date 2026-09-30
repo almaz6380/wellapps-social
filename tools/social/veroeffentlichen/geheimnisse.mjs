@@ -116,9 +116,10 @@ export function bedarf(kanal, appSchluessel) {
         name: 'BLOB_TOKEN',
         geteilt: true,
         zweck: 'Legt das Bild oeffentlich ab, damit Instagram es abholen kann',
-        holen: 'Vercel → Storage → Blob-Store anlegen → Reiter „.env.local" → Wert von '
-          + 'BLOB_READ_WRITE_TOKEN. Auf Hobby kostenlos; bei Ueberschreitung schaltet '
-          + 'Vercel ab, statt abzurechnen. Gilt fuer alle Apps zusammen.',
+        holen: 'Seit 30.09.2026 das gemeinsame Geheimnis mit dem Freigabe-Worker auf '
+          + 'Cloudflare (freigabe-app/worker/index.js), kein Vercel-Token mehr. Frei '
+          + 'gewaehlter Zufallstext, mindestens 16 Zeichen; derselbe Wert geht per '
+          + 'Workflow „Freigabe veroeffentlichen (Cloudflare)" an den Worker. Gilt fuer alle Apps zusammen.',
       },
     ];
   }

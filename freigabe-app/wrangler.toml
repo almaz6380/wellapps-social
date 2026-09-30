@@ -1,0 +1,26 @@
+# Freigabe als Cloudflare Worker (seit 30.09.2026, vorher Vercel-Projekt
+# "wellapps-freigabe"). Warum und wie: worker/index.js.
+name = "freigabe"
+main = "worker/index.js"
+compatibility_date = "2026-09-01"
+# node:crypto fuer api/freigabe.js (Passwortvergleich).
+compatibility_flags = ["nodejs_compat"]
+
+[assets]
+directory = "."
+binding = "ASSETS"
+# Seite, Icons und TikTok-Signaturdateien liefert Cloudflare direkt aus; nur API
+# und Speicher wecken den Worker.
+run_worker_first = ["/api/*", "/social/*"]
+
+# Bilder und Videos. Ohne id legt wrangler den Namensraum beim ersten Deploy an.
+[[kv_namespaces]]
+binding = "MEDIEN"
+
+# Merklisten und Sperren - hier braucht es "nur anlegen, wenn neu", das kann KV nicht.
+[[d1_databases]]
+binding = "DB"
+database_name = "freigabe"
+
+[observability]
+enabled = true

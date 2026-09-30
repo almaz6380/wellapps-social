@@ -1,0 +1,10 @@
+# Nicht oeffentlich ausliefern: Quelltext und Einstellungen.
+api
+worker
+node_modules
+wrangler.toml
+package.json
+README.md
+.assetsignore
+.wrangler
+.dev.vars
