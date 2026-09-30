@@ -97,7 +97,12 @@ jobs:
             sleep 10
           done
           echo "Seite: $code"
-          tiktok=$(curl -s -o /dev/null -w '%{http_code}' "$url/tiktok7dD2RlgMJAC4zRF0UFz6SM4CWGySc5S1.txt")
+          # Neue Dateien sind direkt nach dem Hochladen nicht ueberall sofort da.
+          for i in $(seq 1 12); do
+            tiktok=$(curl -s -o /dev/null -w '%{http_code}' "$url/tiktok7dD2RlgMJAC4zRF0UFz6SM4CWGySc5S1.txt" || true)
+            [ "$tiktok" = 200 ] && break
+            sleep 10
+          done
           quelle=$(curl -s -o /dev/null -w '%{http_code}' "$url/wrangler.toml")
           echo "TikTok-Signatur: $tiktok, Quelltext (soll 404): $quelle"
           echo "## Freigabe veroeffentlicht: $url" >> "$GITHUB_STEP_SUMMARY"
