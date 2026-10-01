@@ -64,11 +64,17 @@ async function lesen(env, pfad) {
       headers: { 'content-type': JSON_TYP, 'cache-control': 'no-store', etag: `"${await md5(zeile.inhalt)}"` },
     });
   }
-  const { value, metadata } = await env.MEDIEN.getWithMetadata(pfad, { type: 'stream' });
+  // ⚠ Als ArrayBuffer, nicht als Strom (01.10.2026): Ein Strom geht ohne
+  // Content-Length hinaus, und HEAD kennt die Groesse dann gar nicht. Vercel Blob
+  // lieferte sie, und Instagram/Facebook holen Bilder und Videos als anonymer
+  // Besucher ab. Ein Reel sind rund vier Megabyte - passt bequem in den Speicher
+  // des Workers.
+  const { value, metadata } = await env.MEDIEN.getWithMetadata(pfad, { type: 'arrayBuffer' });
   if (!value) return null;
   return new Response(value, {
     headers: {
       'content-type': metadata?.typ ?? 'application/octet-stream',
+      'content-length': String(value.byteLength),
       // Der Dateiname hat einen Zufallsanhang und wird nie ueberschrieben.
       'cache-control': 'public, max-age=31536000, immutable',
     },

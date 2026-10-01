@@ -49,12 +49,10 @@ try {
     pruefen(a.headers.get('content-type')?.startsWith(typ), `${typ}: Content-Type ${a.headers.get('content-type')}`);
     // Instagram und Facebook holen Videos ab und wollen die Laenge vorher wissen.
     const h = await fetch(url, { method: 'HEAD' });
-    // ⚠ Nur Hinweis, kein Fehler: Der Worker reicht KV als Strom durch, ohne
-    // Laengenangabe. Vercel Blob lieferte sie. Ob Instagram sie bei Videos
-    // verlangt, zeigt erst eine echte Freigabe.
-    const laenge = Number(h.headers.get('content-length'));
-    pruefen(h.ok, `${typ}: HEAD ${h.status}`);
-    console.log(`  ${laenge === statSync(datei).size ? '✓' : '⚠ Hinweis:'} Content-Length ${h.headers.get('content-length') ?? 'fehlt'}`);
+    // Instagram und Facebook holen die Datei als anonymer Besucher ab; ohne
+    // Laengenangabe war das ungetestet (Probe vom 01.10.: fehlte, seither behoben).
+    pruefen(h.ok && Number(h.headers.get('content-length')) === statSync(datei).size,
+      `${typ}: HEAD mit Content-Length ${h.headers.get('content-length') ?? 'fehlt'}`);
     // TikTok-Fotos laufen ueber die Durchreiche mit verifiziertem Prefix.
     if (typ === 'image/jpeg') {
       const name = new URL(url).pathname.split('/').pop();

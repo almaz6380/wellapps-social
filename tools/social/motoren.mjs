@@ -279,7 +279,10 @@ export function aufruf({ appSchluessel, app, post, wuerfel, out }) {
         schritte: [
           fest
             ? n('scripts/reel/record-solitaire.mjs', '--fest', '--paare', '40')
-            : n('scripts/reel/record-solitaire.mjs', '--level', String(level), '--paare', '16'),
+            // Fakt: 26 Paare (Josef, 30.09.2026: „Mahjong mit Opa und Jungen").
+            // Bei 16 endet die Partie vor dem Jungen, dann ist nur der Opa zu sehen.
+            : n('scripts/reel/record-solitaire.mjs', '--level', String(level),
+              '--paare', post.format === 'fakt' ? '26' : '16'),
           n(...bau),
         ],
         endung: '.mp4',
