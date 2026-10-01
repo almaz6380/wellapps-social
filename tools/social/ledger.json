@@ -2456,6 +2456,24 @@
       "schluessel": "fakt-index",
       "inhalt": "seed62265",
       "sprache": "en"
+    },
+    {
+      "app": "swaply",
+      "datum": "2026-09-28",
+      "winkel": "film-handy",
+      "medium": "reel",
+      "schluessel": "film-handy",
+      "inhalt": "seed17781",
+      "sprache": "de"
+    },
+    {
+      "app": "swaply",
+      "datum": "2026-09-28",
+      "winkel": "film-alkohol",
+      "medium": "reel",
+      "schluessel": "film-alkohol",
+      "inhalt": "seed14852",
+      "sprache": "de"
     }
   ]
 }
