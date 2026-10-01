@@ -17,6 +17,25 @@ entwürfeapp postest." Deshalb gilt:
 - Den TikTok-Posteingang kann keine Schnittstelle leeren. Löschen geht nur in der
   TikTok-App.
 
+## ⚠⚠ Seit 30.09.2026: Freigabe und Speicher laufen auf Cloudflare, nicht mehr auf Vercel
+
+Vercel hat am 28.09. den ganzen Hobby-Account pausiert (Blob-Kontingent gesprengt,
+Sperre bis 27.10.). Seitdem:
+
+- **Freigabe-Seite:** https://freigabe.almaz6380.workers.dev (Passwort = Secret
+  `FREIGABE_PASSWORT`). Code: `freigabe-app/worker/index.js`, Deploy:
+  `.github/workflows/freigabe-cloudflare.yml` (läuft bei Push auf `freigabe-app/**`).
+  `wellapps-freigabe.vercel.app` ist tot — Kommentare, die sie noch nennen, sind Geschichte.
+- **Speicher (ersetzt Vercel Blob):** derselbe Worker. Bilder/Videos in Workers KV,
+  Merklisten und Sperren (`*.json`) in D1. Schreiben mit `Bearer BLOB_TOKEN`;
+  `tools/social/veroeffentlichen/blob.mjs` hat dieselben Exporte wie vorher.
+  **Die alten Merklisten sind weg** — die Liste beginnt leer.
+- **TikTok-Bilder:** Die Durchreiche ist `https://freigabe.almaz6380.workers.dev/api/bild/…`;
+  der URL-Prefix `https://freigabe.almaz6380.workers.dev/` ist im TikTok-Portal
+  verifiziert (01.10.2026, Signaturdatei `freigabe-app/tiktokF94Pt9GwT2KVg8RIdupdGqOD0pSNShEA.txt`).
+- Die Regel oben gilt unverändert: kein Lauf ins Postfach oder in die Freigabe ohne
+  Josefs ausdrückliches Wort.
+
 ## In einem Satz
 
 Die Automatik erzeugt jeden Morgen für alle fünf Apps (Anigosha, Mahjong Royale,
