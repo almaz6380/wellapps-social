@@ -97,7 +97,11 @@ const res = await fetch(`${BASIS}/generate`, {
     model: MODELL,
     style: w.stil,
     title: w.titel,
-    callBackUrl: 'https://wellapps-freigabe.vercel.app/',
+    // Pflichtfeld bei kie.ai, wird aber nicht gebraucht: Das Skript fragt den
+    // Stand selbst ab (Schleife unten). Seit 30.09.2026 auf die Freigabe bei
+    // Cloudflare statt der toten Vercel-Adresse — ein Rueckruf dorthin laeuft
+    // ins Leere und stoert nichts.
+    callBackUrl: 'https://freigabe.almaz6380.workers.dev/',
   }),
 });
 const d = await res.json().catch(() => ({}));

@@ -1,0 +1,24 @@
+name: Social-Speicher-Probe
+
+# Prueft den Cloudflare-Speicher (seit 30.09.2026 statt Vercel Blob) mit
+# derselben blob.mjs, die posten.mjs & Co. benutzen — hochladen, oeffentlich
+# zurueckholen, TikTok-Durchreiche, Merkliste, Sperre, aufraeumen.
+#
+# Schreibt NICHTS in die Freigabe-Seite oder einen Kanal: Alles liegt unter dem
+# Tag 2000-01-01 und wird am Ende geloescht. Siehe tools/social/speicher-probe.mjs.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Probe
+        env:
+          BLOB_TOKEN: ${{ secrets.BLOB_TOKEN }}
+        run: node tools/social/speicher-probe.mjs
