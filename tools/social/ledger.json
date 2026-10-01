@@ -2438,6 +2438,24 @@
       "schluessel": "fragen-ids",
       "inhalt": "seed72449",
       "sprache": "de"
+    },
+    {
+      "app": "mahjong",
+      "datum": "2026-09-28",
+      "winkel": "figur-des-tages",
+      "medium": "reel",
+      "schluessel": "figur",
+      "inhalt": "seed96105",
+      "sprache": "en"
+    },
+    {
+      "app": "mahjong",
+      "datum": "2026-09-28",
+      "winkel": "fakt",
+      "medium": "reel",
+      "schluessel": "fakt-index",
+      "inhalt": "seed62265",
+      "sprache": "en"
     }
   ]
 }
