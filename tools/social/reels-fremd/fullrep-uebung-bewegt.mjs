@@ -78,11 +78,19 @@ export function ausfuehrungPasst({ id, name = '', ordner }) {
     !muster.test(uebung) || new RegExp(wort, 'i').test(ordner));
 }
 
+/**
+ * Clips, die die Übung falsch vormachen — nie verwenden, auch nicht über --uebung.
+ * hip-abductor (02.10.2026, Josef): „Polster war an einem bein auf der falschen
+ * seite!" Der Fehler steckt in der gekauften Animation selbst.
+ */
+export const GESPERRT = new Set(['hip-abductor']);
+
 /** Übungen, die eine Animation UND einen deutschen Namen samt Beschreibung haben. */
 export async function animierteUebungen(appPfad, sprache = 'de') {
   const daten = await import(join(appPfad, 'scripts', 'social-daten.mjs'));
   const anim = (await import(join(appPfad, 'src', 'data', 'exerciseAnimations.js'))).default;
   return daten.exercises
+    .filter((u) => !GESPERRT.has(u.id))
     .filter((u) => anim[u.id] && existsSync(join(appPfad, 'public', 'exercise-demos-anim', anim[u.id], 'demo.mp4')))
     .map((u) => ({ id: u.id, ordner: anim[u.id], ...daten.uebungTexte(u, sprache) }))
     .filter((u) => ausfuehrungPasst(u))

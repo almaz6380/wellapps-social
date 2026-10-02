@@ -1,5 +1,5 @@
 {
-  "_warum": "Josef, 27.09.2026: „für fullrep soll eine Übung mit einer Animation erklärt werden\". Die App führt je Übung nur ein bis zwei Sätze (hipThrustDesc: „Beste Übung für den Gluteus.\") — das zeigt die Bewegung, erklärt sie aber nicht. Hier stehen je Übung vier Ausführungsschritte. Hat die gewürfelte Übung Schritte, zeigt das Reel sie nacheinander zur Animation; sonst bleibt es bei der App-Beschreibung. ⚠ Nur allgemeine Technikhinweise: keine Dosierung, kein Heilversprechen, nichts zu Verletzungen oder Schmerzen (apps.json → regeln). ⚠ Jeder Schritt höchstens 48 Zeichen — länger bricht er um, und vier zweizeilige Schritte laufen in die Knopfleiste von TikTok/Instagram (ab ~1650 px). test-uebung-haltung.mjs prüft das. ⚠ Nur Übungen eintragen, deren Clip zur Beschreibung passt — Bulgarische Kniebeuge fehlt absichtlich: Ihr Clip (Split_Squat_with_Dumbbells) zeigt den hinteren Fuß am Boden, nicht auf der Bank. ⚠ 28.09.2026: 13 weitere Übungen dazu (Josef: „fullrep posts … größtenteils müll … mach lieber posts, wo übungen gezeigt werden\"), jeder Clip vorher am Kontaktblatt geprüft.",
+  "_warum": "Josef, 27.09.2026: „für fullrep soll eine Übung mit einer Animation erklärt werden\". Die App führt je Übung nur ein bis zwei Sätze (hipThrustDesc: „Beste Übung für den Gluteus.\") — das zeigt die Bewegung, erklärt sie aber nicht. Hier stehen je Übung vier Ausführungsschritte. Hat die gewürfelte Übung Schritte, zeigt das Reel sie nacheinander zur Animation; sonst bleibt es bei der App-Beschreibung. ⚠ Nur allgemeine Technikhinweise: keine Dosierung, kein Heilversprechen, nichts zu Verletzungen oder Schmerzen (apps.json → regeln). ⚠ Jeder Schritt höchstens 48 Zeichen — länger bricht er um, und vier zweizeilige Schritte laufen in die Knopfleiste von TikTok/Instagram (ab ~1650 px). test-uebung-haltung.mjs prüft das. ⚠ Nur Übungen eintragen, deren Clip zur Beschreibung passt — Bulgarische Kniebeuge fehlt absichtlich: Ihr Clip (Split_Squat_with_Dumbbells) zeigt den hinteren Fuß am Boden, nicht auf der Bank. ⚠ 28.09.2026: 13 weitere Übungen dazu (Josef: „fullrep posts … größtenteils müll … mach lieber posts, wo übungen gezeigt werden\"), jeder Clip vorher am Kontaktblatt geprüft. ⚠ 02.10.2026: hip-abductor raus — Josef: „Polster war an einem bein auf der falschen seite!\" Der Clip der gekauften Animation ist falsch; gesperrt in GESPERRT (fullrep-uebung-bewegt.mjs).",
   "hip-thrust": [
     "Schulterblätter an die Bankkante legen",
     "Füße hüftbreit, Stange liegt über der Hüfte",
@@ -119,11 +119,5 @@
     "Oberkörper leicht nach vorn, Bauch fest",
     "Bein gestreckt nach hinten führen",
     "Oben das Gesäß anspannen, dann zurück"
-  ],
-  "hip-abductor": [
-    "Aufrecht sitzen, Polster außen am Knie",
-    "Beine kontrolliert nach außen drücken",
-    "Außen kurz halten",
-    "Langsam zurück, Gewicht nicht aufsetzen"
   ]
 }
