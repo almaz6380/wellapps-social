@@ -2546,6 +2546,24 @@
       "schluessel": "uebung-schritte",
       "inhalt": "seed16650",
       "sprache": "de"
+    },
+    {
+      "app": "mahjong",
+      "datum": "2026-10-02",
+      "winkel": "figur-des-tages",
+      "medium": "reel",
+      "schluessel": "figur",
+      "inhalt": "seed79447",
+      "sprache": "en"
+    },
+    {
+      "app": "mahjong",
+      "datum": "2026-10-02",
+      "winkel": "fakt",
+      "medium": "reel",
+      "schluessel": "fakt-index",
+      "inhalt": "seed92955",
+      "sprache": "en"
     }
   ]
 }
