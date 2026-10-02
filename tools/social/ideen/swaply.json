@@ -180,6 +180,38 @@
       ],
       "vorspann": "tools/social/reels-fremd/vorspann/swaply-alkohol-bild.mp4",
       "vorspann_menschen": false
+    },
+    {
+      "id": "film-handy-ki",
+      "medium": "reel",
+      "format": "tausch-loop",
+      "bereich": "doomscrolling",
+      "status": "vorhanden",
+      "haken": "KI-Filmszene vorn (5 s, fal.ai Kling 2.1, OHNE Menschen und Haende): Nachttisch im Morgenlicht, Handy liegt still neben Buch und dampfendem Tee; danach der Swaply-Inhalt. Josef am 02.10.2026: „swaply mit videos! gerne mit fal.ai!!!\" — Bewegung nur durch Dampf/Blaeschen/Licht/Kamerafahrt, weil KI-Haende am 27.09. sichtbare Fehler hatten. Herkunft: tools/social/reels-fremd/vorspann/HERKUNFT.md.",
+      "schluessel": "film-handy-ki",
+      "sprachen": [
+        "de",
+        "en",
+        "es"
+      ],
+      "vorspann": "tools/social/reels-fremd/vorspann/swaply-handy-ki.mp4",
+      "vorspann_menschen": false
+    },
+    {
+      "id": "film-alkohol-ki",
+      "medium": "reel",
+      "format": "notfall-loop",
+      "bereich": "alcohol",
+      "status": "vorhanden",
+      "haken": "KI-Filmszene vorn (5 s, fal.ai Kling 2.1, OHNE Menschen und Haende): Glas Sprudelwasser mit Zitrone an der Bar, Blaeschen steigen; danach der Swaply-Inhalt. Josef am 02.10.2026: „swaply mit videos! gerne mit fal.ai!!!\" — Bewegung nur durch Dampf/Blaeschen/Licht/Kamerafahrt, weil KI-Haende am 27.09. sichtbare Fehler hatten. Herkunft: tools/social/reels-fremd/vorspann/HERKUNFT.md.",
+      "schluessel": "film-alkohol-ki",
+      "sprachen": [
+        "de",
+        "en",
+        "es"
+      ],
+      "vorspann": "tools/social/reels-fremd/vorspann/swaply-alkohol-ki.mp4",
+      "vorspann_menschen": false
     }
   ]
 }

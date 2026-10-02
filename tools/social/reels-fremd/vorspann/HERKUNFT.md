@@ -33,3 +33,18 @@ Handy war unsauber.
 
 **Merksatz:** Keine Hände und keine Menschen in KI-Bildern für Swaply. Das Modell
 verpfuscht sie verlässlich, und jeder Fehler landet öffentlich.
+
+## Seit 02.10.2026: KI-Video wieder, aber OHNE Menschen
+
+Josef: „swaply mit videos! gerne mit fal.ai!!!" — Freigabe für ≈ 0,70 $ („ja").
+
+| Datei | Motiv | Startbild | Clip |
+|---|---|---|---|
+| `swaply-handy-ki.jpg/.mp4` | Nachttisch im Morgenlicht: Handy liegt still auf einem offenen Buch, daneben dampfender Tee, Vorhang | `flux-pro/v1.1-ultra`, Seed 9701 | `kling-video/v2.1/standard/image-to-video`, 5 s |
+| `swaply-alkohol-ki.jpg/.mp4` | Bar-Theke am Abend: Glas Sprudelwasser mit Zitrone und Eis, Bläschen steigen | `flux-pro/v1.1-ultra`, Seed 9702 | `kling-video/v2.1/standard/image-to-video`, 5 s |
+
+Kosten: 2 × 0,06 $ + 2 × 0,28 $ ≈ 0,68 $. Bewegung nur durch Dampf, Bläschen,
+Licht und eine langsame Kamerafahrt; Negativprompt „people, hands, fingers, body
+parts, text, logo, morphing". **Geprüft:** je 10 Bilder im Halbsekundenabstand —
+nichts verzerrt, keine Hände, keine Schrift. Auf 1080×1920 gebracht (CRF 20, ohne Ton).
+Winkel: `film-handy-ki` (tausch-loop/doomscrolling), `film-alkohol-ki` (notfall-loop/alcohol).
