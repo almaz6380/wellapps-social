@@ -66,6 +66,11 @@ async function laufStarten(token, workflow, inputs) {
         Accept: 'application/vnd.github+json',
         'X-GitHub-Api-Version': '2022-11-28',
         'Content-Type': 'application/json',
+        // ⚠ Pflicht bei GitHub (02.10.2026): Ohne User-Agent antwortet die API
+        // mit 403 „Request forbidden by administrative rules". Node (Vercel)
+        // setzte ihn von selbst, das fetch im Cloudflare Worker nicht — jeder
+        // Knopf der Freigabe-Seite scheiterte daran.
+        'User-Agent': 'wellapps-freigabe',
       },
       body: JSON.stringify({ ref: 'main', inputs }),
     },
