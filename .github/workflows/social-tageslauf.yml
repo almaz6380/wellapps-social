@@ -91,6 +91,13 @@ on:
         description: 'Beitraege je App. Leer = das uebliche Tagespaket (meist 2)'
         type: string
         required: false
+      # ⚠ Seit 02.10.2026: genau EINEN Beitrag nachschicken (posten.mjs kennt
+      # --seed laengst). Mit `anzahl: 1` gaebe es einen anderen Seed und damit
+      # einen anderen Inhalt — also das ganze Paket rendern, nur einen senden.
+      seed:
+        description: 'Nur den Beitrag mit diesem Seed verschicken (z. B. 93996), leer = alle'
+        type: string
+        required: false
 
 # ⚠ Schreibrecht nur fuer den Ledger (siehe letzter Schritt). Ohne ihn
 # wiederholt der naechste Lauf dieselben Winkel — die Rotation lebt davon,
@@ -506,11 +513,13 @@ jobs:
           # Kommentar bei der Eingabe. Beim Zeitplan ist der Wert leer, und
           # leer ist nicht `ja`: Die Sperre bleibt dort aktiv.
           ERZWINGEN: ${{ inputs.erzwingen }}
+          SEED: ${{ inputs.seed }}
         run: |
           DATUM_ARG=""
           [ -n "$DATUM" ] && DATUM_ARG="--datum $DATUM"
           KANAL_ARG=""
           [ -n "$KANAELE" ] && KANAL_ARG="--kanal $KANAELE"
+          [ -n "$SEED" ] && KANAL_ARG="$KANAL_ARG --seed $SEED"
           FLAGGE="--trocken"
           [ "$MODUS" = "echt" ] && FLAGGE="--echt"
           if [ "$APPS" = "alle" ]; then
