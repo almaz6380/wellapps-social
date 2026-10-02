@@ -2492,6 +2492,24 @@
       "schluessel": "uebung-schritte",
       "inhalt": "seed93996",
       "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-28",
+      "winkel": "uebung-bewegt",
+      "medium": "reel",
+      "schluessel": "uebung-bewegt",
+      "inhalt": "seed67379",
+      "sprache": "de"
+    },
+    {
+      "app": "fullrep",
+      "datum": "2026-09-28",
+      "winkel": "uebung-schritte",
+      "medium": "bild",
+      "schluessel": "uebung-schritte",
+      "inhalt": "seed93996",
+      "sprache": "de"
     }
   ]
 }
