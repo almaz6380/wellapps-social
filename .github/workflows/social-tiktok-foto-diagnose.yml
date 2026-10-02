@@ -1,0 +1,38 @@
+name: TikTok-Foto-Diagnose
+
+# Stoesst EINEN TikTok-Fotobeitrag an und gibt TikToks Antwort samt Log-ID
+# (x-tt-logid) aus — fuer den TikTok-Support. Kein Diashow-Rueckfall: Lehnt
+# TikTok ab, landet nichts im Posteingang. Siehe tools/social/tiktok-foto-diagnose.mjs.
+
+on:
+  workflow_dispatch:
+    inputs:
+      app:
+        description: 'Welche App? anigosha,mahjong,wellbooked,fullrep,swaply'
+        type: string
+        required: true
+      bild_url:
+        description: 'Oeffentliche Bildadresse (https://freigabe.almaz6380.workers.dev/api/bild/…)'
+        type: string
+        required: true
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Diagnose
+        env:
+          APP: ${{ inputs.app }}
+          BILD_URL: ${{ inputs.bild_url }}
+          TIKTOK_CLIENT_KEY: ${{ secrets.TIKTOK_CLIENT_KEY }}
+          TIKTOK_CLIENT_SECRET: ${{ secrets.TIKTOK_CLIENT_SECRET }}
+          TIKTOK_REFRESH_TOKEN_ANIGOSHA: ${{ secrets.TIKTOK_REFRESH_TOKEN_ANIGOSHA }}
+          TIKTOK_REFRESH_TOKEN_MAHJONG: ${{ secrets.TIKTOK_REFRESH_TOKEN_MAHJONG }}
+          TIKTOK_REFRESH_TOKEN_WELLBOOKED: ${{ secrets.TIKTOK_REFRESH_TOKEN_WELLBOOKED }}
+          TIKTOK_REFRESH_TOKEN_FULLREP: ${{ secrets.TIKTOK_REFRESH_TOKEN_FULLREP }}
+          TIKTOK_REFRESH_TOKEN_SWAPLY: ${{ secrets.TIKTOK_REFRESH_TOKEN_SWAPLY }}
+        run: node tools/social/tiktok-foto-diagnose.mjs
