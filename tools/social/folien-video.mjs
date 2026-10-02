@@ -244,6 +244,10 @@ export async function fotosInDenPosteingang({
     if (!/url_ownership_unverified/.test(e.message)) throw e;
     melden('   ⚠ TikTok darf die Bildadressen nicht abholen '
       + '(URL-Praefix im Portal nicht verifiziert). Die Folien gehen als Diashow-Video.');
+    // TikToks Wortlaut und eine der Adressen mit ausgeben (02.10.2026): Seit dem
+    // Umzug auf Cloudflare kommt dieser Fehler, obwohl der Prefix im Portal als
+    // verifiziert steht — ohne den genauen Text laesst sich das nicht klaeren.
+    melden(`     TikTok: ${e.message}`);
     const v = await folienVideo({ bildUrls: rohUrls, ziel, tonDatei: musikFuer(app) });
     melden(`   Diashow gebaut: ${v.folien} Folien, ${v.sekunden} s, 1080×1920`
       + `${v.ton ? ', mit Musikteppich' : ', stumm'}.`);
