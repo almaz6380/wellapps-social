@@ -2510,6 +2510,24 @@
       "schluessel": "uebung-schritte",
       "inhalt": "seed93996",
       "sprache": "de"
+    },
+    {
+      "app": "anigosha",
+      "datum": "2026-10-02",
+      "winkel": "richtig-falsch",
+      "medium": "reel",
+      "schluessel": "richtig-falsch",
+      "inhalt": "seed42836",
+      "sprache": "de"
+    },
+    {
+      "app": "anigosha",
+      "datum": "2026-10-02",
+      "winkel": "schwierigkeitsleiter",
+      "medium": "bild",
+      "schluessel": "kategorie",
+      "inhalt": "seed30049",
+      "sprache": "de"
     }
   ]
 }
