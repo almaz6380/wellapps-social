@@ -33,15 +33,15 @@ Sperre bis 27.10.). Seitdem:
 - **TikTok-Bilder:** Die Durchreiche ist `https://freigabe.almaz6380.workers.dev/api/bild/…`;
   der URL-Prefix `https://freigabe.almaz6380.workers.dev/` ist im TikTok-Portal
   verifiziert (01.10.2026, Signaturdatei `freigabe-app/tiktokF94Pt9GwT2KVg8RIdupdGqOD0pSNShEA.txt`).
-- ⚠ **TikTok-Fotos kommen trotzdem als 6-s-Diashow an** (Tageslauf 01.10.2026,
-  FullRep-Karte: `url_ownership_unverified`). Im Portal steht der Prefix unter
-  Production → URL properties korrekt als „Verified" (Screenshot Josef, 02.10.) —
-  und mit `wellapps-freigabe.vercel.app` war es seit dem 19.09. genauso: Ein
-  Fotobeitrag ist noch NIE durchgegangen, deshalb gibt es `fotosInDenPosteingang`.
-  Am Prefix liegt es also nicht. Vermutung (nicht gemessen): Die App-Version steht
-  bei TikTok seit dem 07.09. auf „In review"; erst nach der Freigabe greift
-  `pull_by_url`. Nicht weiter am Prefix suchen — nach der Freigabe EINEN Fotobeitrag
-  probieren (mit Josefs Wort).
+- ⚠ **TikTok-Fotos kamen am 01.10. als 6-s-Diashow an** (FullRep-Karte,
+  `url_ownership_unverified`). Bis zum 28.09. gingen Fotos ueber die Durchreiche auf
+  `wellapps-freigabe.vercel.app` ANSTANDSLOS durch (Protokolle 24.–28.09.: 1, 3 und
+  8 Bilder, kein einziger Rueckfall) — die App-Pruefung bei TikTok spielt also keine
+  Rolle. Der Fehler kam erst mit dem Umzug auf `freigabe.almaz6380.workers.dev`.
+  Am 02.10. stand der Prefix unter Production → URL properties als „Verified", und
+  die Durchreiche liefert das Bild (200, image/jpeg, Content-Length). Offen, ob die
+  Bestaetigung zum Laufzeitpunkt (01.10., 19:39 UTC) schon griff — klaert nur ein
+  echter Fotobeitrag (mit Josefs Wort).
 - Die Regel oben gilt unverändert: kein Lauf ins Postfach oder in die Freigabe ohne
   Josefs ausdrückliches Wort.
 
