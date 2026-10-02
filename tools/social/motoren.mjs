@@ -55,8 +55,13 @@ export function anigoshaKategorien(pfad) {
 const mahjongLevel = (winkel, wuerfel) => {
   const [von, bis] = {
     paar: [6, 52], 'paar-standbild': [6, 52],
-    clear: [40, 300], 'figur-des-tages': [40, 300],
-    'blumen-falle': [40, 120], fakt: [10, 180], 'fakt-film': [10, 180],
+    // ⚠ Abraeum-Reels nur unter Level 30 (02.10.2026). Ab 30 gibt es verdeckte
+    // Steine, ab 50 Spezialsteine (mahjong-app/src/game/modifiers.ts). Daran
+    // scheitert der Aufnahme-Bot: Level 78 blieb am Joker-Hinweis haengen,
+    // Level 297 wurde mit 16 Paaren nicht annaehernd leer — und das Reel sagte
+    // trotzdem „Every single tile. Gone." Unter 30 raeumt er jedes Brett ab.
+    clear: [10, 30], 'figur-des-tages': [10, 30],
+    'blumen-falle': [40, 120], fakt: [10, 30], 'fakt-film': [10, 30],
   }[winkel] ?? [20, 120];
   return von + Math.floor(wuerfel() * (bis - von));
 };
@@ -279,10 +284,12 @@ export function aufruf({ appSchluessel, app, post, wuerfel, out }) {
         schritte: [
           fest
             ? n('scripts/reel/record-solitaire.mjs', '--fest', '--paare', '40')
-            // Fakt: 26 Paare (Josef, 30.09.2026: „Mahjong mit Opa und Jungen").
-            // Bei 16 endet die Partie vor dem Jungen, dann ist nur der Opa zu sehen.
+            // Fakt und Abraeumen: bis das Brett leer ist (Obergrenze 40, das
+            // Brett entscheidet). Bei 16 endete die Partie vor dem Jungen
+            // (Josef, 30.09.: „Mahjong mit Opa und Jungen"), und „clear"
+            // versprach ein leeres Brett, das nie kam.
             : n('scripts/reel/record-solitaire.mjs', '--level', String(level),
-              '--paare', post.format === 'fakt' ? '26' : '16'),
+              '--paare', ['fakt', 'clear'].includes(post.format) ? '40' : '16'),
           n(...bau),
         ],
         endung: '.mp4',
