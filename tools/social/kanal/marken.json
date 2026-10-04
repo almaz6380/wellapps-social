@@ -389,5 +389,35 @@
    "display": "marken-mittel/wellbooked/outfit.woff2",
    "body": "marken-mittel/wellbooked/outfit.woff2"
   }
+ },
+ "fullrep": {
+  "name": "FullRep",
+  "wortmarke": "FullRep",
+  "_nur_karten": true,
+  "_nur_karten_grund": "⚠ Dieser Eintrag traegt NUR die freie Karte (tools/social/karten-fremd/freie-karte.mjs, 04.10.2026). Die KANAL-Ausstattung von FullRep entsteht seit jeher in mypeak/scripts/kanal-assets.mjs — dort ist sie gemessen, geprueft und im Profil in Gebrauch. Zwei Ausstatter fuer dieselbe Marke waeren zwei Wahrheiten, und die zweite faellt erst auf, wenn ein Profilbild nicht mehr zum anderen passt. kanal/assets.mjs bricht bei dieser Marke deshalb ausdruecklich ab.",
+  "_farben_quelle": "GEMESSEN aus mypeak/scripts/kanal-assets.mjs (04.10.2026): Grund radial #1c1c1c → #0a0a0a, Akzent Amber #fbbf24, Schrift #fff8e7, gedaempfte Schrift #a8a29e. Genau diese Werte benutzt in DIESEM Repo schon reels-fremd/fullrep-uebung-schritte.mjs — hier wird also keine neue Quelle aufgemacht, sondern die bestehende aufgeschrieben. ⚠ FullRep hat KEINEN Dreiklang-Verlauf wie die vier anderen: Der Akzent ist flaches Amber. Deshalb fehlt `verlauf` hier, und die Karte faellt auf `mint` zurueck — ein erfundener Verlauf waere eine Behauptung ueber eine Marke, die so nirgends auftritt.",
+  "schrift": "#fff8e7",
+  "gedaempft": "#a8a29e",
+  "kontrast": "#0a0a0a",
+  "grund": "#0a0a0a",
+  "grundTief": "#1c1c1c",
+  "weich": "#e7e5e4",
+  "linie": "rgba(255,255,255,.14)",
+  "mint": "#fbbf24",
+  "stores": {
+   "ios": true,
+   "android": true
+  },
+  "spruch": {
+   "de": "Training & Ernährung in einer App",
+   "en": "Workout & nutrition in one app"
+  },
+  "mittel": {
+   "icon": "marken-mittel/fullrep/icon.png",
+   "display": "marken-mittel/fullrep/anton.woff2",
+   "body": "marken-mittel/fullrep/inter-600.woff2"
+  },
+  "displayVersalien": true,
+  "_mittel_quelle": "icon.png = mypeak/public/icon-512.png (Josefs eigenes App-Icon, steht so in beiden Stores). anton.woff2 = mypeak/scripts/schriften/anton.woff2 (Anton, SIL OFL 1.1, Copyright 2020 The Anton Project Authors — Einbettung ausdruecklich erlaubt); sie traegt bei FullRep jede Schlagzeile und ist nur in Versalien sinnvoll, daher displayVersalien. inter-600.woff2 = tools/reels/assets/schriften/inter-latin-600-normal.woff2 dieses Repos (FullReps Fliesstext ist Inter). Kopiert am 04.10.2026 — aus demselben Grund wie bei den vier anderen Marken: Eine per setContent() gebaute Seite hat keinen Origin, die Schrift MUSS als data:-URI eingebettet werden, und der Tageslauf soll nichts nachinstallieren."
  }
 }

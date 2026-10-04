@@ -174,10 +174,15 @@
     aufgeklapptes Formular ganz oben verdraengt jeden Tag die Beitraege, die
     eigentlich auf einen Knopfdruck warten.
 
-    ⚠ Nur Anigosha in der Auswahl. Das Format „freie-karte" steckt in
-    anigosha/tools/post-bild.mjs; die vier anderen Apps haben es noch nicht.
-    Lieber ein Menue mit einer Zeile als vier, von denen drei eine
-    Fehlermeldung liefern.
+    Seit 04.10.2026 stehen alle fuenf in der Auswahl (Josef: „bau die karten
+    für alle apps"). Anigosha zeichnet mit seinem eigenen Generator, die vier
+    anderen mit tools/social/karten-fremd/freie-karte.mjs.
+
+    ⚠ Das VIDEO kann weiterhin nur Anigosha — es ist das Format „ansage" in
+    dessen Reel-Generator. Die Wahl „Video" wird bei den anderen vier deshalb
+    gesperrt, statt eine Fehlermeldung zu liefern, nachdem jemand den Text
+    getippt hat. Verlass ist trotzdem erst auf die Pruefung im Server: Diese
+    Seite laeuft im Browser des Nutzers.
   -->
   <details id="neuer" class="karte">
     <summary>Neuen Beitrag bauen</summary>
@@ -188,7 +193,13 @@
     </p>
 
     <label class="feldname" for="k-app">App</label>
-    <select id="k-app"><option value="anigosha">Anigosha</option></select>
+    <select id="k-app">
+      <option value="anigosha">Anigosha</option>
+      <option value="mahjong">Mahjong Royale</option>
+      <option value="wellbooked">WELLbooked!</option>
+      <option value="fullrep">FullRep</option>
+      <option value="swaply">Swaply</option>
+    </select>
 
     <label class="feldname" for="k-medium">Als was?</label>
     <select id="k-medium">
@@ -199,7 +210,7 @@
 
     <label class="feldname" for="k-text">Text</label>
     <textarea id="k-text" maxlength="240" enterkeyhint="done"
-      placeholder="Wer drei Tage nicht spielt, verliert seinen Streak."></textarea>
+      placeholder="Der Satz, der gross auf der Karte stehen soll."></textarea>
     <p class="hinweis" id="k-zaehler">0 / 240</p>
 
     <!--
@@ -213,11 +224,11 @@
       <input id="k-haken" maxlength="60" placeholder="Wusstest du?">
 
       <label class="feldname" for="k-marke">Pille ganz oben (optional)</label>
-      <input id="k-marke" maxlength="60" placeholder="Anigosha 1.1">
+      <input id="k-marke" maxlength="60" placeholder="Version 1.1">
     </div>
 
     <label class="feldname" for="k-cta">Schlusszeile (optional)</label>
-    <input id="k-cta" maxlength="60" placeholder="anigosha.vercel.app/get">
+    <input id="k-cta" maxlength="60" placeholder="Jetzt ausprobieren">
 
     <div class="reihe" style="margin-top:14px">
       <button id="k-bauen">Bauen</button>
@@ -1001,10 +1012,25 @@ const medium = () => {
   $('#k-nurbild').hidden = reel;
   $('#k-medienhinweis').textContent = reel
     ? 'Ein Video geht auf alle drei Kanäle. Dauert etwa drei Minuten länger.'
-    : 'Eine Karte geht auf Facebook und Instagram. TikTok nimmt nur Videos.';
+    : 'Eine Karte geht auf Facebook und Instagram. TikTok nimmt nur Videos.'
+      + ($('#k-app').value === 'anigosha' ? '' : ' Ein Video kann bisher nur Anigosha.');
 };
 $('#k-medium').addEventListener('change', medium);
-medium();
+
+// ⚠ Die Wahl „Video" SPERREN statt sie laufen zu lassen (04.10.2026). Die
+// Karte können seit heute alle fünf, das Video nur Anigosha — es ist das
+// Format „ansage" in dessen Reel-Generator. Ein Feld, das man ausfüllen kann
+// und das dann eine Fehlermeldung liefert, ist dasselbe Übel wie eines, das
+// nichts tut: Man merkt es erst, nachdem man den Text getippt hat.
+const appWahl = () => {
+  const anigosha = $('#k-app').value === 'anigosha';
+  const reelOption = $('#k-medium').querySelector('option[value="reel"]');
+  reelOption.disabled = !anigosha;
+  if (!anigosha && $('#k-medium').value === 'reel') $('#k-medium').value = 'bild';
+  medium();
+};
+$('#k-app').addEventListener('change', appWahl);
+appWahl();
 
 $('#k-bauen').onclick = async () => {
   const knopf = $('#k-bauen');

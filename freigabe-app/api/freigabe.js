@@ -359,17 +359,29 @@ export default async function handler(req, res) {
     // heute gehaengt; oeffentlich wird er erst mit dem gewoehnlichen Knopf.
     if (aktion === 'karte') {
       if (ohneToken()) return;
-      // ⚠ Nur Anigosha. Das Format steckt in anigosha/tools/post-bild.mjs; die
-      // vier anderen Apps haben es noch nicht. Hier abfangen statt den Lauf
-      // zehn Minuten spaeter scheitern zu lassen.
-      if (app !== 'anigosha') {
-        res.status(400).json({ fehler: 'Freie Karten gibt es bisher nur fuer Anigosha.' });
+      // Seit 04.10.2026 koennen alle fuenf eine freie KARTE (Josef: „bau die
+      // karten für alle apps"). Anigosha zeichnet sie mit seinem eigenen
+      // Generator, die vier anderen mit tools/social/karten-fremd/.
+      if (!APPS.includes(app)) {
+        res.status(400).json({ fehler: 'Unbekannte App.' });
         return;
       }
 
       // ⚠ Fest, nicht durchgereicht — wie PRIVACY weiter oben. Der Wert landet
       // als Workflow-Eingabe in einer Shell-Umgebung.
       const medium = req.body?.medium === 'reel' ? 'reel' : 'bild';
+
+      // ⚠ Das freie VIDEO kann weiterhin nur Anigosha: Es ist das Format
+      // `ansage` in dessen Reel-Generator. Hier abfangen statt den Lauf zehn
+      // Minuten spaeter scheitern zu lassen — die Seite bietet die Wahl bei
+      // den anderen vier zwar gar nicht erst an, aber diese Pruefung ist die,
+      // auf die Verlass sein muss: Die Seite laeuft im Browser des Nutzers.
+      if (medium === 'reel' && app !== 'anigosha') {
+        res.status(400).json({
+          fehler: 'Ein freies Video gibt es bisher nur fuer Anigosha. Als Karte geht es.',
+        });
+        return;
+      }
 
       const txt = String(req.body?.text ?? '').trim();
       if (!txt) {

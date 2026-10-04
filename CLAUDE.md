@@ -249,7 +249,7 @@ vorderen Teil. Zwei Ausnahmen laufen aus DIESEM Repo: `tools/social/reels-fremd/
 | **Facebook-Entwuerfe** | unveröffentlichte Beiträge auflisten und (nur mit ausdrücklichen IDs) löschen |
 | **Social-Zugaenge pruefen** | sagt je App, ob der Token zur richtigen Seite gehört und ob er abläuft. Sendet nichts |
 | **TikTok-Zugang holen** | tauscht einen OAuth-Code gegen einen Refresh-Token. Protokoll danach löschen |
-| **Freie Karte** | eine Bildkarte mit eigenem Text, auf Zuruf. Ausgelöst von der Freigabe-Seite |
+| **Freie Karte** | eine Bildkarte mit eigenem Text, auf Zuruf — seit 04.10.2026 für alle fünf Apps. Ausgelöst von der Freigabe-Seite |
 | **TikTok-Stand abfragen** | fragt bei TikTok nach, was aus den Entwürfen wurde, und schreibt es in die Merklisten. Liest nur ab, veröffentlicht nichts |
 
 ### TikTok gibt jetzt Rückmeldung (20.09.2026)
@@ -460,8 +460,9 @@ still passieren.
 Alle Formate zeichnen aus den Daten der jeweiligen App. Für eine Ansage, die
 kein Generator kennen kann (neue Version, Hinweis, ein Satz, der unterwegs
 einfällt), gab es nichts. Jetzt: `--format freie-karte` in
-`anigosha/tools/post-bild.mjs`, bestellt über `lauf.mjs --karte` oder den
-Block „Neuen Beitrag bauen" auf der Freigabe-Seite.
+`anigosha/tools/post-bild.mjs` (für die vier anderen Apps seit 04.10.2026
+`tools/social/karten-fremd/freie-karte.mjs`, siehe unten), bestellt über
+`lauf.mjs --karte` oder den Block „Neuen Beitrag bauen" auf der Freigabe-Seite.
 
 **Sie ist bewusst KEIN Winkel der Rotation.** Ein Winkel wird gewürfelt, diese
 Karte wird bestellt. Stünde sie in `ideen/anigosha.json`, zöge der Tageslauf
@@ -483,10 +484,67 @@ falsch: Die Caption lief bis ans Dateiende und nahm „Store-Satz im Bild: …"
 mit. Der Versand brach ab (*„Verräter: Store-Satz im Bild"*) — die Leitplanke
 hat genau das getan, wofür sie da ist.
 
-⚠ **Nur Anigosha.** Die Auswahl auf der Freigabe-Seite zeigt deshalb eine
-einzige Zeile, und `lauf.mjs --karte` bricht bei den anderen vier mit einer
-klaren Meldung ab, statt bis zum Motor durchzulaufen und dort mit „unbekanntes
-Format" zu scheitern.
+### Die Karte können jetzt alle fünf (04.10.2026)
+
+Josef: *„bau die karten für alle apps"* — nachdem er gefragt hatte, warum er
+nur für Anigosha etwas erstellen kann.
+
+Der gemeinsame Generator ist **`tools/social/karten-fremd/freie-karte.mjs`**,
+eine Karte für vier Marken. **Anigosha bleibt bei seinem eigenen**
+(`tools/post-bild.mjs`): Seine Karte trägt das Wasserzeichen mit den beiden
+Figuren und die Randfigur aus `apps.json`, beides kennt der gemeinsame
+Generator nicht — einen laufenden Beitrag ohne Not umzubauen wäre der teurere
+Weg. `motoren.mjs` schickt deshalb nur die vier anderen hierher.
+
+⚠ **Er braucht KEIN App-Repo.** Farben, Schriften und Zeichen liegen in
+`kanal/marken.json` und `kanal/marken-mittel/`, die Store-Abzeichen in
+`kanal/badges/`. Das ist der Unterschied zu `reels-fremd/`, das seine Inhalte
+aus den App-Repos liest — und der Grund, warum `social-karte.yml` für diese
+vier gar nichts mehr auscheckt und ohne `REPOS_TOKEN` auskommt. FullRep stand
+dafür bis dahin nicht in `marken.json`; sein Icon und Anton liegen jetzt unter
+`marken-mittel/fullrep/`, mit `_nur_karten: true` — **`kanal/assets.mjs` bricht
+bei dieser Marke ausdrücklich ab**, weil FullReps Kanal-Ausstattung aus
+`mypeak/scripts/kanal-assets.mjs` kommt und zwei Ausstatter für eine Marke zwei
+Wahrheiten wären.
+
+⚠ **Das VIDEO kann weiterhin nur Anigosha.** Es ist das Format `ansage` in
+dessen Reel-Generator; Mahjongs Reel wird abgefilmt, FullReps Generator kennt
+`ansage` nicht, `reels-fremd/make-reel.mjs` auch nicht. Die Freigabe-Seite
+**sperrt** die Wahl bei den anderen vier (und fällt auf „Karte" zurück, wenn
+sie schon stand), `lauf.mjs` bricht ab, und `api/freigabe.js` prüft es noch
+einmal — die Seite läuft im Browser des Nutzers, Verlass ist nur auf den
+Server.
+
+⚠ **Der Überlauf-Wächter hat zuerst NICHT angeschlagen, und das sah aus wie
+Erfolg.** Der Inhaltsblock stand auf `min-height:0`. Damit darf er
+*schrumpfen*: Der Text lief sichtbar über seine Kanten, aber der Body meldete
+keinen Überlauf. Gemessen: **444 Zeichen gingen als „passt" durch**, auf dem
+fertigen JPEG lag die Schlagzeile über der Wortmarke und die Schlusszeile über
+der Fußzeile. Mit dem Vorgabewert `min-height:auto` wächst der Block über die
+Karte hinaus — und genau daran erkennt die Messung den Überlauf. Dieselbe
+Falle steht seit dem 18.09. in Anigoshas Generator angeschrieben; sie kam in
+neuer Verkleidung wieder.
+
+⚠ **Der Markenverlauf trägt den Haken nicht bei jeder Marke.** Zuerst lief er
+bei allen vier im Verlauf, wie auf Anigoshas Karte. Bei WELLbooked! steht damit
+Dunkelgrün (`#2d6a4f`) auf Dunkelgrün (`#1b4332`) — **gemessen 1,73:1**, die
+Zeile verschwindet fast. Anigosha kommt damit durch, weil SEIN Verlauf hell
+ist. Der Generator rechnet deshalb den WCAG-Kontrast aus und nimmt den Verlauf
+nur, wenn **beide** Stufen 3:1 gegen den Grund schaffen; sonst den Akzent der
+Marke. Die gemessenen Werte stehen im Protokoll und im Beiblatt, damit sie
+jemand nachrechnen kann.
+
+**Merksatz: Ein Layout, das bei einer Marke stimmt, stimmt bei der nächsten
+nur zufällig.** Beides — Überlauf und Kontrast — fiel erst am gerenderten JPEG
+auf, nicht im Code.
+
+Gegenprobe ist `tools/social/test-freie-karte.mjs` (59 Proben: je Marke
+zeichnen, Beiblatt gegen `captionAus`, Leitplanke, Kontrast; dazu Überlauf,
+falsch getippte Marke, verwechselte Argumente und ein Abgleich, ob
+Freigabe-Seite und Workflow dieselben Apps kennen). ⚠ **Sie wurde an den
+kaputten Fassungen geprüft**: mit `min-height:0` fallen die zwei
+Überlauf-Proben, ohne die Kontrastmessung die WELLbooked!-Probe. Eine Null von
+einem Prüfer, der nichts findet, ist nichts wert.
 
 ⚠ **Beide Formate liegen seit 18.09. auf Anigoshas `main`.** Vorher checkte der
 Workflow einen Feature-Zweig aus — nötig, aber falsch: Der Motor eines Repos
@@ -524,6 +582,8 @@ node tools/social/lauf.mjs --pruefung         # Leitplanken gegen Gegenbeispiele
 node tools/social/lauf.mjs --trocken --tage 14 # Redaktionsplan, rendert nichts
 node tools/social/posten.mjs --trocken        # was ein Versand tun wuerde, nennt fehlende Werte
 node tools/social/test-caption.mjs            # Caption-Regeln
+CHROMIUM_PFAD=/opt/pw-browsers/chromium \
+  node tools/social/test-freie-karte.mjs      # freie Karte, alle vier Marken
 ```
 
 **Immer erst `--trocken`.** Ein Trockenlauf legt keine Merkliste ab und verbraucht

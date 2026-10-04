@@ -195,6 +195,55 @@ export function aufruf({ appSchluessel, app, post, wuerfel, out }) {
     };
   }
 
+  // --- Die freie Karte der vier anderen (Josef, 04.10.2026) ----------------
+  //
+  // „bau die karten für alle apps". Bis dahin gab es sie nur bei Anigosha,
+  // weil das Format `freie-karte` in anigosha/tools/post-bild.mjs steckt.
+  //
+  // ⚠ VOR den App-Weichen, aus demselben Grund wie die App-Schau ganz oben:
+  // Der Generator ist fuer alle vier DERSELBE (karten-fremd/freie-karte.mjs)
+  // und laeuft aus DIESEM Repo. Stuende die Weiche in den vier App-Zweigen,
+  // waere sie viermal dieselbe Zeile — und die vierte vergisst irgendwann
+  // jemand.
+  //
+  // ⚠ ANIGOSHA GEHT HIER NICHT DURCH. Seine Karte traegt das Wasserzeichen
+  // mit den beiden Figuren und die Randfigur aus apps.json; beides kennt der
+  // gemeinsame Generator nicht. Einen laufenden Beitrag ohne Not umzubauen
+  // waere der teurere Weg.
+  //
+  // ⚠ Der Generator braucht KEIN App-Repo: Farben, Schriften und Zeichen
+  // liegen in kanal/marken.json und kanal/marken-mittel/. Deshalb faehrt hier
+  // auch kein `--repo` mit, und social-karte.yml checkt fuer diese vier
+  // nichts weiter aus.
+  if (post.format === 'freie-karte' && appSchluessel !== 'anigosha') {
+    return {
+      schritte: [{
+        cmd: 'node',
+        args: ['tools/social/karten-fremd/freie-karte.mjs',
+          // ⚠ `--app` ist hier der MARKENSCHLUESSEL, nicht der Pfad — anders
+          // als bei reels-fremd/ nebenan. `--marke` ist in dieser Weiche
+          // schon vergeben: Es ist Josefs Pille oben auf der Karte.
+          '--app', appSchluessel, '--lang', post.sprache,
+          '--seed', String(post.seed), '--name', post.dateiname,
+          // ⚠ ABSOLUT — dieselbe Falle wie bei der App-Schau oben: `out`
+          // kommt fuer diese vier relativ herein (sie haengen ihn sonst an
+          // ihre eigene Wurzel, siehe ausgabeOrt), dieses Skript laeuft aber
+          // in wellapps-social.
+          '--out', isAbsolute(out) ? out : join(app.pfad, out),
+          ...(app.storeSatz ? ['--store', app.storeSatz] : []),
+          // ⚠ Leere Werte NICHT durchreichen — dieselbe Begruendung wie im
+          // Anigosha-Zweig unten: `--haken` ohne Wert schluckt das naechste
+          // Argument, und im Bild staende dann „--marke" als Hakentext.
+          ...['text', 'haken', 'marke', 'cta'].flatMap((feld) => {
+            const v = post.frei?.[feld];
+            return v ? [`--${feld}`, String(v)] : [];
+          })],
+        cwd: ANIGOSHA,
+      }],
+      endung: '.jpg',
+    };
+  }
+
   if (appSchluessel === 'anigosha') {
     if (post.medium === 'reel') {
       const kat = anigoshaKategorien(p);

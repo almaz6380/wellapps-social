@@ -287,15 +287,6 @@ async function kartenlauf() {
     console.error('sich ein fehlender Text ersetzen liesse.');
     process.exit(1);
   }
-  // ⚠ Nur Anigoshas Generator kennt `freie-karte`. Ohne diese Probe liefe der
-  // Lauf bei den anderen vier bis zum Motor durch und schluege dort mit
-  // „unbekanntes Format" fehl — eine Meldung, die nach einem kaputten
-  // Werkzeug aussieht statt nach einem, das es fuer diese App noch nicht gibt.
-  if (k !== 'anigosha') {
-    console.error(`Fuer ${APPS[k].name} ist das Format „freie-karte" noch nicht gebaut.`);
-    console.error('Bisher kann es nur Anigosha (tools/post-bild.mjs).');
-    process.exit(1);
-  }
 
   // ⚠ Bild oder Video, und das entscheidet mehr als das Aussehen: TikTok nimmt
   // NUR Videos. Eine freie Karte geht deshalb nur auf Facebook und Instagram,
@@ -304,6 +295,26 @@ async function kartenlauf() {
   const MEDIUM = wert('medium', 'bild');
   if (!['bild', 'reel'].includes(MEDIUM)) {
     console.error(`--medium ${MEDIUM} gibt es nicht. Erlaubt: bild, reel.`);
+    process.exit(1);
+  }
+
+  // ⚠ DIE KARTE KOENNEN SEIT 04.10.2026 ALLE FUENF, DAS REEL NUR ANIGOSHA.
+  //
+  // Josef: „bau die karten für alle apps". Anigosha zeichnet seine Karte
+  // weiter mit dem eigenen Generator (tools/post-bild.mjs — er traegt das
+  // Wasserzeichen mit den beiden Figuren und die Randfigur), die vier anderen
+  // mit tools/social/karten-fremd/freie-karte.mjs aus diesem Repo.
+  //
+  // Das freie REEL ist eine andere Sache: Es ist das Format `ansage` in
+  // anigosha/tools/reels/make-reel.mjs. Mahjongs Reel wird abgefilmt, FullReps
+  // Generator kennt `ansage` nicht, und reels-fremd/make-reel.mjs (Swaply,
+  // WELLbooked!) auch nicht. Hier abbrechen statt bis zum Motor durchlaufen
+  // und dort mit „unbekanntes Format" scheitern — eine Meldung, die nach
+  // einem kaputten Werkzeug aussieht statt nach einem, das es noch nicht gibt.
+  if (MEDIUM === 'reel' && k !== 'anigosha') {
+    console.error(`Ein freies VIDEO gibt es fuer ${APPS[k].name} noch nicht — nur fuer Anigosha.`);
+    console.error(`Die freie KARTE kann ${APPS[k].name}: dasselbe ohne --medium reel.`);
+    console.error('(Eine Karte geht auf Facebook und Instagram; TikTok nimmt nur Videos.)');
     process.exit(1);
   }
 

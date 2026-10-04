@@ -40,6 +40,22 @@ if (!M) {
   process.exit(1);
 }
 
+// ⚠ Nicht jede Marke in marken.json gehoert diesem Werkzeug (04.10.2026).
+//
+// FullRep steht dort seit der freien Karte — aber nur mit den Farben und
+// Mitteln, die EINE Karte braucht. Seine Kanal-Ausstattung entsteht in
+// mypeak/scripts/kanal-assets.mjs, ist dort gemessen und haengt in den
+// Profilen. Liefe sie zusaetzlich von hier, gaebe es zwei Avatare derselben
+// Marke, und der Unterschied faellt erst auf, wenn eines der beiden Profile
+// nicht mehr zum anderen passt.
+//
+// Lieber hier abbrechen als ein zweites, halbrichtiges Profilbild bauen.
+if (M._nur_karten) {
+  console.error(`✗ ${M.name} traegt in marken.json nur die freie Karte, keine Kanal-Ausstattung.`);
+  console.error(`  ${M._nur_karten_grund ?? ''}`);
+  process.exit(1);
+}
+
 // ⚠ NICHT nach out/ — das ist gitignoriert (dort liegen die taeglichen Posts,
 // die aus ihrem Seed jederzeit neu entstehen). Kanal-Ausstattung ist das
 // Gegenteil: Sie wird einmal gebaut und jahrelang benutzt. Ein Container einer

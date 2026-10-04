@@ -18,11 +18,25 @@ name: Freie Karte
 # zweites Mal in die Merkliste — in der Freigabe-Seite staende dann jeder
 # Beitrag doppelt.
 #
-# --- ⚠ Bisher kann das nur Anigosha ------------------------------------------
+# --- Zwei Motoren, und warum (04.10.2026) ------------------------------------
 #
-# Das Format `freie-karte` steckt in anigosha/tools/post-bild.mjs. Die vier
-# anderen Apps haben es noch nicht; `lauf.mjs --karte` bricht dort mit einer
-# klaren Meldung ab, statt bis zum Motor durchzulaufen.
+# Josef: „bau die karten für alle apps". Seitdem:
+#
+#   anigosha   zeichnet mit seinem EIGENEN Generator (anigosha/tools/post-bild.mjs
+#              --format freie-karte). Er traegt das Wasserzeichen mit den beiden
+#              Figuren und die Randfigur aus apps.json — beides kennt der
+#              gemeinsame Generator nicht. Nur fuer diese App wird das App-Repo
+#              ausgecheckt.
+#   die vier   zeichnen mit tools/social/karten-fremd/freie-karte.mjs AUS DIESEM
+#   anderen    REPO. Der Generator braucht kein App-Repo: Farben, Schriften und
+#              Zeichen liegen in tools/social/kanal/. Deshalb faellt fuer sie
+#              der ganze Checkout- und Installationsteil weg — ein Lauf fuer
+#              Swaply holt kein einziges fremdes Repo mehr.
+#
+# ⚠ Das freie VIDEO (`medium: reel`) kann weiterhin nur Anigosha: Es ist das
+# Format `ansage` in dessen Reel-Generator. `lauf.mjs --karte --medium reel`
+# bricht bei den anderen vier mit einer klaren Meldung ab, und die
+# Freigabe-Seite bietet die Wahl dort gar nicht erst an.
 
 on:
   workflow_dispatch:
@@ -30,14 +44,14 @@ on:
       app:
         description: 'Fuer welche App?'
         type: choice
-        options: [anigosha]
+        options: [anigosha, mahjong, wellbooked, fullrep, swaply]
         default: anigosha
         required: true
       # ⚠ Bild oder Video entscheidet ueber die KANAELE, nicht nur ueber das
       # Aussehen: TikTok nimmt nur Videos. Eine Karte geht auf Facebook und
       # Instagram, ein Reel auf alle drei.
       medium:
-        description: 'bild = Karte (Facebook, Instagram) · reel = Video (auch TikTok)'
+        description: 'bild = Karte (Facebook, Instagram) · reel = Video (auch TikTok, NUR Anigosha)'
         type: choice
         options: [bild, reel]
         default: bild
@@ -103,7 +117,15 @@ jobs:
       # Motor eines Repos muss auf dessen STANDARDZWEIG liegen, sonst sieht
       # dieser Workflow ihn nicht — und lokal ist alles da, weshalb es erst im
       # Lauf auffaellt. Seit dem Zusammenfuehren ist der Notbehelf weg.
+      #
+      # ⚠ NUR fuer Anigosha (04.10.2026). Die vier anderen zeichnen mit
+      # tools/social/karten-fremd/freie-karte.mjs aus diesem Repo und lesen
+      # dabei nichts aus ihrem eigenen — weder Daten noch Schriften. Ein
+      # Checkout „zur Sicherheit" waere kein Nullgeschaeft: Er braucht
+      # REPOS_TOKEN, und ein abgelaufener Token liesse einen Lauf scheitern,
+      # der die Daten dahinter gar nicht anfasst.
       - name: anigosha auschecken
+        if: inputs.app == 'anigosha'
         uses: actions/checkout@v4
         with:
           repository: almaz6380/anigosha
@@ -114,6 +136,19 @@ jobs:
         with:
           node-version: '22'
 
+      # ⚠ playwright steht hier in package.json, nicht in einem `--no-save`
+      # danebeninstalliert: Der gemeinsame Kartengenerator laeuft in DIESEM
+      # Repo, also muss der Browser hier sein. Die Probe darunter ist kein
+      # Zierrat — ein `npm ci`, das durchlaeuft und trotzdem kein playwright
+      # hinterlaesst, faellt sonst erst beim Zeichnen auf.
+      - name: Abhaengigkeiten
+        run: |
+          set -e
+          cd "$SOCIAL_WURZEL/wellapps-social"
+          npm ci --no-audit --no-fund
+          [ -d node_modules/@vercel/blob ] || { echo "✗ @vercel/blob fehlt"; exit 1; }
+          [ -d node_modules/playwright ] || { echo "✗ playwright fehlt in wellapps-social"; exit 1; }
+
       # ⚠ BEIDE Pakete in EINEM `npm i --no-save`-Aufruf. Zwei Aufrufe
       # nacheinander heben sich auf: npm raeumt bei jeder Installation weg, was
       # nicht in package.json steht — und --no-save traegt es dort gerade nicht
@@ -123,16 +158,14 @@ jobs:
       # Fuer eine Karte reicht playwright; ffmpeg-static steht hier trotzdem
       # mit, damit dieser Schritt derselbe ist wie im Tageslauf und nicht
       # auseinanderlaeuft.
-      - name: Abhaengigkeiten
+      - name: Abhaengigkeiten fuer Anigoshas eigenen Generator
+        if: inputs.app == 'anigosha'
         run: |
           set -e
           cd "$SOCIAL_WURZEL/anigosha"
           npm ci --no-audit --no-fund || npm install --no-audit --no-fund
           npm i --no-save --no-audit --no-fund playwright ffmpeg-static
           [ -d node_modules/playwright ] || { echo "✗ playwright fehlt in anigosha"; exit 1; }
-          cd "$SOCIAL_WURZEL/wellapps-social"
-          npm ci --no-audit --no-fund
-          [ -d node_modules/@vercel/blob ] || { echo "✗ @vercel/blob fehlt"; exit 1; }
 
       # Erst NACH der Installation — der Browser muss zu der Playwright-Fassung
       # passen, die dann wirklich laeuft.
@@ -140,6 +173,11 @@ jobs:
         run: |
           set -e
           cd "$SOCIAL_WURZEL/wellapps-social" && npx playwright install --with-deps chromium
+
+      - name: Chromium fuer Anigoshas Playwright
+        if: inputs.app == 'anigosha'
+        run: |
+          set -e
           cd "$SOCIAL_WURZEL/anigosha" && npx playwright install chromium
 
       # ⚠ Die Texte kommen ueber `env`, NICHT direkt als ${{ inputs.text }} in
@@ -171,11 +209,24 @@ jobs:
       # gewuerfelt wird und auf eine Datei zeigt, die es nicht gibt.
       - name: In die Merkliste
         working-directory: wellapps-social
+        # ⚠ Alle fuenf Seiten-Token, nicht mehr nur Anigoshas (04.10.2026).
+        # posten.mjs sucht FB_SEITEN_TOKEN_<APP> nach dem Schluessel der App;
+        # stand hier nur ANIGOSHA, waere eine Swaply-Karte zwar gezeichnet
+        # worden und haette dann beim Ablegen gefehlt — mit einem Lauf, der
+        # erst ganz am Ende rot wird. Dieselbe Liste wie im Tageslauf.
         env:
           FB_SEITEN_TOKEN_ANIGOSHA: ${{ secrets.FB_SEITEN_TOKEN_ANIGOSHA }}
+          FB_SEITEN_TOKEN_MAHJONG: ${{ secrets.FB_SEITEN_TOKEN_MAHJONG }}
+          FB_SEITEN_TOKEN_WELLBOOKED: ${{ secrets.FB_SEITEN_TOKEN_WELLBOOKED }}
+          FB_SEITEN_TOKEN_FULLREP: ${{ secrets.FB_SEITEN_TOKEN_FULLREP }}
+          FB_SEITEN_TOKEN_SWAPLY: ${{ secrets.FB_SEITEN_TOKEN_SWAPLY }}
           TIKTOK_CLIENT_KEY: ${{ secrets.TIKTOK_CLIENT_KEY }}
           TIKTOK_CLIENT_SECRET: ${{ secrets.TIKTOK_CLIENT_SECRET }}
           TIKTOK_REFRESH_TOKEN_ANIGOSHA: ${{ secrets.TIKTOK_REFRESH_TOKEN_ANIGOSHA }}
+          TIKTOK_REFRESH_TOKEN_MAHJONG: ${{ secrets.TIKTOK_REFRESH_TOKEN_MAHJONG }}
+          TIKTOK_REFRESH_TOKEN_WELLBOOKED: ${{ secrets.TIKTOK_REFRESH_TOKEN_WELLBOOKED }}
+          TIKTOK_REFRESH_TOKEN_FULLREP: ${{ secrets.TIKTOK_REFRESH_TOKEN_FULLREP }}
+          TIKTOK_REFRESH_TOKEN_SWAPLY: ${{ secrets.TIKTOK_REFRESH_TOKEN_SWAPLY }}
           BLOB_TOKEN: ${{ secrets.BLOB_TOKEN }}
           APP: ${{ inputs.app }}
           SEED: ${{ steps.karte.outputs.seed }}
