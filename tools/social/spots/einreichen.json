@@ -1,0 +1,47 @@
+[
+  {
+    "app": "mahjong",
+    "video": "tools/social/spots/mahjong/fertig/mahjong-spot-de.mp4",
+    "sprache": "de"
+  },
+  {
+    "app": "mahjong",
+    "video": "tools/social/spots/mahjong/fertig/mahjong-spot-en.mp4",
+    "sprache": "en"
+  },
+  {
+    "app": "mahjong",
+    "video": "tools/social/spots/mahjong-neon/fertig/mahjong-neon-de.mp4",
+    "sprache": "de"
+  },
+  {
+    "app": "mahjong",
+    "video": "tools/social/spots/mahjong-neon/fertig/mahjong-neon-en.mp4",
+    "sprache": "en"
+  },
+  {
+    "app": "anigosha",
+    "video": "tools/social/spots/anigosha/fertig/anigosha-spot-de.mp4",
+    "sprache": "de"
+  },
+  {
+    "app": "anigosha",
+    "video": "tools/social/spots/anigosha/fertig/anigosha-spot-en.mp4",
+    "sprache": "en"
+  },
+  {
+    "app": "fullrep",
+    "video": "tools/social/studie-erklaert/fertig/fullrep-studie-gibala.mp4",
+    "sprache": "de"
+  },
+  {
+    "app": "fullrep",
+    "video": "tools/social/studie-erklaert/fertig/fullrep-studie-trizeps.mp4",
+    "sprache": "de"
+  },
+  {
+    "app": "swaply",
+    "video": "tools/social/studie-erklaert/fertig/swaply-studie-rauchen.mp4",
+    "sprache": "de"
+  }
+]

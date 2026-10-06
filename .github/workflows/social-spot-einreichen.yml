@@ -1,0 +1,51 @@
+name: Spots einreichen
+
+# Fertige Videos aus tools/social/spots/einreichen.json in die Freigabe-App
+# und (wahlweise) in die TikTok-Postfaecher der App-Konten.
+#
+# ⚠ Nur auf Josefs ausdruecklichen Wunsch ausloesen (CLAUDE.md, 28.09.2026).
+# TikTok bekommt die Videos nur in den POSTEINGANG — veroeffentlicht wird
+# von Hand in der TikTok-App, mit Text, Privatsphaere und KI-Label.
+
+on:
+  workflow_dispatch:
+    inputs:
+      modus:
+        description: 'trocken = nur Texte und Regeln pruefen, echt = hochladen'
+        type: choice
+        options: [trocken, echt]
+        required: true
+      tiktok:
+        description: 'Auch ins TikTok-Postfach laden?'
+        type: choice
+        options: [nein, ja]
+        required: true
+
+jobs:
+  einreichen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Abhaengigkeiten
+        run: npm ci --no-audit --no-fund || npm install --no-audit --no-fund
+      - name: Einreichen
+        env:
+          TIKTOK_CLIENT_KEY: ${{ secrets.TIKTOK_CLIENT_KEY }}
+          TIKTOK_CLIENT_SECRET: ${{ secrets.TIKTOK_CLIENT_SECRET }}
+          TIKTOK_REFRESH_TOKEN_ANIGOSHA: ${{ secrets.TIKTOK_REFRESH_TOKEN_ANIGOSHA }}
+          TIKTOK_REFRESH_TOKEN_MAHJONG: ${{ secrets.TIKTOK_REFRESH_TOKEN_MAHJONG }}
+          TIKTOK_REFRESH_TOKEN_WELLBOOKED: ${{ secrets.TIKTOK_REFRESH_TOKEN_WELLBOOKED }}
+          TIKTOK_REFRESH_TOKEN_FULLREP: ${{ secrets.TIKTOK_REFRESH_TOKEN_FULLREP }}
+          TIKTOK_REFRESH_TOKEN_SWAPLY: ${{ secrets.TIKTOK_REFRESH_TOKEN_SWAPLY }}
+          BLOB_TOKEN: ${{ secrets.BLOB_TOKEN }}
+          MODUS: ${{ inputs.modus }}
+          TIKTOK: ${{ inputs.tiktok }}
+        run: |
+          ARGS=""
+          [ "$MODUS" = "echt" ] && ARGS="$ARGS --echt"
+          [ "$TIKTOK" = "ja" ] && ARGS="$ARGS --tiktok"
+          node tools/social/spot-einreichen.mjs $ARGS
