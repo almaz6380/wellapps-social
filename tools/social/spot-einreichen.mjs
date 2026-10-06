@@ -4,6 +4,7 @@
 //   node tools/social/spot-einreichen.mjs                 # Trockenlauf: Texte bauen, Regeln prüfen
 //   node tools/social/spot-einreichen.mjs --echt          # hochladen, Merkliste ergänzen
 //   node tools/social/spot-einreichen.mjs --echt --tiktok # zusätzlich ins TikTok-Postfach
+//   NUR=a.mp4,b.mp4 node tools/social/spot-einreichen.mjs …  # nur diese Videos
 //
 // Liste: tools/social/spots/einreichen.json → [{ app, video, sprache }], Pfade relativ zum Repo.
 // Neben jedem Video liegt <video>.txt (Beiblatt): „── CAPTION ZUM KOPIEREN ──“, Hashtag-Zeile,
@@ -33,7 +34,12 @@ const APPS = JSON.parse(readFileSync(join(HIER, 'apps.json'), 'utf8'));
 const ECHT = process.argv.includes('--echt');
 const TIKTOK = process.argv.includes('--tiktok');
 const DATUM = process.env.DATUM || new Date().toISOString().slice(0, 10);
-const LISTE = JSON.parse(readFileSync(join(HIER, 'spots', 'einreichen.json'), 'utf8'));
+// NUR=<datei,datei>: nur diese Videos (Dateinamen) — sonst ginge bei jedem Lauf die ganze Liste
+// noch einmal in die TikTok-Postfaecher, als doppelte Entwuerfe.
+const NUR = (process.env.NUR ?? '').split(',').map((x) => x.trim()).filter(Boolean);
+const LISTE = JSON.parse(readFileSync(join(HIER, 'spots', 'einreichen.json'), 'utf8'))
+  .filter((e) => !NUR.length || NUR.includes(basename(e.video)));
+if (!LISTE.length) throw new Error(`Nichts zu tun — NUR=${NUR.join(',')} passt auf keinen Eintrag.`);
 
 const zeile = (beiblatt, schluessel) =>
   beiblatt.match(new RegExp(`^- ${schluessel}: (.+)$`, 'm'))?.[1]?.trim() ?? null;

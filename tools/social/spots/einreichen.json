@@ -43,5 +43,15 @@
     "app": "swaply",
     "video": "tools/social/studie-erklaert/fertig/swaply-studie-rauchen.mp4",
     "sprache": "de"
+  },
+  {
+    "app": "mahjong",
+    "video": "tools/social/spots/mahjong-steinregen/fertig/mahjong-steinregen-de.mp4",
+    "sprache": "de"
+  },
+  {
+    "app": "mahjong",
+    "video": "tools/social/spots/mahjong-steinregen/fertig/mahjong-steinregen-en.mp4",
+    "sprache": "en"
   }
 ]

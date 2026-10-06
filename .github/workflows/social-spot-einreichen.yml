@@ -20,6 +20,10 @@ on:
         type: choice
         options: [nein, ja]
         required: true
+      nur:
+        description: 'Nur diese Videos (Dateinamen, kommagetrennt) — leer = ganze Liste'
+        type: string
+        required: false
 
 jobs:
   einreichen:
@@ -44,6 +48,7 @@ jobs:
           BLOB_TOKEN: ${{ secrets.BLOB_TOKEN }}
           MODUS: ${{ inputs.modus }}
           TIKTOK: ${{ inputs.tiktok }}
+          NUR: ${{ inputs.nur }}
         run: |
           ARGS=""
           [ "$MODUS" = "echt" ] && ARGS="$ARGS --echt"
