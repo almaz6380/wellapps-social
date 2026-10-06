@@ -15,12 +15,25 @@ const NAME = process.argv[2]; const R = REELS[NAME];
 if (!R) { console.error('Reel unbekannt. Bekannt:', Object.keys(REELS).join(', ')); process.exit(1); }
 const STAND = process.argv.includes('--stand');
 const F = join(HIER, '../../../node_modules/ffmpeg-static/ffmpeg');
-const MP = process.env.FULLREP_PFAD || '/home/user/mypeak'; // FullRep-Repo: Schriften, Icon, Badges
-const MUSIK = join(HIER, '../musik/fullrep-bett.mp3');
+// Marken: Pfade, Schriften, Farben. FullRep ist die Vorlage, deren Farbcodes im HTML stehen;
+// andere Marken tauschen sie per `farben` aus (alt → neu).
+const MARKEN = {
+  fullrep: () => { const p = process.env.FULLREP_PFAD || '/home/user/mypeak'; const fi = (w) => `${p}/node_modules/@fontsource/inter/files/inter-latin-${w}-normal.woff2`;
+    return { name: 'FullRep', icon: `${p}/public/icon-512.png`, badges: `${p}/scripts/badges`, musik: join(HIER, '../musik/fullrep-bett.mp3'),
+      schrift: { 400: fi(400), 700: fi(700), 900: fi(900), A: `${p}/scripts/schriften/anton.woff2` }, farben: {} }; },
+  swaply: () => { const p = process.env.SWAPLY_PFAD || '/home/user/swaply'; const f = (n) => `${p}/src/fonts/${n}.woff2`;
+    return { name: 'Swaply', icon: `${p}/assets/icon-only.png`, badges: `${p}/scripts/badges`, musik: join(HIER, '../musik/swaply-bett.mp3'),
+      schrift: { 400: f('plex-sans-latin-400'), 700: f('plex-sans-latin-600'), 900: f('space-grotesk-latin'), A: f('space-grotesk-latin') },
+      // Swaply-Dunkelmodus aus src/index.css: --accent #9be3b4, --bg #0b0c0e, --bg-elev #14161a, --line #23262b
+      farben: { '#fbbf24': '#9be3b4', '#fff8e7': '#f2f2ee', '#fde68a': '#c9f2d6', '#5c4a1c': '#2d5a40', '#1d1a14': '#0f1a14', '#141311': '#14161a',
+        '#2a2722': '#23262b', '#1f1a0c': '#12261b', '#2c2924': '#262a2e', '#6b645a': '#56605a', '#4a4640': '#40464a', '#a8a29e': '#9aa39d', '#e7e5e4': '#e2e6e3' } }; },
+};
+const MK = (MARKEN[R.marke || 'fullrep'])();
+const MUSIK = MK.musik;
 const FPS = 30, LUECKE = 0.45, VOR = 0.35;
 const D = join(HIER, 'out', NAME); mkdirSync(D, { recursive: true });
 mkdirSync(join(HIER, 'fertig'), { recursive: true });
-const ZIEL = join(HIER, 'fertig', `fullrep-studie-${NAME}.mp4`);
+const ZIEL = join(HIER, "fertig", `${R.marke || "fullrep"}-studie-${NAME}.mp4`);
 if (!process.env.FAL_KEY) { console.error('FAL_KEY fehlt (Stimme läuft über fal).'); process.exit(1); }
 const b64 = (p) => readFileSync(p).toString('base64');
 const sh = (c) => execFileSync('sh', ['-c', c], { encoding: 'utf8' });
@@ -78,13 +91,13 @@ if (R.clip) {
 }
 
 // --- 3. Seite ---
-const fi = (w) => b64(`${MP}/node_modules/@fontsource/inter/files/inter-latin-${w}-normal.woff2`);
-const icon = b64(`${MP}/public/icon-512.png`);
-const html = `<!doctype html><html><head><meta charset="utf-8"><style>
+const fi = (w) => b64(MK.schrift[w]);
+const icon = b64(MK.icon);
+let html = `<!doctype html><html><head><meta charset="utf-8"><style>
 @font-face{font-family:I;font-weight:400;src:url(data:font/woff2;base64,${fi(400)})}
 @font-face{font-family:I;font-weight:700;src:url(data:font/woff2;base64,${fi(700)})}
-@font-face{font-family:I;font-weight:900;src:url(data:font/woff2;base64,${fi(900)})}
-@font-face{font-family:A;src:url(data:font/woff2;base64,${b64(`${MP}/scripts/schriften/anton.woff2`)})}
+@font-face{font-family:I;font-weight:800 900;src:url(data:font/woff2;base64,${fi(900)})}
+@font-face{font-family:A;font-weight:300 700;src:url(data:font/woff2;base64,${fi('A')})}
 *{box-sizing:border-box}
 body{margin:0;width:1080px;height:1920px;overflow:hidden;font-family:I;color:#fff8e7;background:radial-gradient(110% 60% at 15% 0%,#1d1a14 0%,#0b0a09 55%,#070707 100%)}
 #k{position:absolute;left:72px;top:150px;font-weight:700;letter-spacing:.32em;font-size:24px;color:#fbbf24}
@@ -96,9 +109,9 @@ body{margin:0;width:1080px;height:1920px;overflow:hidden;font-family:I;color:#ff
 #cap{position:absolute;left:72px;top:1340px;width:820px;font-weight:700;font-size:50px;line-height:1.18;letter-spacing:-.01em}
 #cap span{color:#4a4640}#cap span.g{color:#fff8e7}#cap span.j{color:#fbbf24}
 #fort{position:absolute;left:0;top:0;height:6px;background:#fbbf24}
-.stempel{position:absolute;border:7px solid #ef4444;color:#ef4444;font-family:A;font-size:84px;line-height:1;padding:10px 26px 6px;letter-spacing:.04em;border-radius:12px;text-align:center;background:rgba(11,10,9,.92)}
+.stempel{position:absolute;border:7px solid #ef4444;color:#ef4444;font-family:A;font-weight:700;font-size:84px;line-height:1;padding:10px 26px 6px;letter-spacing:.04em;border-radius:12px;text-align:center;background:rgba(11,10,9,.92)}
 .zahlen{position:absolute;left:72px;display:flex;gap:70px}
-.zahlen div{font-family:A;font-size:120px;color:#fbbf24;line-height:1}
+.zahlen div{font-family:A;font-weight:700;font-size:120px;color:#fbbf24;line-height:1}
 .zahlen small{display:block;font-family:I;font-weight:700;font-size:26px;color:#a8a29e;letter-spacing:.05em;margin-top:8px}
 .karte{position:absolute;left:72px;width:820px;min-height:150px;border-radius:26px;background:#141311;border:2px solid #2a2722;padding:26px 34px}
 .karte b{display:block;font-size:26px;letter-spacing:.16em;color:#fbbf24}
@@ -106,10 +119,10 @@ body{margin:0;width:1080px;height:1920px;overflow:hidden;font-family:I;color:#ff
 .karte.sieg{border-color:#fbbf24;background:#1f1a0c}
 .karte.aus{opacity:.45}
 .label{position:absolute;font-weight:700;font-size:30px;color:#a8a29e;letter-spacing:.04em}
-.wert{position:absolute;font-family:A;font-size:96px;color:#fff8e7;line-height:1}
+.wert{position:absolute;font-family:A;font-weight:700;font-size:96px;color:#fff8e7;line-height:1}
 .band{position:absolute;left:72px;width:820px;border-radius:26px;background:#fbbf24;color:#0b0a09;padding:30px 36px;font-weight:900;font-size:52px;line-height:1.1}
 .schritt{position:absolute;left:72px;width:840px;display:flex;gap:30px;align-items:center}
-.schritt i{font-style:normal;font-family:A;font-size:88px;color:#fbbf24;width:70px;flex:none}
+.schritt i{font-style:normal;font-family:A;font-weight:700;font-size:88px;color:#fbbf24;width:70px;flex:none}
 .schritt span{font-size:50px;font-weight:700;line-height:1.12}
 .end{position:absolute;left:0;width:1080px;top:-520px;height:1920px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding-bottom:260px;text-align:center}
 .end img.i{width:260px;height:260px;border-radius:58px;box-shadow:0 0 0 3px rgba(251,191,36,.5),0 30px 90px rgba(0,0,0,.6)}
@@ -119,11 +132,11 @@ body{margin:0;width:1080px;height:1920px;overflow:hidden;font-family:I;color:#ff
 .tag{position:absolute;background:#fbbf24;color:#0b0a09;font-weight:900;font-size:30px;padding:8px 18px;border-radius:12px}
 canvas{position:absolute;left:0;top:0}
 </style></head><body>
-<img id="hg" style="position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;opacity:0"><div id="hgv" style="position:absolute;inset:0;opacity:0;background:linear-gradient(180deg,rgba(7,7,7,.92) 0%,rgba(7,7,7,.35) 30%,rgba(7,7,7,.15) 55%,rgba(7,7,7,.85) 72%,rgba(7,7,7,.95) 100%)"></div><div id="fort"></div><div id="k"></div><div id="marke"><img src="data:image/png;base64,${icon}">FullRep</div>
+<img id="hg" style="position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;opacity:0"><div id="hgv" style="position:absolute;inset:0;opacity:0;background:linear-gradient(180deg,rgba(7,7,7,.92) 0%,rgba(7,7,7,.35) 30%,rgba(7,7,7,.15) 55%,rgba(7,7,7,.85) 72%,rgba(7,7,7,.95) 100%)"></div><div id="fort"></div><div id="k"></div><div id="marke"><img src="data:image/png;base64,${icon}">${MK.name}</div>
 <div id="titel"></div><div id="buehne"><canvas id="cv" width="1080" height="780"></canvas><div id="ov"></div></div><div id="cap"></div>
 <script>
 const S=${JSON.stringify(szenen)}, G=${G}, CLIP=${JSON.stringify(CLIP)}, CFPS=24;
-const ICON='data:image/png;base64,${icon}', IOS='data:image/png;base64,${b64(`${MP}/scripts/badges/appstore-en.png`)}', GP='data:image/png;base64,${b64(`${MP}/scripts/badges/googleplay-en.png`)}';
+const ICON='data:image/png;base64,${icon}', IOS='data:image/png;base64,${b64(`${MK.badges}/appstore-en.png`)}', GP='data:image/png;base64,${b64(`${MK.badges}/googleplay-en.png`)}', MARKE='${MK.name}';
 const cl=(x,a=0,b=1)=>Math.min(b,Math.max(a,x)), ease=x=>1-Math.pow(1-cl(x),3);
 function dot(c,x,y,r,col){c.beginPath();c.arc(x,y,r,0,7);c.fillStyle=col;c.fill()}
 const AMB='#fbbf24', DIM='#2c2924', MID='#6b645a', ROT='#ef4444', HELL='#fde68a';
@@ -200,13 +213,25 @@ function setFrame(t){
     for(let i=0;i<10;i++)dot(c,150+(i%5)*150,180+Math.floor(i/5)*160,52,i<a?AMB:DIM);
     h+='<div class="wert" style="left:870px;top:160px;font-size:200px;color:'+AMB+';opacity:'+cl(a-9.5)+'">+</div>';
     h+='<div class="label" style="left:72px;top:440px;opacity:'+cl(a-9)+'">1 PUNKT = 1 SATZ PRO MUSKELGRUPPE & WOCHE</div>';}
+  if(v.typ==='zigarette'){const cy=400,x0=160,x1=860,fl=x0+170;
+    for(let x=x0;x<=x1;x+=20)for(let y=cy-60;y<=cy+60;y+=20){dot(c,x,y,7.5,x<fl?'#c98a4b':MID)}
+    const glut=.6+.4*Math.sin(t*6);for(let y=cy-60;y<=cy+60;y+=20){dot(c,x1+20,y,9,'rgba(239,68,68,'+glut+')');dot(c,x1+38,y,6,'rgba(251,191,36,'+(glut*.8)+')')}
+    for(let i=0;i<30;i++){const ph=(t*.35+i/30)%1,yy=cy-80-ph*320,xx=x1+20+Math.sin(ph*9+i)*30*ph;dot(c,xx,yy,6*(1-ph)+2,'rgba(154,163,157,'+(.55*(1-ph))+')')}}
+  if(v.typ==='schleife'){const M=[490,400],R=240,ang=[-90,30,150].map(a=>a*Math.PI/180),pos=ang.map(a=>[M[0]+Math.cos(a)*R,M[1]+Math.sin(a)*R]);
+    v.knoten.forEach((k,i)=>{const a=auf(k.p);if(a<=0)return;const a0=ang[i]+.42,a1=ang[(i+1)%3]-.42;const n=22;
+      for(let j=0;j<=n;j++){const q=j/n;if(q>a*1.4)break;const w=a0+(a1+(a1<a0?2*Math.PI:0)-a0)*q;dot(c,M[0]+Math.cos(w)*R,M[1]+Math.sin(w)*R,j===n?9:5,j===n?AMB:MID)}});
+    v.knoten.forEach((k,i)=>{const a=auf(k.p);const [x,y]=pos[i];const T=v.tausch&&i===1?v.tausch:null,tw=T?auf(T.p,.5):0;
+      let inner='<div style="font-weight:700;font-size:38px;line-height:1.1">'+k.wert+'</div>';
+      if(T&&tw>0)inner='<div style="font-weight:700;font-size:30px;line-height:1.1;color:'+ROT+';text-decoration:line-through;opacity:'+(1-tw*.6)+'">'+k.wert+'</div><div style="font-weight:900;font-size:36px;line-height:1.1;color:'+AMB+';margin-top:6px;opacity:'+tw+'">'+T.neu+'</div>';
+      h+='<div style="position:absolute;left:'+(x-150)+'px;top:'+(y-150)+'px;width:300px;height:300px;border-radius:50%;background:#141311;border:5px solid '+(T&&tw>0?AMB:(a>.5?AMB:'#2a2722'))+';display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px;opacity:'+Math.max(.25,a)+';box-shadow:'+(T&&tw>0?'0 0 60px rgba(251,191,36,.45)':'none')+'"><div style="font-weight:700;font-size:22px;letter-spacing:.2em;color:#a8a29e;margin-bottom:10px">'+k.label+'</div>'+(a>.5?inner:'')+'</div>'});}
   if(v.band){const b=auf(v.band.p,.35);if(b>0)h+='<div class="band" style="top:640px;opacity:'+b+';transform:scale('+(.9+.1*b)+')">'+v.band.text+'</div>';}
   if(v.stempel&&t>=P(v.stempel.p)){const x=cl((t-P(v.stempel.p))/.25);h+='<div class="stempel" style="left:50%;top:'+(v.stempel.top||330)+'px;transform:translate(-50%,-50%) rotate(-9deg) scale('+(2.2-1.2*ease(x))+');opacity:'+cl(x*8)+'">'+v.stempel.text+'</div>';}
-  if(end){const a=ease((t-sz.start)/.5);h+='<div class="end" style="opacity:'+a+'"><img class="i" src="'+ICON+'"><h1>FullRep</h1><p>'+v.zeile+'</p><div class="b"><img src="'+IOS+'"><img src="'+GP+'"></div></div>';}
+  if(end){const a=ease((t-sz.start)/.5);h+='<div class="end" style="opacity:'+a+'"><img class="i" src="'+ICON+'"><h1>'+MARKE+'</h1><p>'+v.zeile+'</p><div class="b"><img src="'+IOS+'"><img src="'+GP+'"></div>'+(v.klein?'<div style="margin-top:44px;font-size:28px;color:#a8a29e">'+v.klein+'</div>':'')+'</div>';}
   document.getElementById('ov').innerHTML=h;
 }
 window.setFrame=setFrame;
 </script></body></html>`;
+for (const [alt, neu] of Object.entries(MK.farben)) html = html.split(alt).join(neu);
 writeFileSync(`${D}/seite.html`, html);
 
 // --- 4. Frames ---

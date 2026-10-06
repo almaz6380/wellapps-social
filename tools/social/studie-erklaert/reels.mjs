@@ -49,4 +49,38 @@ export const REELS = {
       { k: '', titel: '', vo: 'Die Übung findest du in FullRep.', v: { typ: 'end', zeile: 'Trizepsstrecken überkopf<br>in der App' } },
     ],
   },
+  rauchen: { // Swaply, Kategorie „Nikotin & Vaping“. Inhalte aus swaply/src/i18n/de.ts (categories.nicotine):
+    // Auslöser „Nach dem Kaffee“, Belohnung „Pause“, Ersatz „5 tiefe, langsame Atemzüge (imitiert das Ziehen)“,
+    // „Ein Glas Wasser trinken“, Intervention „Ein Verlangen dauert meist nur 3–5 Min“. Prinzip: Duhigg,
+    // „Golden Rule of Habit Change“ (swaply/src/data/categories.ts). Studie siehe Szene „Die Studie“. Keine Therapieversprechen.
+    marke: 'swaply',
+    szenen: [
+      // 0 Mit dem Rauchen aufhören? · 1 Probier es mit Tauschen.
+      { k: 'ERKLÄRT', titel: 'Rauchen: <em>aufhören</em> oder <em>tauschen</em>?', vo: 'Mit dem Rauchen aufhören? Probier es mit Tauschen.',
+        v: { typ: 'zigarette', stempel: { text: 'TAUSCHEN', p: 1, top: 600 } } },
+      // 0 Jede Gewohnheit hat drei Teile: · 1 Auslöser, · 2 Routine, · 3 Belohnung.
+      { k: 'DIE SCHLEIFE', titel: 'Jede Gewohnheit hat <em>drei Teile</em>', vo: 'Jede Gewohnheit hat drei Teile: Auslöser, Routine, Belohnung.',
+        v: { typ: 'schleife', knoten: [{ label: 'AUSLÖSER', wert: '', p: 1 }, { label: 'ROUTINE', wert: '', p: 2 }, { label: 'BELOHNUNG', wert: '', p: 3 }] } },
+      // 0 Der Auslöser: · 1 der Kaffee. · 2 Die Routine: · 3 die Zigarette. · 4 Die Belohnung: · 5 eine kurze Pause.
+      { k: 'BEIM RAUCHEN', titel: 'Die Schleife beim <em>Rauchen</em>', vo: 'Der Auslöser: der Kaffee. Die Routine: die Zigarette. Die Belohnung: eine kurze Pause.',
+        v: { typ: 'schleife', knoten: [{ label: 'AUSLÖSER', wert: 'Kaffee', p: 1 }, { label: 'ROUTINE', wert: 'Zigarette', p: 3 }, { label: 'BELOHNUNG', wert: 'Kurze Pause', p: 5 }] } },
+      // 0 Der Trick: · 1 Auslöser und Belohnung bleiben. · 2 Nur die Routine wird getauscht.
+      { k: 'DER TRICK', titel: 'Nur die <em>Routine</em> tauschen', vo: 'Der Trick: Auslöser und Belohnung bleiben. Nur die Routine wird getauscht.',
+        v: { typ: 'schleife', knoten: [{ label: 'AUSLÖSER', wert: 'Kaffee', p: 0 }, { label: 'ROUTINE', wert: 'Zigarette', p: 0 }, { label: 'BELOHNUNG', wert: 'Kurze Pause', p: 0 }], tausch: { neu: '5 tiefe Atemzüge', p: 2 } } },
+      // Studie: McClernon, Westman & Rose 2004, Addict Behav 29(4):765–772, PMID 15135559 (Abstract gelesen 06.10.2026).
+      // Abhängige Raucher, zwei Laborsitzungen, je 4 h ohne Rauchen; einmal alle 30 Min. eine Reihe tiefer Atemzüge,
+      // einmal ruhig sitzen. Tiefes Atmen senkte Verlangen und negative Stimmung (angespannt, gereizt) signifikant,
+      // Wachheit/Konzentration blieben auf Ausgangsniveau. Laut Autoren eine vorläufige Studie, keine Zahlen im Abstract.
+      // 0 Hilft das? · 1 Die Duke University hat es getestet. · 2 Raucher verzichteten vier Stunden, · 3 mal mit tiefen Atemzügen, · 4 mal ohne.
+      { k: 'DIE STUDIE', titel: 'Hilft <em>tiefes Atmen</em>?', vo: 'Hilft das? Die Duke University hat es getestet. Raucher verzichteten vier Stunden, mal mit tiefen Atemzügen, mal ohne.',
+        v: { typ: 'zahlen', zp: 2, zahlen: [['4', 'STUNDEN OHNE RAUCHEN'], ['2', 'DURCHGÄNGE']], karten: [['DURCHGANG 1', 'Tiefe Atemzüge alle 30 Min.', 3], ['DURCHGANG 2', 'Nur ruhig sitzen', 4]] } },
+      // 0 Mit Atemzügen: · 1 weniger Verlangen, · 2 weniger gereizt. · 3 Und trotzdem wach.
+      { k: 'DAS ERGEBNIS', titel: 'Weniger <em>Verlangen</em>', vo: 'Mit Atemzügen: weniger Verlangen, weniger gereizt. Und trotzdem wach.',
+        v: { typ: 'sieger', p: 1, karten: [['MIT TIEFEN ATEMZÜGEN', 'Weniger Verlangen, weniger gereizt', true], ['NUR RUHIG SITZEN', 'Stärkeres Verlangen', false]], band: { text: 'Und trotzdem wach und konzentriert', p: 3 } } },
+      // 0 So tauschst du: · 1 fünfmal tief atmen, · 2 dann ein Glas Wasser. · 3 Das Verlangen ebbt nach Minuten ab.
+      { k: 'FÜR DEINEN TAUSCH', titel: 'Wenn das <em>Verlangen</em> kommt', vo: 'So tauschst du: fünfmal tief atmen, dann ein Glas Wasser. Das Verlangen ebbt nach Minuten ab.',
+        v: { typ: 'schritte', schritte: [['5× tief und langsam atmen', 1], ['Ein Glas Wasser trinken', 2], ['Das Verlangen ebbt nach Minuten ab', 3]] } },
+      { k: '', titel: '', vo: 'Deinen Tausch planst du mit Swaply.', v: { typ: 'end', zeile: 'Gewohnheiten tauschen<br>statt abgewöhnen', klein: 'Swaply ersetzt keine ärztliche Hilfe oder Suchtberatung.' } },
+    ],
+  },
 };
