@@ -20,6 +20,12 @@ on:
         type: choice
         options: [nein, ja]
         required: true
+      meta:
+        description: 'Instagram + Facebook in der Freigabe-App vormerken?'
+        type: choice
+        options: [nein, ja]
+        required: false
+        default: nein
       nur:
         description: 'Nur diese Videos (Dateinamen, kommagetrennt) — leer = ganze Liste'
         type: string
@@ -49,8 +55,10 @@ jobs:
           MODUS: ${{ inputs.modus }}
           TIKTOK: ${{ inputs.tiktok }}
           NUR: ${{ inputs.nur }}
+          META: ${{ inputs.meta }}
         run: |
           ARGS=""
           [ "$MODUS" = "echt" ] && ARGS="$ARGS --echt"
           [ "$TIKTOK" = "ja" ] && ARGS="$ARGS --tiktok"
+          [ "$META" = "ja" ] && ARGS="$ARGS --meta"
           node tools/social/spot-einreichen.mjs $ARGS

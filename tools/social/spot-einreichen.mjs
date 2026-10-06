@@ -4,6 +4,7 @@
 //   node tools/social/spot-einreichen.mjs                 # Trockenlauf: Texte bauen, Regeln prüfen
 //   node tools/social/spot-einreichen.mjs --echt          # hochladen, Merkliste ergänzen
 //   node tools/social/spot-einreichen.mjs --echt --tiktok # zusätzlich ins TikTok-Postfach
+//   node tools/social/spot-einreichen.mjs --echt --meta   # Instagram + Facebook vormerken (Knopf in der Freigabe-App)
 //   NUR=a.mp4,b.mp4 node tools/social/spot-einreichen.mjs …  # nur diese Videos
 //
 // Liste: tools/social/spots/einreichen.json → [{ app, video, sprache }], Pfade relativ zum Repo.
@@ -33,6 +34,7 @@ const WURZEL = join(HIER, '..', '..');
 const APPS = JSON.parse(readFileSync(join(HIER, 'apps.json'), 'utf8'));
 const ECHT = process.argv.includes('--echt');
 const TIKTOK = process.argv.includes('--tiktok');
+const META = process.argv.includes('--meta');   // Instagram + Facebook in der Freigabe-App vormerken
 const DATUM = process.env.DATUM || new Date().toISOString().slice(0, 10);
 // NUR=<datei,datei>: nur diese Videos (Dateinamen) — sonst ginge bei jedem Lauf die ganze Liste
 // noch einmal in die TikTok-Postfaecher, als doppelte Entwuerfe.
@@ -113,37 +115,56 @@ for (const appSchluessel of [...new Set(posten.map((p) => p.app))]) {
     } catch (err) { console.log(`   ⚠ TikTok-Kontoauskunft ${appSchluessel}: ${err.message}`); }
   }
 
+  // ⚠ ERGÄNZEN, nicht ersetzen — dieselbe Lehre wie in posten.mjs (09.09./20.09.2026).
+  // Zuerst lesen: Liegt ein Video heute schon im Speicher, wird es nicht noch
+  // einmal hochgeladen, und sein TikTok-Stand bleibt erhalten.
+  let alt = null;
+  try { alt = (await merklistenLesen({ datum: DATUM, token: z.blobToken })).find((l) => l.app === appSchluessel) ?? null; }
+  catch (err) { console.log(`   ⚠ Alte Merkliste nicht lesbar (${err.message}) — wird neu angelegt.`); }
+
   const neu = [];
+  const ig = [];
   for (const p of meine) {
-    const { url, pfad } = await hochladen({ datei: p.video, token: z.blobToken, praefix: `social/${DATUM}` });
-    const spur = { datei: p.datei, text: p.text, istVideo: true, url, blobPfad: pfad, kanaele: {} };
+    const vorher = (alt?.uebersicht ?? []).find((s) => s.datei === p.datei) ?? null;
+    const { url, pfad } = vorher?.url
+      ? { url: vorher.url, pfad: vorher.blobPfad ?? null }
+      : await hochladen({ datei: p.video, token: z.blobToken, praefix: `social/${DATUM}` });
+    const spur = { datei: p.datei, text: p.text, istVideo: true, url, blobPfad: pfad,
+      kanaele: { ...(vorher?.kanaele ?? {}) } };
+    const wege = [];
     if (TIKTOK && token && !tiktokGesperrt) {
       try {
         const r = await inPosteingang({ token, datei: p.video });
         spur.kanaele.tiktok = { stand: 'posteingang', publishId: r.publishId, wann: new Date().toISOString() };
-        console.log(`   ✓ ${appSchluessel} · ${p.datei} → Freigabe-App + TikTok-Postfach (${r.mb} MB)`);
+        wege.push(`TikTok-Postfach (${r.mb} MB)`);
       } catch (err) {
         spur.kanaele.tiktok = { stand: 'fehler', meldung: err.message };
-        console.log(`   ✗ ${appSchluessel} · ${p.datei} → TikTok: ${err.message}`);
+        wege.push(`TikTok ✗ ${err.message}`);
         // ⚠ Kein weiterer Versuch: Das Limit zählt vermutlich über alle fünf Konten.
         if (/spam_risk|too many|pending/i.test(err.message)) tiktokGesperrt = true;
       }
-    } else {
-      if (TIKTOK) spur.kanaele.tiktok = { stand: 'wartet' };
-      console.log(`   ✓ ${appSchluessel} · ${p.datei} → Freigabe-App${TIKTOK ? ' (TikTok übersprungen)' : ''}`);
+    } else if (TIKTOK && !spur.kanaele.tiktok) {
+      spur.kanaele.tiktok = { stand: 'wartet' };
     }
+    // Instagram und Facebook: nur VORMERKEN. Veröffentlicht wird erst über den
+    // Knopf auf der Freigabe-Seite — derselbe Weg wie in posten.mjs.
+    if (META) {
+      for (const k of ['instagram', 'facebook']) {
+        if (spur.kanaele[k]?.stand !== 'veroeffentlicht') spur.kanaele[k] = { stand: 'wartet' };
+      }
+      if (spur.kanaele.instagram.stand === 'wartet') ig.push({ datei: p.datei, url, blobPfad: pfad, text: p.text, istVideo: true });
+      wege.push('Instagram + Facebook vorgemerkt');
+    }
+    console.log(`   ✓ ${appSchluessel} · ${p.datei} → Freigabe-App${wege.length ? ' · ' + wege.join(' · ') : ''}`);
     neu.push(spur);
     zusammenfassung.push({ app: appSchluessel, datei: p.datei, text: p.text, tiktok: spur.kanaele.tiktok?.stand ?? '—' });
   }
 
-  // ⚠ ERGÄNZEN, nicht ersetzen — dieselbe Lehre wie in posten.mjs (09.09./20.09.2026).
-  let alt = null;
-  try { alt = (await merklistenLesen({ datum: DATUM, token: z.blobToken })).find((l) => l.app === appSchluessel) ?? null; }
-  catch (err) { console.log(`   ⚠ Alte Merkliste nicht lesbar (${err.message}) — wird neu angelegt.`); }
   const neueNamen = new Set(neu.map((s) => s.datei));
+  const igNamen = new Set(ig.map((e) => e.datei));
   const r = await merklisteAblegen({
     datum: DATUM, appSchluessel, name: APPS[appSchluessel].name,
-    eintraege: alt?.eintraege ?? [],
+    eintraege: [...(alt?.eintraege ?? []).filter((e) => !igNamen.has(e.datei)), ...ig],
     uebersicht: [...(alt?.uebersicht ?? []).filter((s) => !neueNamen.has(s.datei)), ...neu],
     tiktok: kopf ?? alt?.tiktok ?? null,
     token: z.blobToken,
