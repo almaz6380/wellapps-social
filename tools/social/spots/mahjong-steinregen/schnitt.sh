@@ -1,4 +1,6 @@
 set -e
+# ⚠ Satz 1 ist EINE Aufnahme (07.10.): als zwei Stücke („… / …“) war „musst du“ unverständlich,
+# und whoosh/hook-hit lagen darüber. Jetzt endet der Satz bei ~2,8 s, vor dem Aufprall bei 3,35 s.
 # Mahjong-Spot „Steinregen“ schneiden: DE und EN, 15 s, 1080×1920. Siehe README.md.
 cd "$(dirname "$0")"; Q=quellen; M=../mahjong/quellen   # Spielszene und Musik teilt er mit „Das Erbe“
 F=../../../../node_modules/ffmpeg-static/ffmpeg
@@ -11,7 +13,7 @@ for L in de en; do
     -i $Q/clip-1.mp4 -i $Q/clip-2.mp4 -i $Q/clip-3.mp4 -i $M/spiel-lvl18.mp4 \
     -loop 1 -t 4.0 -i $Q/endkarte-$L.png \
     -ss 20 -t $T -i $M/musik.mp3 \
-    -i $Q/vo-$L-0.wav -i $Q/vo-$L-1.wav -i $Q/vo-$L-2.wav \
+    -i $Q/vo-$L-0.wav -i $Q/vo-$L-2.wav \
     -i $Q/whoosh.aac -i $Q/hook-hit.aac -i $Q/whoosh.aac \
     -filter_complex "
     [0:v]trim=0:3.8,setpts=PTS-STARTPTS,$K,$N[a];
@@ -25,12 +27,11 @@ for L in de en; do
     [abcd][e]xfade=transition=fade:duration=0.3:offset=10.8,fade=t=in:st=0:d=0.15[v];
     [5:a]aresample=48000,aformat=channel_layouts=stereo,afade=t=in:d=0.3,afade=t=out:st=14.1:d=0.7,volume=0.32[m];
     [6:a]aresample=48000,aformat=channel_layouts=stereo,adelay=400|400[s0];
-    [7:a]aresample=48000,aformat=channel_layouts=stereo,adelay=3000|3000[s1];
-    [8:a]aresample=48000,aformat=channel_layouts=stereo,adelay=$D2|$D2[s2];
-    [s0][s1][s2]amix=inputs=3:normalize=0,apad=whole_dur=$T,volume=1.6,asplit[vo][vk];
-    [9:a]aresample=48000,aformat=channel_layouts=stereo,volume=0.35,adelay=3350|3350[x1];
-    [10:a]aresample=48000,aformat=channel_layouts=stereo,volume=0.5,adelay=3600|3600[x2];
-    [11:a]aresample=48000,aformat=channel_layouts=stereo,volume=0.35,adelay=8550|8550[x3];
+    [7:a]aresample=48000,aformat=channel_layouts=stereo,adelay=$D2|$D2[s2];
+    [s0][s2]amix=inputs=2:normalize=0,apad=whole_dur=$T,volume=1.6,asplit[vo][vk];
+    [8:a]aresample=48000,aformat=channel_layouts=stereo,volume=0.35,adelay=3350|3350[x1];
+    [9:a]aresample=48000,aformat=channel_layouts=stereo,volume=0.5,adelay=3600|3600[x2];
+    [10:a]aresample=48000,aformat=channel_layouts=stereo,volume=0.35,adelay=8550|8550[x3];
     [x1][x2][x3]amix=inputs=3:normalize=0,apad=whole_dur=$T[fx];
     [m][vk]sidechaincompress=threshold=0.015:ratio=12:attack=20:release=600[md];
     [md][fx][vo]amix=inputs=3:normalize=0,atrim=0:$T,loudnorm=I=-14:TP=-1.5:LRA=11[au]" \

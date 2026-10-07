@@ -26,6 +26,12 @@ on:
         options: [nein, ja]
         required: false
         default: nein
+      neu:
+        description: 'Video neu hochladen (geaenderte Fassung ersetzt die alte)?'
+        type: choice
+        options: [nein, ja]
+        required: false
+        default: nein
       datum:
         description: 'Tag der Freigabe-Liste (JJJJ-MM-TT), leer = heute'
         type: string
@@ -61,9 +67,11 @@ jobs:
           NUR: ${{ inputs.nur }}
           META: ${{ inputs.meta }}
           DATUM: ${{ inputs.datum }}
+          NEU: ${{ inputs.neu }}
         run: |
           ARGS=""
           [ "$MODUS" = "echt" ] && ARGS="$ARGS --echt"
           [ "$TIKTOK" = "ja" ] && ARGS="$ARGS --tiktok"
           [ "$META" = "ja" ] && ARGS="$ARGS --meta"
+          [ "$NEU" = "ja" ] && ARGS="$ARGS --neu"
           node tools/social/spot-einreichen.mjs $ARGS

@@ -14,8 +14,12 @@ eine Neongasse vor riesigen fallenden Mahjong-Steinen. Am Ende lösen sich die S
 | 8,7–11,1 s | echtes Spiel | `../mahjong/quellen/spiel-lvl18.mp4` |
 | 10,8–14,8 s | Endkarte „Jedes Paar zählt.“ | `endkarte.mjs` |
 
-Sprecher George (turbo): DE „Wenn die Steine fallen … musst du schnell sein. … Mahjong Royale – jetzt kostenlos spielen.“,
-EN „When the tiles start falling … you had better be quick. … Mahjong Royale, now free to play.“
+Sprecher George (turbo): DE „Wenn die Steine fallen, musst du schnell sein. … Mahjong Royale – jetzt kostenlos spielen.“,
+EN „When the tiles start falling, you had better be quick. … Mahjong Royale, now free to play.“
+⚠ Der erste Satz ist seit 07.10. EINE Aufnahme. Vorher waren es zwei Stücke („… / … musst du schnell sein“),
+George setzte im zweiten ohne Anlauf ein, und whoosh und Aufprall lagen genau darüber — Josef: „das Wort nach
+fallen ist nicht verständlich“. Dieselbe Lehre wie beim ersten Spot: nie innerhalb eines Satzes schneiden,
+und keine Effekte unter die Stimme legen.
 Der Schlusssatz ist derselbe wie im „Neonstreit“ (`vo-*-2.wav` von dort übernommen). Musik `../mahjong/quellen/musik.mp3` ab 20 s.
 
 ## Erzeugt mit fal.ai
