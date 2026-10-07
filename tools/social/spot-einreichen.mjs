@@ -34,8 +34,8 @@ const WURZEL = join(HIER, '..', '..');
 const APPS = JSON.parse(readFileSync(join(HIER, 'apps.json'), 'utf8'));
 const ECHT = process.argv.includes('--echt');
 const TIKTOK = process.argv.includes('--tiktok');
-const META = process.argv.includes('--meta');
-const NEU = process.argv.includes('--neu');     // Video neu hochladen, auch wenn es heute schon im Speicher liegt (geänderte Fassung)   // Instagram + Facebook in der Freigabe-App vormerken
+const META = process.argv.includes('--meta');   // Instagram + Facebook in der Freigabe-App vormerken
+const NEU = process.argv.includes('--neu');     // Video neu hochladen, auch wenn es heute schon im Speicher liegt (geänderte Fassung)
 const DATUM = process.env.DATUM || new Date().toISOString().slice(0, 10);
 // NUR=<datei,datei>: nur diese Videos (Dateinamen) — sonst ginge bei jedem Lauf die ganze Liste
 // noch einmal in die TikTok-Postfaecher, als doppelte Entwuerfe.
