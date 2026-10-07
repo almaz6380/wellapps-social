@@ -25,7 +25,7 @@ import { dirname, join, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { beschreibungBauen, hashtagsFuer, linkZeile } from './beschreibung.mjs';
 import { pruefe, berichte, captionAus, riechtNachBeiblatt } from './vorflug.mjs';
-import { hochladen, merklistenLesen, merklisteAblegen } from './veroeffentlichen/blob.mjs';
+import { hochladen, merklistenLesen, merklisteAblegen, sperreLoesen } from './veroeffentlichen/blob.mjs';
 import { frischerToken, inPosteingang, kontoAuskunft } from './veroeffentlichen/tiktok.mjs';
 import { zugaenge } from './veroeffentlichen/geheimnisse.mjs';
 
@@ -35,6 +35,10 @@ const APPS = JSON.parse(readFileSync(join(HIER, 'apps.json'), 'utf8'));
 const ECHT = process.argv.includes('--echt');
 const TIKTOK = process.argv.includes('--tiktok');
 const META = process.argv.includes('--meta');   // Instagram + Facebook in der Freigabe-App vormerken
+// --zuruecksetzen (nur mit --meta): Instagram/Facebook wieder auf „wartet“, AUCH wenn sie schon
+// veroeffentlicht waren, und die harten Sperren loesen. Nur fuer den Fall, dass Josef die alten
+// Beitraege von Hand geloescht hat (07.10.2026, Steinregen DE mit unverstaendlichem Ton).
+const ZURUECK = process.argv.includes('--zuruecksetzen');
 const NEU = process.argv.includes('--neu');     // Video neu hochladen, auch wenn es heute schon im Speicher liegt (geänderte Fassung)
 const DATUM = process.env.DATUM || new Date().toISOString().slice(0, 10);
 // NUR=<datei,datei>: nur diese Videos (Dateinamen) — sonst ginge bei jedem Lauf die ganze Liste
@@ -155,7 +159,8 @@ for (const appSchluessel of [...new Set(posten.map((p) => p.app))]) {
     // Knopf auf der Freigabe-Seite — derselbe Weg wie in posten.mjs.
     if (META) {
       for (const k of ['instagram', 'facebook']) {
-        if (spur.kanaele[k]?.stand !== 'veroeffentlicht') spur.kanaele[k] = { stand: 'wartet' };
+        if (ZURUECK) await sperreLoesen({ datum: DATUM, kanal: k, datei: p.datei, token: z.blobToken });
+        if (ZURUECK || spur.kanaele[k]?.stand !== 'veroeffentlicht') spur.kanaele[k] = { stand: 'wartet' };
       }
       if (spur.kanaele.instagram.stand === 'wartet') ig.push({ datei: p.datei, url, blobPfad: pfad, text: p.text, istVideo: true });
       wege.push('Instagram + Facebook vorgemerkt');

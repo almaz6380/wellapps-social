@@ -21,9 +21,9 @@ on:
         options: [nein, ja]
         required: true
       meta:
-        description: 'Instagram + Facebook in der Freigabe-App vormerken?'
+        description: 'Instagram + Facebook vormerken? zuruecksetzen = auch schon veroeffentlichte wieder auf wartet (nur wenn die alten Beitraege geloescht sind)'
         type: choice
-        options: [nein, ja]
+        options: [nein, ja, zuruecksetzen]
         required: false
         default: nein
       neu:
@@ -73,5 +73,6 @@ jobs:
           [ "$MODUS" = "echt" ] && ARGS="$ARGS --echt"
           [ "$TIKTOK" = "ja" ] && ARGS="$ARGS --tiktok"
           [ "$META" = "ja" ] && ARGS="$ARGS --meta"
+          [ "$META" = "zuruecksetzen" ] && ARGS="$ARGS --meta --zuruecksetzen"
           [ "$NEU" = "ja" ] && ARGS="$ARGS --neu"
           node tools/social/spot-einreichen.mjs $ARGS
