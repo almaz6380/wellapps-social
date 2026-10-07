@@ -90,12 +90,16 @@ if (!ECHT) {
 }
 
 // --- 2. Hochladen, TikTok-Postfach, Merkliste je App ergänzen ----------------
-let tiktokGesperrt = false;
+let tiktokGesperrt = false;   // ob irgendein Konto gesperrt hat (nur fuer die Schlussmeldung)
 const zusammenfassung = [];
 for (const appSchluessel of [...new Set(posten.map((p) => p.app))]) {
   const z = zugaenge(appSchluessel);
   if (!z.blobToken) throw new Error('BLOB_TOKEN fehlt.');
   const meine = posten.filter((p) => p.app === appSchluessel);
+  // ⚠ Das Limit offener Entwuerfe gilt JE KONTO (07.10.2026 gemessen: Mahjong meldete
+  // spam_risk_too_many_pending_share, Anigosha nahm Minuten spaeter an). Also nur
+  // dieses Konto anhalten, nicht alle.
+  let kontoGesperrt = false;
   let token = null;
   let kopf = null;
   if (TIKTOK) {
@@ -132,7 +136,7 @@ for (const appSchluessel of [...new Set(posten.map((p) => p.app))]) {
     const spur = { datei: p.datei, text: p.text, istVideo: true, url, blobPfad: pfad,
       kanaele: { ...(vorher?.kanaele ?? {}) } };
     const wege = [];
-    if (TIKTOK && token && !tiktokGesperrt) {
+    if (TIKTOK && token && !kontoGesperrt) {
       try {
         const r = await inPosteingang({ token, datei: p.video });
         spur.kanaele.tiktok = { stand: 'posteingang', publishId: r.publishId, wann: new Date().toISOString() };
@@ -140,8 +144,8 @@ for (const appSchluessel of [...new Set(posten.map((p) => p.app))]) {
       } catch (err) {
         spur.kanaele.tiktok = { stand: 'fehler', meldung: err.message };
         wege.push(`TikTok ✗ ${err.message}`);
-        // ⚠ Kein weiterer Versuch: Das Limit zählt vermutlich über alle fünf Konten.
-        if (/spam_risk|too many|pending/i.test(err.message)) tiktokGesperrt = true;
+        // ⚠ Kein weiterer Versuch fuer DIESES Konto — erst muss Josef dort Entwuerfe abarbeiten.
+        if (/spam_risk|too many|pending/i.test(err.message)) { kontoGesperrt = true; tiktokGesperrt = true; }
       }
     } else if (TIKTOK && !spur.kanaele.tiktok) {
       spur.kanaele.tiktok = { stand: 'wartet' };
