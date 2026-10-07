@@ -26,6 +26,10 @@ on:
         options: [nein, ja]
         required: false
         default: nein
+      datum:
+        description: 'Tag der Freigabe-Liste (JJJJ-MM-TT), leer = heute'
+        type: string
+        required: false
       nur:
         description: 'Nur diese Videos (Dateinamen, kommagetrennt) — leer = ganze Liste'
         type: string
@@ -56,6 +60,7 @@ jobs:
           TIKTOK: ${{ inputs.tiktok }}
           NUR: ${{ inputs.nur }}
           META: ${{ inputs.meta }}
+          DATUM: ${{ inputs.datum }}
         run: |
           ARGS=""
           [ "$MODUS" = "echt" ] && ARGS="$ARGS --echt"
