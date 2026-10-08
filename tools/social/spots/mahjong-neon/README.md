@@ -15,8 +15,11 @@ am Ende sitzen beide lachend auf der Treppe über einer Runde Mahjong.
 | 11,6–15 s | Endkarte | `endkarte.mjs` → `quellen/endkarte-{de,en}.png` |
 
 Sprecher: ElevenLabs Turbo v2.5 „George“ über fal, jeder Satz einzeln.
-DE „Manche Streits löst man nicht mit Worten. … Sondern mit einer Runde. … Mahjong Royale – jetzt kostenlos spielen.“
-EN „Some arguments are not settled with words. … But with one round. … Mahjong Royale, now free to play.“
+DE „Manche Streits löst man nicht mit Worten, sondern mit einer Runde Mahjong. … Mahjong Royale – jetzt kostenlos spielen.“
+EN „Some arguments aren't settled with words, but with one round of Mahjong. … Mahjong Royale, now free to play.“
+⚠ Seit 08.10. ist der erste Satz EINE Aufnahme (`vo-*-0.wav`). Vorher waren es zwei Stücke, und der Satz
+endete bei „Runde“ / „one round“ — das Wort „Mahjong“ fehlte (Josef). Das erste whoosh entfällt dabei,
+weil es sonst mitten im Satz läge.
 Musik: `../mahjong/quellen/musik.mp3` ab 5 s.
 
 ## Erzeugt mit fal.ai
