@@ -34,14 +34,21 @@ Sperre bis 27.10.). Seitdem:
   der URL-Prefix `https://freigabe.almaz6380.workers.dev/` ist im TikTok-Portal
   verifiziert (01.10.2026, Signaturdatei `freigabe-app/tiktokF94Pt9GwT2KVg8RIdupdGqOD0pSNShEA.txt`).
 - ⚠ **TikTok-Fotos kamen am 01.10. als 6-s-Diashow an** (FullRep-Karte,
-  `url_ownership_unverified`). Bis zum 28.09. gingen Fotos ueber die Durchreiche auf
-  `wellapps-freigabe.vercel.app` ANSTANDSLOS durch (Protokolle 24.–28.09.: 1, 3 und
-  8 Bilder, kein einziger Rueckfall) — die App-Pruefung bei TikTok spielt also keine
-  Rolle. Der Fehler kam erst mit dem Umzug auf `freigabe.almaz6380.workers.dev`.
-  Am 02.10. stand der Prefix unter Production → URL properties als „Verified", und
-  die Durchreiche liefert das Bild (200, image/jpeg, Content-Length). Offen, ob die
-  Bestaetigung zum Laufzeitpunkt (01.10., 19:39 UTC) schon griff — klaert nur ein
-  echter Fotobeitrag (mit Josefs Wort).
+  `url_ownership_unverified`). **Ursache laut TikTok-Support (Mail vom 20.10.2026):**
+  Der Prefix wurde in der App-Revision ergänzt, die gerade **in der App-Prüfung** steht.
+  Die Production-Konfiguration — und damit die Verifizierung — gilt erst, wenn diese
+  Prüfung abgeschlossen ist. Dass das Portal den Prefix schon als „Verified" zeigt,
+  heißt also nichts. Die frühere Vermutung hier („die App-Prüfung spielt keine Rolle",
+  weil Fotos über `wellapps-freigabe.vercel.app` bis 28.09. durchgingen) ist damit
+  widerlegt: Der alte Prefix stammte aus einer längst freigegebenen Revision.
+  **Videos betrifft das nicht** (`FILE_UPLOAD`, keine Adresse), nur Fotos
+  (`PULL_FROM_URL`). **Nächster Schritt:** nach der Freigabe der App-Prüfung EIN
+  Fotobeitrag ins Postfach (mit Josefs Wort). Kommt wieder die Diashow, will der
+  Support: Production Client Key, eine `x-tt-logid` eines fehlgeschlagenen Aufrufs
+  (höchstens 3 Tage alt), die vollständige Fehlerantwort und einen Screenshot des
+  Prefix unter Production → URL properties — nie Client Secret oder Token.
+  Die **Content-Posting-API-Prüfung** ist ein getrennter Vorgang und nur für direktes,
+  öffentliches Posten nötig; wir laden bewusst nur in den Posteingang.
 - Die Regel oben gilt unverändert: kein Lauf ins Postfach oder in die Freigabe ohne
   Josefs ausdrückliches Wort.
 
