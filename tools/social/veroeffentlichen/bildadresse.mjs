@@ -17,8 +17,16 @@
 // Bild und Durchreiche teilen sich damit die Domain; im TikTok-Entwicklerportal
 // muss `freigabe.almaz6380.workers.dev` als verifizierte Domain eingetragen sein
 // (Signaturdateien liegen weiter im Wurzelverzeichnis von freigabe-app/).
+//
+// ⚠ Seit 29.10.2026 laeuft die Durchreiche wieder ueber Vercel. TikTok hat die
+// App-Aenderung mit dem neuen Prefix `freigabe.almaz6380.workers.dev` abgelehnt
+// („personal or internal use … not eligible"), und ein Prefix gilt erst, wenn
+// seine Revision freigegeben ist. Verifiziert in der FREIGEGEBENEN Fassung ist
+// nur `wellapps-freigabe.vercel.app` — dort gingen Fotos bis 28.09. durch. Die
+// Vercel-Route (freigabe-app/api/bild/[teil].js) liest die Bytes aus dem Worker;
+// gespeichert wird weiter nur auf Cloudflare (Vercel Blob nie wieder: Kontingent).
 export const BLOB_HOST = 'freigabe.almaz6380.workers.dev';
-export const DURCHREICHE = 'https://freigabe.almaz6380.workers.dev/api/bild';
+export const DURCHREICHE = 'https://wellapps-freigabe.vercel.app/api/bild';
 
 /**
  * @param {string} url  die oeffentliche Blob-Adresse eines Bildes

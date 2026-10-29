@@ -10,6 +10,11 @@ Veröffentlicht wird per Workflow `freigabe-cloudflare.yml` bei jedem Push auf
 `api/` bleibt unverändert und wird vom Worker eingebunden; der Rest dieser Datei
 beschreibt die Vercel-Zeit und gilt nur noch für den Rückweg.
 
+⚠ **Eine Ausnahme lebt seit 29.10.2026 wieder auf Vercel: die Bild-Durchreiche für
+TikTok** (`api/bild/[teil].js` → liest aus dem Worker). Nur `wellapps-freigabe.vercel.app`
+ist in der von TikTok FREIGEGEBENEN App-Fassung als URL-Prefix verifiziert; die Änderung
+auf die Cloudflare-Domain hat TikTok abgelehnt. Vercel speichert dabei nichts.
+
 ⚠ **Das Vercel-Projekt `wellapps-freigabe` hängt seit 17.09.2026 an DIESEM Repo**
 (vorher `almaz6380/anigosha`). Root Directory bleibt `freigabe-app`.
 
