@@ -49,6 +49,16 @@ Sperre bis 27.10.). Seitdem:
   Prefix unter Production → URL properties — nie Client Secret oder Token.
   Die **Content-Posting-API-Prüfung** ist ein getrennter Vorgang und nur für direktes,
   öffentliches Posten nötig; wir laden bewusst nur in den Posteingang.
+- ✅ **Stand 29.10.2026: TikTok-Fotos laufen wieder über `wellapps-freigabe.vercel.app`.**
+  TikTok hat die App-Änderung mit dem Cloudflare-Prefix ABGELEHNT („Applications intended
+  for personal use or internal company use are not eligible") — damit gilt nur der Prefix
+  der alten, freigegebenen Fassung. Vercel ist seit 29.10. wieder erreichbar;
+  `DURCHREICHE` in `bildadresse.mjs` zeigt dorthin, die Route `api/bild/[teil].js` liest
+  aus dem Worker. ⚠ **Vercels GitHub-Anbindung ist tot** (Build mit `git_info_fail`):
+  Änderungen an `freigabe-app/api/` gehen per Datei-Upload über die Vercel-API raus
+  (`VERCEL_TOKEN`, `POST /v2/files` + `/v13/deployments` mit `files`, Projekt
+  `prj_tHgQAG3OqYmyW1qOPj6jGLV17FaA`, Pfade mit `freigabe-app/`-Präfix, ohne `worker/`).
+  Nicht neu bei TikTok einreichen — „für andere Nutzer" wäre gelogen.
 - Die Regel oben gilt unverändert: kein Lauf ins Postfach oder in die Freigabe ohne
   Josefs ausdrückliches Wort.
 
