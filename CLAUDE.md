@@ -59,6 +59,8 @@ Sperre bis 27.10.). Seitdem:
   (`VERCEL_TOKEN`, `POST /v2/files` + `/v13/deployments` mit `files`, Projekt
   `prj_tHgQAG3OqYmyW1qOPj6jGLV17FaA`, Pfade mit `freigabe-app/`-Präfix, ohne `worker/`).
   Nicht neu bei TikTok einreichen — „für andere Nutzer" wäre gelogen.
+  **Am Gerät bestätigt (23.11.2026):** Testbild über `tiktok-foto-diagnose` (FullRep) →
+  TikTok `ok`, im Postfach als Foto-Beitrag angekommen (Josef). Keine Diashow mehr.
 - Die Regel oben gilt unverändert: kein Lauf ins Postfach oder in die Freigabe ohne
   Josefs ausdrückliches Wort.
 
