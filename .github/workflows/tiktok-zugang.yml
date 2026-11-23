@@ -29,7 +29,7 @@ on:
       app:
         description: 'Fuer welches Konto?'
         type: choice
-        options: [anigosha, mahjong, wellbooked, fullrep, swaply]
+        options: [anigosha, mahjong, wellbooked, fullrep, swaply, watten]
         required: true
       schritt:
         description: 'link = Anmeldeadresse erzeugen · tausch = Code einloesen'
